@@ -8,6 +8,7 @@ import IconLockDots from '../../components/Icon/IconLockDots';
 import IconMail from '../../components/Icon/IconMail';
 import { IRootState } from '../../store';
 import { setPageTitle, toggleRTL } from '../../store/themeConfigSlice';
+import { login } from '../../utilities/Auth/login';
 
 const LoginBoxed = () => {
     const dispatch = useDispatch();
@@ -28,8 +29,51 @@ const LoginBoxed = () => {
     };
     const [flag, setFlag] = useState(themeConfig.locale);
 
-    const submitForm = () => {
-        navigate('/');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [userNameOrEmail, setUserNameOrEmail] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        console.log('submit');
+        e.preventDefault();
+        setError('');
+
+        const input = userNameOrEmail;
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isUsername = /^[a-zA-Z0-9_.-]{3,}$/;
+        let userOrEmail: { email?: string; username?: string } = {};
+
+        // Determine if input is email or username
+        if (isEmail.test(input)) {
+            userOrEmail.email = input; // Set email property
+        } else if (isUsername.test(input)) {
+            userOrEmail.username = input; // Set username property
+        } else {
+            setError('Invalid input. Please enter a valid username or email.');
+            return; // Exit if input is invalid
+        }
+
+        // Check for empty password or input
+        if (!password) {
+            setError('Please fill in all fields');
+            return; // Exit if password is empty
+        }
+
+        try {
+            // Call the login service
+            const response = await login(userOrEmail, password);
+            console.log('the response is', response);
+            const cookies = document.cookie;
+            console.log('the cooooookkkiiiieesss', cookies);
+            if (response.status === 200) {
+                navigate('/');
+            } else {
+                setError('Login failed. Please check your credentials.');
+            }
+        } catch (error: any) {
+            setError(error.message); // Set error message from caught error
+        }
     };
 
     return (
@@ -91,20 +135,35 @@ const LoginBoxed = () => {
                                 <h1 className="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Sign in</h1>
                                 <p className="text-base font-bold leading-normal text-white-dark">Enter your email and password to login</p>
                             </div>
-                            <form className="space-y-5 dark:text-white" onSubmit={submitForm}>
+                            <form className="space-y-5 dark:text-white" onSubmit={handleSubmit}>
                                 <div>
-                                    <label htmlFor="Email">Email</label>
+                                    <label htmlFor="usernameOrEmail">Username or Email</label>
                                     <div className="relative text-white-dark">
-                                        <input id="Email" type="email" placeholder="Enter Email" className="form-input ps-10 placeholder:text-white-dark" />
+                                        <input
+                                            id="Email"
+                                            type="text"
+                                            name="usernameOrEmail"
+                                            placeholder="Enter Username or Email"
+                                            className="form-input ps-10 placeholder:text-white-dark"
+                                            value={userNameOrEmail}
+                                            onChange={(e) => setUserNameOrEmail(e.target.value)}
+                                        />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconMail fill={true} />
                                         </span>
-                                    </div>
+                                    </div>{' '}
                                 </div>
                                 <div>
                                     <label htmlFor="Password">Password</label>
                                     <div className="relative text-white-dark">
-                                        <input id="Password" type="password" placeholder="Enter Password" className="form-input ps-10 placeholder:text-white-dark" />
+                                        <input
+                                            id="Password"
+                                            type="password"
+                                            placeholder="Enter Password"
+                                            className="form-input ps-10 placeholder:text-white-dark"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                        />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconLockDots fill={true} />
                                         </span>
@@ -131,7 +190,7 @@ const LoginBoxed = () => {
                             </div>
                             <div className="text-center dark:text-white">
                                 Don't have an account ?&nbsp;
-                                <Link to="/auth/boxed-signup" className="uppercase text-primary underline transition hover:text-black dark:hover:text-white">
+                                <Link to="/register" className="uppercase text-primary underline transition hover:text-black dark:hover:text-white">
                                     SIGN UP
                                 </Link>
                             </div>

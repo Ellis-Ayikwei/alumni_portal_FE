@@ -1,37 +1,38 @@
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Link, NavLink, useLocation } from 'react-router-dom';
-import { IRootState } from '../../store';
-import { toggleRTL, toggleTheme, toggleSidebar } from '../../store/themeConfigSlice';
-import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { AppDispatch, IRootState } from '../../store';
+import { logoutUser } from '../../store/logOutSlice';
+import { toggleRTL, toggleSidebar, toggleTheme } from '../../store/themeConfigSlice';
 import Dropdown from '../Dropdown';
-import IconMenu from '../Icon/IconMenu';
-import IconCalendar from '../Icon/IconCalendar';
-import IconEdit from '../Icon/IconEdit';
-import IconChatNotification from '../Icon/IconChatNotification';
-import IconSearch from '../Icon/IconSearch';
-import IconXCircle from '../Icon/IconXCircle';
-import IconSun from '../Icon/IconSun';
-import IconMoon from '../Icon/IconMoon';
-import IconLaptop from '../Icon/IconLaptop';
-import IconMailDot from '../Icon/IconMailDot';
 import IconArrowLeft from '../Icon/IconArrowLeft';
-import IconInfoCircle from '../Icon/IconInfoCircle';
 import IconBellBing from '../Icon/IconBellBing';
-import IconUser from '../Icon/IconUser';
-import IconMail from '../Icon/IconMail';
+import IconCalendar from '../Icon/IconCalendar';
+import IconCaretDown from '../Icon/IconCaretDown';
+import IconChatNotification from '../Icon/IconChatNotification';
+import IconEdit from '../Icon/IconEdit';
+import IconInfoCircle from '../Icon/IconInfoCircle';
+import IconLaptop from '../Icon/IconLaptop';
 import IconLockDots from '../Icon/IconLockDots';
 import IconLogout from '../Icon/IconLogout';
-import IconMenuDashboard from '../Icon/Menu/IconMenuDashboard';
-import IconCaretDown from '../Icon/IconCaretDown';
+import IconMail from '../Icon/IconMail';
+import IconMailDot from '../Icon/IconMailDot';
+import IconMenu from '../Icon/IconMenu';
+import IconMoon from '../Icon/IconMoon';
+import IconSearch from '../Icon/IconSearch';
+import IconSun from '../Icon/IconSun';
+import IconUser from '../Icon/IconUser';
+import IconXCircle from '../Icon/IconXCircle';
 import IconMenuApps from '../Icon/Menu/IconMenuApps';
 import IconMenuComponents from '../Icon/Menu/IconMenuComponents';
-import IconMenuElements from '../Icon/Menu/IconMenuElements';
+import IconMenuDashboard from '../Icon/Menu/IconMenuDashboard';
 import IconMenuDatatables from '../Icon/Menu/IconMenuDatatables';
+import IconMenuElements from '../Icon/Menu/IconMenuElements';
 import IconMenuForms from '../Icon/Menu/IconMenuForms';
-import IconMenuPages from '../Icon/Menu/IconMenuPages';
 import IconMenuMore from '../Icon/Menu/IconMenuMore';
+import IconMenuPages from '../Icon/Menu/IconMenuPages';
 
 const Header = () => {
     const location = useLocation();
@@ -59,7 +60,7 @@ const Header = () => {
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
 
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
-    const dispatch = useDispatch();
+    const dispatch: AppDispatch = useDispatch();
 
     function createMarkup(messages: any) {
         return { __html: messages };
@@ -137,6 +138,25 @@ const Header = () => {
     const [flag, setFlag] = useState(themeConfig.locale);
 
     const { t } = useTranslation();
+
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            const resultAction = await dispatch(logoutUser() as any);
+            if (logoutUser.fulfilled.match(resultAction)) {
+                // Handle successful logout (e.g., redirect to login page)
+            } else {
+                // Handle error during logout
+                console.error('Logout failed:', resultAction.payload);
+            }
+        } catch (error) {
+            // Handle error during logout
+            console.error('Logout failed:', error);
+        }
+
+        navigate('/login');
+    };
 
     return (
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>

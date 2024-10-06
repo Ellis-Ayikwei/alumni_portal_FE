@@ -15,12 +15,12 @@ const routes = [
 
     //Authentication
     {
-        path: '/auth/boxed-signin',
+        path: '/login',
         element: <LoginBoxed />,
         layout: 'blank',
     },
     {
-        path: '/auth/boxed-signup',
+        path: '/register',
         element: <RegisterBoxed />,
         layout: 'blank',
     },
