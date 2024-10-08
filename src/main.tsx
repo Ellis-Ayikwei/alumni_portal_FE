@@ -1,8 +1,5 @@
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client'
-import { PublicClientApplication } from '@azure/msal-browser';
-import { MsalProvider } from '@azure/msal-react';
-import { msalConfig } from './configs/Authentication/authConfig';
 
 // Perfect Scrollbar
 import 'react-perfect-scrollbar/dist/css/styles.css';
@@ -21,7 +18,6 @@ import router from './router/index';
 import { Provider } from 'react-redux';
 import store from './store/index';
 
-const msalInstance = new PublicClientApplication(msalConfig);
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>

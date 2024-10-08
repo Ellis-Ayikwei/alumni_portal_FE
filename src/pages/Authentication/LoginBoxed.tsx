@@ -7,8 +7,8 @@ import IconCaretDown from '../../components/Icon/IconCaretDown';
 import IconLockDots from '../../components/Icon/IconLockDots';
 import IconMail from '../../components/Icon/IconMail';
 import { IRootState } from '../../store';
+import { LoginUser } from '../../store/logInSlice';
 import { setPageTitle, toggleRTL } from '../../store/themeConfigSlice';
-import { login } from '../../utilities/Auth/login';
 
 const LoginBoxed = () => {
     const dispatch = useDispatch();
@@ -61,12 +61,8 @@ const LoginBoxed = () => {
         }
 
         try {
-            // Call the login service
-            const response = await login(userOrEmail, password);
-            console.log('the response is', response);
-            const cookies = document.cookie;
-            console.log('the cooooookkkiiiieesss', cookies);
-            if (response.status === 200) {
+            const loginResponse = await dispatch(LoginUser({ userOrEmail, password }) as any);
+            if (loginResponse.meta.requestStatus === 'fulfilled') {
                 navigate('/');
             } else {
                 setError('Login failed. Please check your credentials.');

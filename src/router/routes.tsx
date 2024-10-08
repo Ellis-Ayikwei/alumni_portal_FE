@@ -1,9 +1,10 @@
 import { lazy } from 'react';
+import AccountSetting from '../pages/UserManagement/AccountSetting';
+import UserManagement from '../pages/UserManagement/UserManagement';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
 const RegisterBoxed = lazy(() => import('../pages/Authentication/RegisterBoxed'));
-
 
 const routes = [
     // dashboard
@@ -24,6 +25,14 @@ const routes = [
         element: <RegisterBoxed />,
         layout: 'blank',
     },
+    {
+        path: '/users',
+        element: <UserManagement />,
+    },
+    {
+        path: '/userAccountSetting',
+        element: <AccountSetting />,
+    },
     // {
     //     path: '/auth/boxed-lockscreen',
     //     element: <UnlockBoxed />,
@@ -34,9 +43,6 @@ const routes = [
     //     element: <RecoverIdBoxed />,
     //     layout: 'blank',
     // },
-    
-
-
 ];
 
 export { routes };

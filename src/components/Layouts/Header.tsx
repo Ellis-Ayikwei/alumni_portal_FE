@@ -60,6 +60,9 @@ const Header = () => {
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
 
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
+    const error = useSelector((state: IRootState) => state.logout.error);
+    const isLoggedOut = useSelector((state: IRootState) => state.logout.isLoggedOut);
+
     const dispatch: AppDispatch = useDispatch();
 
     function createMarkup(messages: any) {
@@ -141,21 +144,15 @@ const Header = () => {
 
     const navigate = useNavigate();
 
-    const handleLogout = async () => {
+    const handleLogoutClick = async () => {
         try {
-            const resultAction = await dispatch(logoutUser() as any);
-            if (logoutUser.fulfilled.match(resultAction)) {
-                // Handle successful logout (e.g., redirect to login page)
-            } else {
-                // Handle error during logout
-                console.error('Logout failed:', resultAction.payload);
+            const logoutResponse = await dispatch(logoutUser() as any);
+            if (logoutResponse.meta.requestStatus === 'fulfilled') {
+                navigate('/login');
             }
         } catch (error) {
-            // Handle error during logout
             console.error('Logout failed:', error);
         }
-
-        navigate('/login');
     };
 
     return (
@@ -475,7 +472,7 @@ const Header = () => {
                                         </Link>
                                     </li>
                                     <li className="border-t border-white-light dark:border-white-light/10">
-                                        <Link to="/auth/boxed-signin" className="text-danger !py-3">
+                                        <Link to="" className="text-danger !py-3" onClick={handleLogoutClick}>
                                             <IconLogout className="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 rotate-90 shrink-0" />
                                             Sign Out
                                         </Link>

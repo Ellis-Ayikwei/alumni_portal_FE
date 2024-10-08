@@ -1,10 +1,12 @@
 import { combineReducers, configureStore, Store } from '@reduxjs/toolkit';
-import themeConfigSlice from './themeConfigSlice';
 import logOutSlice from './logOutSlice';
+import themeConfigSlice from './themeConfigSlice';
+import logInSlice from './logInSlice';
 
 const rootReducer = combineReducers({
     themeConfig: themeConfigSlice,
     logout: logOutSlice,
+    login: logInSlice,
 });
 
 const confStore: Store = configureStore({

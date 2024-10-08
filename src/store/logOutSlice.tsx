@@ -1,24 +1,30 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../helper/axiosInstance';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import authAxiosInstance from '../helper/authAxiosInstance';
+import getCookie from '../helper/getCookies';
 
 // Define the initial state type
 interface LogoutState {
-    isLogout: boolean;
+    isLoggedOut: boolean;
     loading: boolean;
     error: string | null;
 }
 
 // Define the initial state
 const initialState: LogoutState = {
-    isLogout: false,
+    isLoggedOut: false,
     loading: false,
     error: null,
 };
 
 // Create an async thunk for logout functionality
 export const logoutUser = createAsyncThunk('logout/logoutUser', async () => {
-    const response = await axiosInstance.post('auth/logout');
-    return response.data;  // Return the response data if needed
+    console.log('the csrf token is', getCookie('csrf_access_token'));
+    const response = await authAxiosInstance.post('/logout', {
+        headers: {
+            'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+        },
+    });
+    return response.data;
 });
 
 // Create a slice for logout functionality
@@ -27,7 +33,7 @@ const logOutSlice = createSlice({
     initialState,
     reducers: {
         resetLogout: (state) => {
-            state.isLogout = false;
+            state.isLoggedOut = false;
             state.error = null;
         },
     },
@@ -37,7 +43,7 @@ const logOutSlice = createSlice({
                 state.loading = true;
             })
             .addCase(logoutUser.fulfilled, (state) => {
-                state.isLogout = true;
+                state.isLoggedOut = true;
                 state.loading = false;
             })
             .addCase(logoutUser.rejected, (state, action) => {
