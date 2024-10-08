@@ -29,10 +29,10 @@ const usersSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(GetUserData.pending, (state, action.payload) => {
+            .addCase(GetUserData.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(GetUserData.fulfilled, (state) => {
+            .addCase(GetUserData.fulfilled, (state, action.payload) => {
                 state.userData = action.payload
                 state.loading = false;
             })
