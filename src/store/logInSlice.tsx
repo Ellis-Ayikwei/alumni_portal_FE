@@ -5,6 +5,8 @@ import authAxiosInstance from '../helper/authAxiosInstance';
 interface LoginState {
     isLoggedIn: boolean;
     loading: boolean;
+    myData: object;
+    role: string;
     error: string | null;
 }
 
@@ -12,6 +14,8 @@ interface LoginState {
 const initialState: LoginState = {
     isLoggedIn: false,
     loading: false,
+    role: '',
+    myData: {},
     error: null,
 };
 
@@ -19,6 +23,7 @@ const initialState: LoginState = {
 export const LoginUser = createAsyncThunk('Login/LoginUser', async ({ userOrEmail, password }: { userOrEmail: { email?: string; username?: string }; password: string }) => {
     const payload = { ...userOrEmail, password };
     const response = await authAxiosInstance.post('/login', payload);
+    console.log(response)
     return response.data;
 });
 
@@ -37,7 +42,9 @@ const logInSlice = createSlice({
             .addCase(LoginUser.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(LoginUser.fulfilled, (state) => {
+            .addCase(LoginUser.fulfilled, (state, action) => {
+                state.myData = action.payload;
+                state.role = action.payload.role;
                 state.isLoggedIn = true;
                 state.loading = false;
             })

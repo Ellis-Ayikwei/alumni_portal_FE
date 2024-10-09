@@ -13,51 +13,50 @@ import IconChecks from '../../components/Icon/IconChecks';
 import IconEye from '../../components/Icon/IconEye';
 import IconFile from '../../components/Icon/IconFile';
 import IconPencil from '../../components/Icon/IconPencil';
+import IconPlusCircle from '../../components/Icon/IconPlusCircle';
 import IconPrinter from '../../components/Icon/IconPrinter';
 import IconRefresh from '../../components/Icon/IconRefresh';
-import IconUserPlus from '../../components/Icon/IconUserPlus';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconX from '../../components/Icon/IconX';
 import { IRootState } from '../../store';
+import { GetAlumniData } from '../../store/alumnigroupSlice';
 import { setPageTitle } from '../../store/themeConfigSlice';
-import { GetUserData } from '../../store/usersSlice';
-import SaveNewUser from './userManagementUtils/addNewUser';
-import handleUserActivation from './userManagementUtils/userActivation';
+import SaveNewUser from '../UserManagement/userManagementUtils/addNewUser';
+import handleUserActivation from '../UserManagement/userManagementUtils/userActivation';
 
-const col = ['username', 'email', 'phone', 'address', 'created_at', 'dob', 'role', 'azure_id', 'id'];
+const col = ['name', 'start_date', 'end_date', 'insurance_package', 'is_locked', 'president_id', 'id', 'create_at', 'updated_at'];
 
-const UserManagement = () => {
+const AlumniGroupManagementpage = () => {
     const dispatch = useDispatch();
-    const [usersdata, setUsersData] = useState<any>([]);
-    const usersData = useSelector((state: IRootState) => state.usersdata.usersData);
-    const userDataIsLoading = useSelector((state: IRootState) => state.usersdata.loading);
+    const [alumnidata, setUsersData] = useState<any>([]);
+    const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniData);
+    const userDataIsLoading = useSelector((state: IRootState) => state.alumnidata.loading);
     const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
 
-
-    console.log("my role is ", myRole);
+    console.log('my role is ', myRole);
     useEffect(() => {
         dispatch(setPageTitle('Multiple Tables'));
-        dispatch(GetUserData() as any);
+        dispatch(GetAlumniData() as any);
     }, [dispatch]);
 
     useEffect(() => {
-        if (usersData) {
-            setInitialRecords2(sortBy(usersData, 'first_name'));
+        if (alumniData) {
+            setInitialRecords2(sortBy(alumniData, 'name'));
         }
-    }, [usersData]);
+    }, [alumniData]);
 
     const PAGE_SIZES = [10, 20, 30, 50, 100];
     const navigate = useNavigate();
 
     const [page2, setPage2] = useState(1);
     const [pageSize2, setPageSize2] = useState(PAGE_SIZES[0]);
-    const [initialRecords2, setInitialRecords2] = useState(sortBy(usersdata, 'first_name'));
+    const [initialRecords2, setInitialRecords2] = useState(sortBy(alumnidata, 'name'));
     const [recordsData2, setRecordsData2] = useState(initialRecords2);
     const rowData = initialRecords2;
     const [search2, setSearch2] = useState('');
     const [sortStatus2, setSortStatus2] = useState<DataTableSortStatus>({
-        columnAccessor: 'first_name',
+        columnAccessor: 'name',
         direction: 'asc',
     });
 
@@ -73,9 +72,9 @@ const UserManagement = () => {
 
     useEffect(() => {
         setInitialRecords2(() => {
-            return usersdata.filter((item: any) => {
+            return alumnidata.filter((item: any) => {
                 return (
-                    item.first_name.toLowerCase().includes(search2.toLowerCase()) ||
+                    item.name.toLowerCase().includes(search2.toLowerCase()) ||
                     item.company.toLowerCase().includes(search2.toLowerCase()) ||
                     item.age.toString().toLowerCase().includes(search2.toLowerCase()) ||
                     item.dob.toLowerCase().includes(search2.toLowerCase()) ||
@@ -279,7 +278,7 @@ const UserManagement = () => {
     };
 
     const [selectedRecords, setSelectedRecords] = useState<any>([]);
-    const [hideCols, setHideCols] = useState<any>(['id', 'azure_id']);
+    const [hideCols, setHideCols] = useState<any>(['id']);
 
     const showHideColumns = (col: any, value: any) => {
         if (hideCols.includes(col)) {
@@ -290,26 +289,20 @@ const UserManagement = () => {
     };
 
     const cols = [
-        { accessor: 'username', title: 'Username', sortable: true },
-        { accessor: 'email', title: 'Email', sortable: true },
-        { accessor: 'phone', title: 'Phone No.', sortable: true },
-        { accessor: 'address', title: 'Address', sortable: true },
-        {
-            accessor: 'created_at',
-            title: 'Date joined',
-            sortable: true,
-        },
-        { accessor: 'dob', title: 'DOB', sortable: true },
-        { accessor: 'role', title: 'Role', sortable: true },
-        { accessor: 'azure_id', title: 'Azure_id', sortable: true },
-        { accessor: 'id', title: 'User id', sortable: true },
+        { accessor: 'name', title: 'Name', sortable: true },
+        { accessor: 'start_date', title: 'Start Date', sortable: true },
+        { accessor: 'end_date', title: 'End Date', sortable: true },
+        { accessor: 'insurance_package', title: 'Insurance Package', sortable: true },
+        { accessor: 'is_locked', title: 'Is Locked', sortable: true },
+        { accessor: 'president_id', title: 'President Id', sortable: true },
+        { accessor: 'id', title: 'Id', sortable: true },
+        { accessor: 'create_at', title: 'Create At', sortable: true },
+        { accessor: 'updated_at', title: 'Updated At', sortable: true },
     ];
-
-
-  const handleNavigation = (payload: any) => {
-    // You can pass any data here in the state object
-    navigate('/profile', { state: payload });
-  };
+    const handleNavigation = (payload: any) => {
+        // You can pass any data here in the state object
+        navigate('/profile', { state: payload });
+    };
 
     return (
         <div>
@@ -390,7 +383,7 @@ const UserManagement = () => {
                     </div>
 
                     <div>
-                        <button type="button" className="btn btn-dark w-8 h-8 p-0 rounded-full" onClick={() => dispatch(GetUserData() as any)}>
+                        <button type="button" className="btn btn-dark w-8 h-8 p-0 rounded-full" onClick={() => dispatch(GetAlumniData() as any)}>
                             <IconRefresh className="w-5 h-5" />
                         </button>
                     </div>
@@ -405,8 +398,8 @@ const UserManagement = () => {
                             setAddUserModal(true);
                         }}
                     >
-                        <IconUserPlus className="ltr:mr-2 rtl:ml-2" />
-                        Add User
+                        <IconPlusCircle className="ltr:mr-2 rtl:ml-2" />
+                        Add Alumni Group
                     </button>
                 </div>
                 <div className="datatables">
@@ -415,52 +408,51 @@ const UserManagement = () => {
                         records={recordsData2}
                         columns={[
                             {
-                                accessor: 'first_name',
+                                accessor: 'name',
                                 title: 'Name',
                                 sortable: true,
-                                render: ({ first_name, last_name, id }) => (
+                                render: ({ name, id }) => (
                                     <div className="flex items-center w-max">
                                         <img className="w-9 h-9 rounded-full ltr:mr-2 rtl:ml-2 object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
-                                        <div>{first_name + ' ' + last_name}</div>
+                                        <div>{name}</div>
                                     </div>
                                 ),
                             },
-                            { accessor: 'username', title: 'Username', sortable: true, hidden: hideCols.includes('username') },
-                            { accessor: 'email', title: 'Email', sortable: true, hidden: hideCols.includes('email') },
-                            { accessor: 'phone', title: 'Phone No.', sortable: true, hidden: hideCols.includes('phone') },
-                            { accessor: 'address', title: 'Address', sortable: true, hidden: hideCols.includes('address') },
-                            {
-                                accessor: 'dob',
-                                title: 'DOB',
-                                sortable: true,
-                                hidden: hideCols.includes('dob'),
-                                render: ({ dob }) => {
-                                    const validDob = dob as string | number | Date;
 
-                                    return <div>{formatDate(validDob)}</div>;
+                            {
+                                accessor: 'start_date',
+                                title: 'Start Date',
+                                sortable: true,
+                                hidden: hideCols.includes('start_date'),
+                                render: ({ start_date }) => {
+                                    const validStart_date = start_date as string | number | Date;
+
+                                    return <div>{formatDate(validStart_date)}</div>;
                                 },
                             },
                             {
-                                accessor: 'is_active',
-                                title: 'Active',
+                                accessor: 'end_date',
+                                title: 'End Date',
+                                sortable: true,
+                                hidden: hideCols.includes('end_date'),
+                                render: ({ end_date }) => {
+                                    const validEnd_date = end_date as string | number | Date;
+
+                                    return <div>{formatDate(validEnd_date)}</div>;
+                                },
+                            },
+                            { accessor: 'insurance_package', title: 'Insurance Package', sortable: true, hidden: hideCols.includes('insurance_package') },
+                            {
+                                accessor: 'is_locked',
+                                title: 'Is Locked',
                                 sortable: true,
                                 hidden: hideCols.includes('Active'),
-                                render: ({ is_active }) => <span className={`badge bg-${getActivityColor(is_active)}`}>{is_active ? 'Active' : 'Inactive'}</span>,
+                                render: ({ is_locked }) => <span className={`badge bg-${getActivityColor(is_locked)}`}>{is_locked ? 'Active' : 'Locked'}</span>,
                             },
-                            {
-                                accessor: 'created_at',
-                                title: 'Date joined',
-                                sortable: true,
-                                hidden: hideCols.includes('created_at'),
-                                render: ({ created_at }) => {
-                                    const validDob = created_at as string | number | Date;
-
-                                    return <div>{formatDate(created_at)}</div>;
-                                },
-                            },
-                            { accessor: 'role', title: 'Role', sortable: true, hidden: hideCols.includes('role') },
-                            { accessor: 'azure_id', title: 'Azure_id', sortable: true, hidden: hideCols.includes('azure_id') },
-                            { accessor: 'id', title: 'User id', sortable: true, hidden: hideCols.includes('id') },
+                            { accessor: 'president_id', title: 'President ID', sortable: true, hidden: hideCols.includes('president_id') },
+                            { accessor: 'id', title: 'ID', sortable: true, hidden: hideCols.includes('id') },
+                            { accessor: 'create_at', title: 'Create At', sortable: true, hidden: hideCols.includes('create_at') },
+                            { accessor: 'updated_at', title: 'Updated At', sortable: true, hidden: hideCols.includes('updated_at') },
                         ]}
                         totalRecords={initialRecords2.length}
                         recordsPerPage={pageSize2}
@@ -512,4 +504,4 @@ const UserManagement = () => {
     );
 };
 
-export default UserManagement;
+export default AlumniGroupManagementpage;
