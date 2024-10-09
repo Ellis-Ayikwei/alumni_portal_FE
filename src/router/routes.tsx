@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import AccountSetting from '../pages/UserManagement/AccountSetting';
 import UserManagement from '../pages/UserManagement/UserManagement';
+import Profile from '../pages/UserManagement/Profile';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -32,6 +33,10 @@ const routes = [
     {
         path: '/userAccountSetting',
         element: <AccountSetting />,
+    },
+    {
+        path: '/profile',
+        element: <Profile />,
     },
     // {
     //     path: '/auth/boxed-lockscreen',

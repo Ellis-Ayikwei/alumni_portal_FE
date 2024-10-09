@@ -4,21 +4,30 @@ import sortBy from 'lodash/sortBy';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { Fragment, useEffect, useState } from 'react';
 import { downloadExcel } from 'react-export-table-to-excel';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { NavLink, useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import Swal from 'sweetalert2';
 import useSWR from 'swr';
 import 'tippy.js/dist/tippy.css';
+import Dropdown from '../../components/Dropdown';
 import IconBell from '../../components/Icon/IconBell';
+import IconCaretDown from '../../components/Icon/IconCaretDown';
+import IconEye from '../../components/Icon/IconEye';
 import IconFile from '../../components/Icon/IconFile';
 import IconPencil from '../../components/Icon/IconPencil';
 import IconPrinter from '../../components/Icon/IconPrinter';
+import IconRefresh from '../../components/Icon/IconRefresh';
 import IconTrashLines from '../../components/Icon/IconTrashLines';
 import IconUserPlus from '../../components/Icon/IconUserPlus';
 import IconX from '../../components/Icon/IconX';
 import fetcher from '../../helper/fetcher';
+import { IRootState } from '../../store';
 import { setPageTitle } from '../../store/themeConfigSlice';
+import { GetUserData } from '../../store/usersSlice';
+import saveNewUser, { dParams } from './userManagementUtils/addNewUser';
+import { set } from 'lodash';
+import useSaveNewUser from './userManagementUtils/addNewUser';
 
 const rowData = [
     {
@@ -536,65 +545,36 @@ const roles = [
 
 const UserManagement = () => {
     const dispatch = useDispatch();
-    const [userdata, setuserdata] = useState([]);
+    const [usersdata, setUsersData] = useState<any>([]);
+    const usersData = useSelector((state: IRootState) => state.usersdata.usersData);
+    const userDataIsLoading = useSelector((state: IRootState) => state.usersdata.loading);
+    const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
+
+    // First effect for fetching data (runs only once on mount)
     useEffect(() => {
         dispatch(setPageTitle('Multiple Tables'));
-    });
+        dispatch(GetUserData() as any);
+    }, [dispatch]);
+
+    // Second effect for updating initialRecords2 when usersData changes
+    useEffect(() => {
+        if (usersData) {
+            setInitialRecords2(sortBy(usersData, 'first_name'));
+        }
+    }, [usersData]);
+
     const { data, error, isLoading } = useSWR('/users', fetcher);
     console.log(data);
 
-
-    const rowData = data || [];
-    const [page, setPage] = useState(1);
+    console.log('usersData', usersData);
+    const rowData = usersdata;
+    console.log('first', rowData);
     const PAGE_SIZES = [10, 20, 30, 50, 100];
-    const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
-    const [initialRecords, setInitialRecords] = useState(sortBy(rowData, 'first_name'));
-    const [recordsData, setRecordsData] = useState(initialRecords);
-
-    const navigate =  useNavigate()
-
-    const [search, setSearch] = useState('');
-    const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-        columnAccessor: 'first_name',
-        direction: 'asc',
-    });
-
-    useEffect(() => {
-        setPage(1);
-    }, [pageSize]);
-
-    useEffect(() => {
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize;
-        setRecordsData([...initialRecords.slice(from, to)]);
-    }, [page, pageSize, initialRecords]);
-
-    useEffect(() => {
-        setInitialRecords(() => {
-            return rowData.filter((item: { first_name: string; company: string; age: { toString: () => string }; dob: string; email: string; phone: string }) => {
-                return (
-                    item.first_name.toLowerCase().includes(search.toLowerCase()) ||
-                    item.company.toLowerCase().includes(search.toLowerCase()) ||
-                    item.age.toString().toLowerCase().includes(search.toLowerCase()) ||
-                    item.dob.toLowerCase().includes(search.toLowerCase()) ||
-                    item.email.toLowerCase().includes(search.toLowerCase()) ||
-                    item.phone.toLowerCase().includes(search.toLowerCase())
-                );
-            });
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
-
-    useEffect(() => {
-        const data = sortBy(initialRecords, sortStatus.columnAccessor);
-        setInitialRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
-        setPage(1);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sortStatus]);
+    const navigate = useNavigate();
 
     const [page2, setPage2] = useState(1);
     const [pageSize2, setPageSize2] = useState(PAGE_SIZES[0]);
-    const [initialRecords2, setInitialRecords2] = useState(sortBy(rowData, 'first_name'));
+    const [initialRecords2, setInitialRecords2] = useState(sortBy(usersdata, 'first_name'));
     const [recordsData2, setRecordsData2] = useState(initialRecords2);
 
     const [search2, setSearch2] = useState('');
@@ -613,9 +593,11 @@ const UserManagement = () => {
         setRecordsData2([...initialRecords2.slice(from, to)]);
     }, [page2, pageSize2, initialRecords2]);
 
+    console.log('the records', initialRecords2);
+
     useEffect(() => {
         setInitialRecords2(() => {
-            return rowData.filter((item: any) => {
+            return usersdata.filter((item: any) => {
                 return (
                     item.first_name.toLowerCase().includes(search2.toLowerCase()) ||
                     item.company.toLowerCase().includes(search2.toLowerCase()) ||
@@ -662,40 +644,6 @@ const UserManagement = () => {
         dispatch(setPageTitle('Export Table'));
     });
 
-    useEffect(() => {
-        setPage(1);
-    }, [pageSize]);
-
-    useEffect(() => {
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize;
-        setRecordsData([...initialRecords.slice(from, to)]);
-    }, [page, pageSize, initialRecords]);
-
-    useEffect(() => {
-        setInitialRecords(() => {
-            return rowData.filter((item: any) => {
-                return (
-                    item.id.toString().includes(search.toLowerCase()) ||
-                    item.firstName.toLowerCase().includes(search.toLowerCase()) ||
-                    item.lastName.toLowerCase().includes(search.toLowerCase()) ||
-                    item.company.toLowerCase().includes(search.toLowerCase()) ||
-                    item.email.toLowerCase().includes(search.toLowerCase()) ||
-                    item.age.toString().toLowerCase().includes(search.toLowerCase()) ||
-                    item.dob.toLowerCase().includes(search.toLowerCase()) ||
-                    item.phone.toLowerCase().includes(search.toLowerCase())
-                );
-            });
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
-
-    useEffect(() => {
-        const data = sortBy(initialRecords, sortStatus.columnAccessor);
-        setInitialRecords(sortStatus.direction === 'desc' ? data.reverse() : data);
-        setPage(1);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sortStatus]);
     const header = ['Id', 'Firstname', 'Lastname', 'Email', 'Start Date', 'Phone No.', 'Age', 'Company'];
 
     const formatDate = (date: any) => {
@@ -841,247 +789,6 @@ const UserManagement = () => {
 
     const [AddUserModal, setAddUserModal] = useState<any>(false);
 
-    const [value, setValue] = useState<any>('list');
-    const [defaultParams] = useState({
-        id: null,
-        name: '',
-        email: '',
-        phone: '',
-        role: '',
-        location: '',
-    });
-
-    const [params, setParams] = useState<any>(JSON.parse(JSON.stringify(defaultParams)));
-
-    const changeValue = (e: any) => {
-        const { value, id } = e.target;
-        setParams({ ...params, [id]: value });
-    };
-
-    const [contactList] = useState<any>([
-        {
-            id: 1,
-            path: 'profile-35.png',
-            name: 'Alan Green',
-            role: 'Web Developer',
-            email: 'alan@mail.com',
-            location: 'Boston, USA',
-            phone: '+1 202 555 0197',
-            posts: 25,
-            followers: '5K',
-            following: 500,
-        },
-        {
-            id: 2,
-            path: 'profile-35.png',
-            name: 'Linda Nelson',
-            role: 'Web Designer',
-            email: 'linda@mail.com',
-            location: 'Sydney, Australia',
-            phone: '+1 202 555 0170',
-            posts: 25,
-            followers: '21.5K',
-            following: 350,
-        },
-        {
-            id: 3,
-            path: 'profile-35.png',
-            name: 'Lila Perry',
-            role: 'UX/UI Designer',
-            email: 'lila@mail.com',
-            location: 'Miami, USA',
-            phone: '+1 202 555 0105',
-            posts: 20,
-            followers: '21.5K',
-            following: 350,
-        },
-        {
-            id: 4,
-            path: 'profile-35.png',
-            name: 'Andy King',
-            role: 'Project Lead',
-            email: 'andy@mail.com',
-            location: 'Tokyo, Japan',
-            phone: '+1 202 555 0194',
-            posts: 25,
-            followers: '21.5K',
-            following: 300,
-        },
-        {
-            id: 5,
-            path: 'profile-35.png',
-            name: 'Jesse Cory',
-            role: 'Web Developer',
-            email: 'jesse@mail.com',
-            location: 'Edinburgh, UK',
-            phone: '+1 202 555 0161',
-            posts: 30,
-            followers: '20K',
-            following: 350,
-        },
-        {
-            id: 6,
-            path: 'profile-35.png',
-            name: 'Xavier',
-            role: 'UX/UI Designer',
-            email: 'xavier@mail.com',
-            location: 'New York, USA',
-            phone: '+1 202 555 0155',
-            posts: 25,
-            followers: '21.5K',
-            following: 350,
-        },
-        {
-            id: 7,
-            path: 'profile-35.png',
-            name: 'Susan',
-            role: 'Project Manager',
-            email: 'susan@mail.com',
-            location: 'Miami, USA',
-            phone: '+1 202 555 0118',
-            posts: 40,
-            followers: '21.5K',
-            following: 350,
-        },
-        {
-            id: 8,
-            path: 'profile-35.png',
-            name: 'Raci Lopez',
-            role: 'Web Developer',
-            email: 'traci@mail.com',
-            location: 'Edinburgh, UK',
-            phone: '+1 202 555 0135',
-            posts: 25,
-            followers: '21.5K',
-            following: 350,
-        },
-        {
-            id: 9,
-            path: 'profile-35.png',
-            name: 'Steven Mendoza',
-            role: 'HR',
-            email: 'sokol@verizon.net',
-            location: 'Monrovia, US',
-            phone: '+1 202 555 0100',
-            posts: 40,
-            followers: '21.8K',
-            following: 300,
-        },
-        {
-            id: 10,
-            path: 'profile-35.png',
-            name: 'James Cantrell',
-            role: 'Web Developer',
-            email: 'sravani@comcast.net',
-            location: 'Michigan, US',
-            phone: '+1 202 555 0134',
-            posts: 100,
-            followers: '28K',
-            following: 520,
-        },
-        {
-            id: 11,
-            path: 'profile-35.png',
-            name: 'Reginald Brown',
-            role: 'Web Designer',
-            email: 'drhyde@gmail.com',
-            location: 'Entrimo, Spain',
-            phone: '+1 202 555 0153',
-            posts: 35,
-            followers: '25K',
-            following: 500,
-        },
-        {
-            id: 12,
-            path: 'profile-35.png',
-            name: 'Stacey Smith',
-            role: 'Chief technology officer',
-            email: 'maikelnai@optonline.net',
-            location: 'Lublin, Poland',
-            phone: '+1 202 555 0115',
-            posts: 21,
-            followers: '5K',
-            following: 200,
-        },
-    ]);
-
-    const [filteredItems, setFilteredItems] = useState<any>(contactList);
-
-    useEffect(() => {
-        setFilteredItems(() => {
-            return contactList.filter((item: any) => {
-                return item.name.toLowerCase().includes(search.toLowerCase());
-            });
-        });
-    }, [search, contactList]);
-
-    const saveUser = () => {
-        if (!params.name) {
-            showMessage('Name is required.', 'error');
-            return true;
-        }
-        if (!params.email) {
-            showMessage('Email is required.', 'error');
-            return true;
-        }
-        if (!params.phone) {
-            showMessage('Phone is required.', 'error');
-            return true;
-        }
-        if (!params.role) {
-            showMessage('Occupation is required.', 'error');
-            return true;
-        }
-
-        if (params.id) {
-            //update user
-            let user: any = filteredItems.find((d: any) => d.id === params.id);
-            user.name = params.name;
-            user.email = params.email;
-            user.phone = params.phone;
-            user.role = params.role;
-            user.location = params.location;
-        } else {
-            //add user
-            let maxUserId = filteredItems.length ? filteredItems.reduce((max: any, character: any) => (character.id > max ? character.id : max), filteredItems[0].id) : 0;
-
-            let user = {
-                id: maxUserId + 1,
-                path: 'profile-35.png',
-                name: params.name,
-                email: params.email,
-                phone: params.phone,
-                role: params.role,
-                location: params.location,
-                posts: 20,
-                followers: '5K',
-                following: 500,
-            };
-            filteredItems.splice(0, 0, user);
-            //   searchContacts();
-        }
-
-        showMessage('User has been saved successfully.');
-        setAddUserModal(false);
-    };
-
-    const editUser = (user: any = null) => {
-        const initialParams = { ...defaultParams };
-        setParams(initialParams);
-
-        if (user) {
-            const userParams = { ...user };
-            setParams(userParams);
-        }
-
-        navigate('/userAccountSetting');
-    };
-
-    const deleteUser = (user: any = null) => {
-        setFilteredItems(filteredItems.filter((d: any) => d.id !== user.id));
-        showMessage('User has been deleted successfully.');
-    };
-
     const showMessage = (msg = '', type = 'success') => {
         const toast: any = Swal.mixin({
             toast: true,
@@ -1096,6 +803,52 @@ const UserManagement = () => {
             padding: '10px 20px',
         });
     };
+
+    const [value, setValue] = useState<any>('list');
+    const [defaultParams, setDefaultParams] = useState({ ...dParams });
+
+    const [params, setParams] = useState<any>(JSON.parse(JSON.stringify(defaultParams)));
+
+    const changeValue = (e: any) => {
+        const { value, id } = e.target;
+        console.log('value', value);
+        setParams({ ...params, [id]: value });
+    };
+
+    const editUser = (user: any = null) => {
+        navigate('/userAccountSetting');
+    };
+
+    const deleteUser = (user: any = null) => {
+        showMessage('User has been deleted successfully.');
+    };
+
+    const [selectedRecords, setSelectedRecords] = useState<any>([]);
+    const [hideCols, setHideCols] = useState<any>(['id', 'azure_id']);
+
+    const showHideColumns = (col: any, value: any) => {
+        if (hideCols.includes(col)) {
+            setHideCols((col: any) => hideCols.filter((d: any) => d !== col));
+        } else {
+            setHideCols([...hideCols, col]);
+        }
+    };
+
+    const cols = [
+        { accessor: 'username', title: 'Username', sortable: true },
+        { accessor: 'email', title: 'Email', sortable: true },
+        { accessor: 'phone', title: 'Phone No.', sortable: true },
+        { accessor: 'address', title: 'Address', sortable: true },
+        {
+            accessor: 'created_at',
+            title: 'Date joined',
+            sortable: true,
+        },
+        { accessor: 'dob', title: 'DOB', sortable: true },
+        { accessor: 'role', title: 'Role', sortable: true },
+        { accessor: 'azure_id', title: 'Azure_id', sortable: true },
+        { accessor: 'id', title: 'User id', sortable: true },
+    ];
 
     return (
         <div>
@@ -1132,10 +885,65 @@ const UserManagement = () => {
                             PRINT
                         </button>
                     </div>
+                    <div className="dropdown">
+                        <Dropdown
+                            placement={`${isRtl ? 'bottom-end' : 'bottom-start'}`}
+                            btnClassName="!flex items-center border font-semibold border-white-light dark:border-[#253b5c] rounded-md px-4 py-2 text-sm dark:bg-[#1b2e4b] dark:text-white-dark"
+                            button={
+                                <>
+                                    <span className="ltr:mr-1 rtl:ml-1">Columns</span>
+                                    <IconCaretDown className="w-5 h-5" />
+                                </>
+                            }
+                        >
+                            <ul className="!min-w-[140px]">
+                                {cols.map((col, i) => {
+                                    return (
+                                        <li
+                                            key={i}
+                                            className="flex flex-col"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                            }}
+                                        >
+                                            <div className="flex items-center px-4 py-1">
+                                                <label className="cursor-pointer mb-0">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!hideCols.includes(col.accessor)}
+                                                        className="form-checkbox"
+                                                        defaultValue={col.accessor}
+                                                        onChange={(event: any) => {
+                                                            setHideCols(event.target.value);
+                                                            showHideColumns(col.accessor, event.target.checked);
+                                                        }}
+                                                    />
+                                                    <span className="ltr:ml-2 rtl:mr-2">{col.title}</span>
+                                                </label>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </Dropdown>
+                    </div>
+
+                    <div>
+                        <button type="button" className="btn btn-dark w-8 h-8 p-0 rounded-full" onClick={() => dispatch(GetUserData() as any)}>
+                            <IconRefresh className="w-5 h-5" />
+                        </button>
+                    </div>
+
                     <div className="ltr:ml-auto rtl:mr-auto">
                         <input type="text" className="form-input w-auto" placeholder="Search..." value={search2} onChange={(e) => setSearch2(e.target.value)} />
                     </div>
-                    <button type="button" className="btn btn-primary" onClick={() => editUser()}>
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => {
+                            setAddUserModal(true);
+                        }}
+                    >
                         <IconUserPlus className="ltr:mr-2 rtl:ml-2" />
                         Add User
                     </button>
@@ -1156,16 +964,16 @@ const UserManagement = () => {
                                     </div>
                                 ),
                             },
-                            { accessor: 'username', title: 'Username', sortable: true },
-                            { accessor: 'email', title: 'Email', sortable: true },
-                            { accessor: 'phone_number', title: 'Phone No.', sortable: true },
-                            { accessor: 'address', title: 'Address', sortable: true },
+                            { accessor: 'username', title: 'Username', sortable: true, hidden: hideCols.includes('username') },
+                            { accessor: 'email', title: 'Email', sortable: true, hidden: hideCols.includes('email') },
+                            { accessor: 'phone', title: 'Phone No.', sortable: true, hidden: hideCols.includes('phone') },
+                            { accessor: 'address', title: 'Address', sortable: true, hidden: hideCols.includes('address') },
                             {
                                 accessor: 'dob',
                                 title: 'DOB',
                                 sortable: true,
+                                hidden: hideCols.includes('dob'),
                                 render: ({ dob }) => {
-                                    // Assert the type of dob
                                     const validDob = dob as string | number | Date;
 
                                     return <div>{formatDate(validDob)}</div>;
@@ -1175,26 +983,33 @@ const UserManagement = () => {
                                 accessor: 'is_active',
                                 title: 'Active',
                                 sortable: true,
+                                hidden: hideCols.includes('Active'),
                                 render: ({ is_active }) => <span className={`badge bg-${getActivityColor(is_active)}`}>{is_active ? 'Active' : 'Inactive'}</span>,
                             },
                             {
                                 accessor: 'created_at',
                                 title: 'Date joined',
                                 sortable: true,
+                                hidden: hideCols.includes('created_at'),
+                                render: ({ created_at }) => {
+                                    const validDob = created_at as string | number | Date;
+
+                                    return <div>{formatDate(created_at)}</div>;
+                                },
                             },
-                            { accessor: 'role', title: 'Role', sortable: true },
-                            {
-                                accessor: 'password',
-                                title: 'Password',
-                                sortable: true,
-                                render: () => <span className={`badge bg-${randomColor()} `}>{randomStatus()}</span>,
-                            },
+                            { accessor: 'role', title: 'Role', sortable: true, hidden: hideCols.includes('role') },
+                            { accessor: 'azure_id', title: 'Azure_id', sortable: true, hidden: hideCols.includes('azure_id') },
+                            { accessor: 'id', title: 'User id', sortable: true, hidden: hideCols.includes('id') },
+
                             {
                                 accessor: 'action',
                                 title: 'Action',
                                 titleClassName: '!text-center',
                                 render: () => (
                                     <div className="flex items-center w-max mx-auto gap-2">
+                                        <NavLink to="/profile" className="flex hover:text-primary">
+                                            <IconEye />
+                                        </NavLink>
                                         <Tippy content="Edit">
                                             <button type="button" onClick={() => editUser()}>
                                                 <IconPencil />
@@ -1217,6 +1032,8 @@ const UserManagement = () => {
                         onRecordsPerPageChange={setPageSize2}
                         sortStatus={sortStatus2}
                         onSortStatusChange={setSortStatus2}
+                        selectedRecords={selectedRecords}
+                        onSelectedRecordsChange={setSelectedRecords}
                         minHeight={200}
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
@@ -1252,20 +1069,27 @@ const UserManagement = () => {
                                     <div className="p-5">
                                         <form>
                                             <div className="mb-5">
-                                                <label htmlFor="name">First Name</label>
-                                                <input id="name" type="text" placeholder="Enter First Name" className="form-input" value={params.name} onChange={(e) => changeValue(e)} />
+                                                <label htmlFor="first_name">First Name</label>
+                                                <input id="first_name" type="text" placeholder="Enter First Name" className="form-input" value={params.first_name} onChange={(e) => changeValue(e)} />
                                             </div>
                                             <div className="mb-5">
-                                                <label htmlFor="last-name">Last Name</label>
-                                                <input id="name" type="text" placeholder="Enter Last Name" className="form-input" value={params.name} onChange={(e) => changeValue(e)} />
+                                                <label htmlFor="last_name">Last Name</label>
+                                                <input id="last_name" type="text" placeholder="Enter Last Name" className="form-input" value={params.last_name} onChange={(e) => changeValue(e)} />
                                             </div>
                                             <div className="mb-5">
-                                                <label htmlFor="other names">Other Names</label>
-                                                <input id="name" type="text" placeholder="Enter Other Names" className="form-input" value={params.name} onChange={(e) => changeValue(e)} />
+                                                <label htmlFor="other_names">Other Names</label>
+                                                <input
+                                                    id="other_names"
+                                                    type="text"
+                                                    placeholder="Enter Other Names"
+                                                    className="form-input"
+                                                    value={params.other_names}
+                                                    onChange={(e) => changeValue(e)}
+                                                />
                                             </div>
                                             <div className="mb-5">
                                                 <label htmlFor="username">Username</label>
-                                                <input id="name" type="text" placeholder="Enter Username" className="form-input" value={params.name} onChange={(e) => changeValue(e)} />
+                                                <input id="username" type="text" placeholder="Enter Username" className="form-input" value={params.username} onChange={(e) => changeValue(e)} />
                                             </div>
 
                                             <div className="mb-5">
@@ -1275,19 +1099,21 @@ const UserManagement = () => {
 
                                             <div className="mb-5">
                                                 <label htmlFor="role">Role</label>
-                                                <Select defaultValue={roles[2]} options={roles} isSearchable={false} />
+                                                <Select defaultValue={roles[2]} id="role"
+                                                 options={roles} 
+                                                 isSearchable={false} 
+                                                 onChange={(e) => setParams({ ...params, role: e?.value })} />
                                             </div>
-
                                             <div className="mb-5">
-                                                <label htmlFor="number">Phone Number</label>
+                                                <label htmlFor="phone">Phone Number</label>
                                                 <input id="phone" type="text" placeholder="Enter Phone Number" className="form-input" value={params.phone} onChange={(e) => changeValue(e)} />
                                             </div>
                                             <div className="mb-5">
-                                                <label htmlFor="occupation">Occupation</label>
-                                                <input id="role" type="text" placeholder="Enter Occupation" className="form-input" value={params.role} onChange={(e) => changeValue(e)} />
+                                                <label htmlFor="role">Occupation</label>
+                                                <input id="occupation" type="text" placeholder="Enter Occupation" className="form-input" value={params.occupation} onChange={(e) => changeValue(e)} />
                                             </div>
                                             <div className="mb-5">
-                                                <label htmlFor="address">Address</label>
+                                                <label htmlFor="location">Address</label>
                                                 <textarea
                                                     id="location"
                                                     rows={3}
@@ -1301,7 +1127,7 @@ const UserManagement = () => {
                                                 <button type="button" className="btn btn-outline-danger" onClick={() => setAddUserModal(false)}>
                                                     Cancel
                                                 </button>
-                                                <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={saveUser}>
+                                                <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={() => useSaveNewUser(showMessage, setAddUserModal, params, setDefaultParams, dispatch)}>
                                                     {params.id ? 'Update' : 'Add'}
                                                 </button>
                                             </div>

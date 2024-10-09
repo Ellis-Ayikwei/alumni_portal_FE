@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import authAxiosInstance from '../helper/authAxiosInstance';
+import axiosInstance from '../helper/axiosInstance';
 
 // Define the initial state type
 interface LoginState {
@@ -25,15 +25,14 @@ export const GetUserData = createAsyncThunk('users/getusers', async () => {
 const usersSlice = createSlice({
     name: 'usersdata',
     initialState,
-    reducers: {
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder
             .addCase(GetUserData.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(GetUserData.fulfilled, (state, action.payload) => {
-                state.userData = action.payload
+            .addCase(GetUserData.fulfilled, (state, action) => {
+                state.usersData = action.payload;
                 state.loading = false;
             })
             .addCase(GetUserData.rejected, (state, action) => {
@@ -42,7 +41,6 @@ const usersSlice = createSlice({
             });
     },
 });
-
 
 // Export the reducer to be used in the store
 export default usersSlice.reducer;
