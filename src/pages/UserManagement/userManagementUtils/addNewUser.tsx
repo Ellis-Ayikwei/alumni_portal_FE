@@ -157,10 +157,12 @@ const SaveNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
 
         try {
             const response = await axiosInstance.post('/users', payload);
-            showMessage(`User created successfully.`, 'success');
-            setParams(defaultParams);
-            dispatch(GetUserData() as any);
-            setAddUserModal(false);
+            if (response.status === 200) {
+                showMessage(`User created successfully.`, 'success');
+                setParams(defaultParams);
+                dispatch(GetUserData() as any);
+                setAddUserModal(false);
+            }
         } catch (error: any) {
             if (error.response && error.response.data) {
                 const parser = new DOMParser();

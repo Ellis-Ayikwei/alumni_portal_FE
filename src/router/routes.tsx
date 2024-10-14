@@ -1,10 +1,11 @@
 import { lazy } from 'react';
 import AlumniGroupManagementpage from '../pages/AlumniGroupManagement/AlumniGroupManagemnetPage';
 import ContractManagementpage from '../pages/ContractsManagement/Contractsmanagementpage';
+import AdminDashboard from '../pages/Dasboard/AdminDashboard';
+import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
 import AccountSetting from '../pages/UserManagement/AccountSetting';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
-import AdminDashboard from '../pages/Dasboard/AdminDashBoard';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -53,7 +54,10 @@ const routes = [
         path: '/admindashboard',
         element: <AdminDashboard />,
     },
-   
+    {
+        path: '/member/dashboard',
+        element: <MemberDashboard />,
+    },
 
     // {
     //     path: '/auth/boxed-lockscreen',

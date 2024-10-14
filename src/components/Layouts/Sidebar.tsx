@@ -8,8 +8,11 @@ import { IRootState } from '../../store';
 import { toggleSidebar } from '../../store/themeConfigSlice';
 import IconCaretDown from '../Icon/IconCaretDown';
 import IconCaretsDown from '../Icon/IconCaretsDown';
+import IconCashBanknotes from '../Icon/IconCashBanknotes';
 import IconChatNotification from '../Icon/IconChatNotification';
+import IconHeart from '../Icon/IconHeart';
 import IconHelpCircle from '../Icon/IconHelpCircle';
+import IconHome from '../Icon/IconHome';
 import IconMinus from '../Icon/IconMinus';
 import IconOpenBook from '../Icon/IconOpenBook';
 import IconUsersGroup from '../Icon/IconUsersGroup';
@@ -186,11 +189,57 @@ const Sidebar = () => {
                             </li>
                             <h2 className="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
                                 <IconMinus className="w-4 h-5 flex-none hidden" />
+                                <span>{t('Personal')}</span>
+                            </h2>
+
+                            <li className="menu nav-item">
+                                <NavLink to="/member/dashboard" className="nav-link group">
+                                    <div className="flex items-center">
+                                        <IconHome className="group-hover:!text-primary shrink-0" />
+                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Home</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+                            <li className="menu nav-item">
+                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
+                                    <div className="flex items-center">
+                                        <IconUsersGroup className="group-hover:!text-primary shrink-0" />
+                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Groups</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+                            <li className="menu nav-item">
+                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
+                                    <div className="flex items-center">
+                                        <IconCashBanknotes className="group-hover:!text-primary shrink-0" />
+                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Payments</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+                            <li className="menu nav-item">
+                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
+                                    <div className="flex items-center">
+                                        <IconOpenBook className="group-hover:!text-primary shrink-0" />
+                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Contracts</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+                            <li className="menu nav-item">
+                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
+                                    <div className="flex items-center">
+                                        <IconHeart className="group-hover:!text-primary shrink-0" />
+                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Beneficiaries</span>
+                                    </div>
+                                </NavLink>
+                            </li>
+
+                            <h2 className="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
+                                <IconMinus className="w-4 h-5 flex-none hidden" />
                                 <span>{t('supports')}</span>
                             </h2>
 
                             <li className="menu nav-item">
-                                <NavLink to="https://vristo.sbthemes.com" target="_blank" className="nav-link group">
+                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
                                     <div className="flex items-center">
                                         <IconMenuDocumentation className="group-hover:!text-primary shrink-0" />
                                         <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{t('documentation')}</span>
