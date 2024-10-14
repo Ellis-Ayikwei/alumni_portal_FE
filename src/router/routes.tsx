@@ -3,9 +3,12 @@ import AlumniGroupManagementpage from '../pages/AlumniGroupManagement/AlumniGrou
 import ContractManagementpage from '../pages/ContractsManagement/Contractsmanagementpage';
 import AdminDashboard from '../pages/Dasboard/AdminDashboard';
 import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
+import MyGroups from '../pages/MemberOnly/MyAlumniGroups';
 import AccountSetting from '../pages/UserManagement/AccountSetting';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
+import MemberGroupPreview from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupPreview ';
+import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/MembergroupEdit';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -57,6 +60,18 @@ const routes = [
     {
         path: '/member/dashboard',
         element: <MemberDashboard />,
+    },
+    {
+        path: '/member/groups',
+        element: <MyGroups />,
+    },
+    {
+        path: '/member/groups/preview',
+        element: <MemberGroupPreview />,
+    },
+    {
+        path: '/member/groups/edit',
+        element: <MemberGroupEdit />,
     },
 
     // {
