@@ -1,9 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState } from 'react';
-import { Icon } from 'react-icons-kit';
 import { eye } from 'react-icons-kit/feather/eye';
 import { eyeOff } from 'react-icons-kit/feather/eyeOff';
-import PasswordChecklist from 'react-password-checklist';
 import { useDispatch } from 'react-redux';
 import Select from 'react-select';
 import 'tippy.js/dist/tippy.css';
@@ -19,6 +17,7 @@ export const dParams = {
     phone: '',
     role: 'REGULAR',
     location: '',
+    relationshipTypes: '',
     username: '',
     password: '',
     password1: '',
@@ -66,14 +65,16 @@ export const dParams = {
     medical_history_doctor_address: '',
 };
 
-const roles = [
-    { value: 'SUPER_ADMIN', label: 'Super Admin', isDisabled: 'option--is-disabled' },
-    { value: 'ADMIN', label: 'Admin' },
-    { value: 'REGULAR', label: 'Regular' },
-    { value: 'UNDERWRITER', label: 'Underwriter' },
-    { value: 'PREMIUM_ADMIN', label: 'Premium Admin' },
-    { value: 'SALES', label: 'Sales' },
-    { value: 'MEMBER', label: 'Member' },
+const relationshipTypes = [
+    { value: 'BROTHER', label: 'Brother' },
+    { value: 'SISTER', label: 'Sister' },
+    { value: 'MOTHER', label: 'Mother' },
+    { value: 'FATHER', label: 'Father' },
+    { value: 'SPOUSE', label: 'Spouse' },
+    { value: 'SON', label: 'Son' },
+    { value: 'DAUGHTER', label: 'Daughter' },
+    { value: 'FRIEND', label: 'Friend' },
+    { value: 'OTHER', label: 'Other' },
 ];
 
 interface SaveNewUserProps {
@@ -81,7 +82,7 @@ interface SaveNewUserProps {
     setAddUserModal: (value: boolean) => void;
 }
 
-const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
+const AddNewBeneficiary = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const dispatch = useDispatch();
@@ -265,65 +266,18 @@ const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
                                         <input id="password1" type="password" placeholder="Enter Email" className="form-input" value={params.email} onChange={(e) => changeValue(e)} />
                                     </div> */}
 
-                                        <div className="mb-4">
-                                            <label htmlFor="password1">
-                                                Password <span className="text-red-600">*</span>
-                                            </label>
-                                            <div className="flex">
-                                                <input
-                                                    type={type}
-                                                    name="password1"
-                                                    id="password1"
-                                                    placeholder="Password"
-                                                    className="form-input"
-                                                    value={params.password1}
-                                                    onChange={(e) => changeValue(e)}
-                                                    autoComplete="current-password"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="mb-7">
-                                            <label htmlFor="password2">
-                                                Confirm password <span className="text-red-600">*</span>
-                                            </label>
-                                            <div className="">
-                                                <input
-                                                    type={type}
-                                                    name="password2"
-                                                    id="password2"
-                                                    placeholder="Re-Type Password"
-                                                    className="form-input w-full"
-                                                    value={params.password2}
-                                                    onChange={(e) => changeValue(e)}
-                                                    autoComplete="current-password"
-                                                    required
-                                                />
-                                                <div className="text-right mt-2">
-                                                    {' '}
-                                                    <span className="cursor-pointer text-gray-500 flex items-center justify-end" onClick={handleToggle}>
-                                                        show
-                                                        <Icon className="ml-1" icon={icon} size={16} />
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {params.password1 && (
-                                                <PasswordChecklist
-                                                    rules={['minLength', 'specialChar', 'number', 'capital', 'match']}
-                                                    minLength={8}
-                                                    value={params.password1}
-                                                    valueAgain={params.password2}
-                                                    onChange={() => setParams({ ...params, password: params.password1 })}
-                                                />
-                                            )}
-                                        </div>
-
                                         <div className="mb-5">
-                                            <label htmlFor="role">
-                                                Role <span className="text-red-600">*</span>
+                                            <label htmlFor="Relationship-Type">
+                                                Relationship Type <span className="text-red-600">*</span>
                                             </label>
-                                            <Select defaultValue={roles[2]} id="role" options={roles} isSearchable={false} onChange={(e) => setParams({ ...params, role: e?.value })} required />
+                                            <Select
+                                                defaultValue={relationshipTypes[2]}
+                                                id="role"
+                                                options={relationshipTypes}
+                                                isSearchable={false}
+                                                onChange={(e) => setParams({ ...params, relationshipType: e?.value })}
+                                                required
+                                            />
                                         </div>
                                         <div className="mb-5">
                                             <label htmlFor="phone">
@@ -378,4 +332,4 @@ const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
     );
 };
 
-export default AddNewUser;
+export default AddNewBeneficiary;

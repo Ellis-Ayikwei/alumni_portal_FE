@@ -1,10 +1,22 @@
+import { faHeartCirclePlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
+import CopyToClipboard from 'react-copy-to-clipboard';
 import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { RWebShare } from 'react-web-share';
 import IconArrowBackward from '../../../components/Icon/IconArrowBackward';
+import IconPencil from '../../../components/Icon/IconPencil';
+import IconSave from '../../../components/Icon/IconSave';
+import IconSend from '../../../components/Icon/IconSend';
+import IconShare from '../../../components/Icon/IconShare';
+import IconTrash from '../../../components/Icon/IconTrash';
+import IconUserPlus from '../../../components/Icon/IconUserPlus';
 import IconX from '../../../components/Icon/IconX';
 import { setPageTitle } from '../../../store/themeConfigSlice';
-import IconSave from '../../../components/Icon/IconSave';
+import AddNewBeneficiary from './AddNewBeneficiary';
+import AddNewGroupMember from './AddNewGroupMember';
+import showMessage from './showMessage';
 
 const MemberGroupEdit = () => {
     const dispatch = useDispatch();
@@ -91,23 +103,81 @@ const MemberGroupEdit = () => {
         setItems([...items]);
     };
 
+    const [imageSrc, setImageSrc] = useState('/assets/images/logo.svg');
+
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target && e.target.result) {
+                    setImageSrc(e.target.result as string);
+                }
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    };
+
+    const [AddUserModal, setAddUserModal] = useState(false);
+    const [AddNewBeneficiaryModal, setAddNewBeneficiaryModal] = useState(false);
+    const [ActivateSave, setActivateSave] = useState(false);
+
     return (
         <div className="flex xl:flex-col flex-col gap-2.5">
-            <div className="flex items-center lg:justify-between  flex-wrap gap-4 mb-6">
+            <div className="flex items-center lg:justify-between flex-wrap gap-4 mb-6">
                 <Link to="/apps/invoice/edit" className="btn btn-danger gap-2">
                     <IconArrowBackward />
                     Back
                 </Link>
-                <Link to="/member/groups/edit" className="btn btn-success gap-2">
-                    <IconSave />
-                    Edit
-                </Link>
+                <div className="flex !gap-2">
+                    <button
+                        onClick={() => {
+                            setAddUserModal(true);
+                        }}
+                        className="btn btn-primary gap-2 bg-blue-500 text-white"
+                    >
+                        <IconUserPlus />
+                        Add Member
+                    </button>
+
+                    <div>
+                        <RWebShare
+                            data={{
+                                text: 'Like humans, flamingos make friends for life',
+                                url: 'https://on.natgeo.com/2zHaNup',
+                                title: 'Flamingos',
+                            }}
+                            onClick={() => console.log('invite button clicked')}
+                        >
+                            <button className="btn btn-warning gap-2 bg-yellow-500 text-white">
+                                <IconShare />
+                                Invite A member
+                            </button>
+                        </RWebShare>
+                    </div>
+                    <button
+                        className="btn btn-info gap-2 bg-teal-500 text-white"
+                        onClick={() => {
+                            setAddNewBeneficiaryModal(true);
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faHeartCirclePlus} />
+                        Add Beneficiary
+                    </button>
+                    <button className={`btn ${ActivateSave ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-300'} flex items-center gap-2 p-2 rounded`}>
+                        <IconSave />
+                        Save
+                    </button>
+                </div>
             </div>
             <div className="panel px-0 flex-1 py-6 ltr:xl:mr-6 rtl:xl:ml-6">
                 <div className="flex justify-between flex-wrap px-4">
                     <div className="mb-6 lg:w-1/2 w-full">
                         <div className="flex items-center text-black dark:text-white shrink-0">
-                            <img src="/assets/images/logo.svg" alt="img" className="w-14" />
+                            <img src={imageSrc} alt="img" className="w-14" />
+                            <label htmlFor="imageUpload" className="ml-2 cursor-pointer">
+                                <IconPencil className="-mt-5 -ml-5  w-6 h-6 " />
+                            </label>
+                            <input type="file" id="imageUpload" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
                         </div>
                         <div className="space-y-1 mt-6 text-gray-500 dark:text-gray-400">
                             <div>13 Tetrick Road, Cypress Gardens, Florida, 33884, US</div>
@@ -117,374 +187,171 @@ const MemberGroupEdit = () => {
                     </div>
                     <div className="lg:w-1/2 w-full lg:max-w-fit">
                         <div className="flex items-center">
-                            <label htmlFor="number" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
-                                Invoice Number
+                            <label htmlFor="Alumni Group Name" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
+                                Alumni Group Name
                             </label>
-                            <input id="number" type="text" name="inv-num" className="form-input lg:w-[250px] w-2/3" placeholder="#8801" defaultValue={params.invoiceNo} />
+                            <input id="number" type="text" name="alumni-group-name" className="form-input lg:w-[250px] w-2/3" placeholder="#8801" defaultValue={'Presec Year 2015'} />
                         </div>
-                        <div className="flex items-center mt-4">
-                            <label htmlFor="invoiceLabel" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
-                                Invoice Label
+                        <div className="flex items-center mt-2">
+                            <label htmlFor="Alumni Group Name" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
+                                Group Description
                             </label>
-                            <input id="invoiceLabel" type="text" name="inv-label" className="form-input lg:w-[250px] w-2/3" placeholder="Enter Invoice Label" defaultValue={params.title} />
-                        </div>
-                        <div className="flex items-center mt-4">
-                            <label htmlFor="startDate" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
-                                Invoice Date
-                            </label>
-                            <input id="startDate" type="date" name="inv-date" className="form-input lg:w-[250px] w-2/3" defaultValue={params.invoiceDate} />
-                        </div>
-                        <div className="flex items-center mt-4">
-                            <label htmlFor="dueDate" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
-                                Due Date
-                            </label>
-                            <input id="dueDate" type="date" name="due-date" className="form-input lg:w-[250px] w-2/3" defaultValue={params.dueDate} />
+                            {/* <input id="number" type="textarea" name="alumni-group-description" className="form-input lg:w-[250px] w-2/3" placeholder="#8801" defaultValue={'group descrition'} /> */}
+                            <textarea id="notes" name="alumni-group-description" className="form-textarea min-h-[100px]" placeholder="alumni-group-description" defaultValue={params.notes}></textarea>
                         </div>
                     </div>
                 </div>
                 <hr className="border-white-light dark:border-[#1b2e4b] my-6" />
-                <div className="mt-8 px-4">
-                    <div className="flex justify-between lg:flex-row flex-col">
-                        <div className="lg:w-1/2 w-full ltr:lg:mr-6 rtl:lg:ml-6 mb-6">
-                            <div className="text-lg">Bill To :-</div>
-                            <div className="mt-4 flex items-center">
-                                <label htmlFor="reciever-name" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    Name
-                                </label>
-                                <input id="reciever-name" type="text" name="reciever-name" className="form-input flex-1" defaultValue={params.to.name} placeholder="Enter Name" />
+                <div className="flex justify-between lg:flex-row flex-col gap-6 flex-wrap p-5">
+                    <div className="flex-1">
+                        <div className="space-y-1 text-white-dark">
+                            <div>President:</div>
+                            <div className="text-black dark:text-white font-semibold">John Doe</div>
+                            <div>405 Mulberry Rd. Mc Grady, NC, 28649</div>
+                            <div>Johndoe@gmail.com</div>
+                            <div>(128) 666 070</div>
+                        </div>
+                    </div>
+                    <div className="flex justify-between sm:flex-row flex-col gap-6 lg:w-2/3">
+                        <div className="xl:1/3 lg:w-2/5 sm:w-1/2">
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Insurrance Package :</div>
+                                <div>Alumni AlumniGroup1</div>
                             </div>
-                            <div className="mt-4 flex items-center">
-                                <label htmlFor="reciever-email" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    Email
-                                </label>
-                                <input id="reciever-email" type="email" name="reciever-email" className="form-input flex-1" defaultValue={params.to.email} placeholder="Enter Email" />
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Issue Date :</div>
+                                <div>13 Sep 2022</div>
                             </div>
-                            <div className="mt-4 flex items-center">
-                                <label htmlFor="reciever-address" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    Address
-                                </label>
-                                <input id="reciever-address" type="text" name="reciever-address" className="form-input flex-1" defaultValue={params.to.address} placeholder="Enter Address" />
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Start Date</div>
+                                <div>13 Sep 2022</div>
                             </div>
-                            <div className="mt-4 flex items-center">
-                                <label htmlFor="reciever-number" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    Phone Number
-                                </label>
-                                <input id="reciever-number" type="text" name="reciever-number" className="form-input flex-1" defaultValue={params.to.phone} placeholder="Enter Phone number" />
+                            <div className="flex items-center w-full justify-between">
+                                <div className="text-white-dark">End Date :</div>
+                                <div>13 Sep 2022</div>
                             </div>
                         </div>
-                        <div className="lg:w-1/2 w-full">
-                            <div className="text-lg">Payment Details:</div>
-                            <div className="flex items-center mt-4">
-                                <label htmlFor="acno" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    Account Number
-                                </label>
-                                <input id="acno" type="text" name="acno" className="form-input flex-1" defaultValue={params.bankInfo.no} placeholder="Enter Account Number" />
+                        <div className="xl:1/3 lg:w-2/5 sm:w-1/2">
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Contract Name:</div>
+                                <div className="whitespace-nowrap">Contract for devs</div>
                             </div>
-                            <div className="flex items-center mt-4">
-                                <label htmlFor="bank-name" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    Bank Name
-                                </label>
-                                <input id="bank-name" type="text" name="bank-name" className="form-input flex-1" defaultValue={params.bankInfo.name} placeholder="Enter Bank Name" />
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Contract Id:</div>
+                                <div>1234567890</div>
                             </div>
-                            <div className="flex items-center mt-4">
-                                <label htmlFor="swift-code" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    SWIFT Number
-                                </label>
-                                <input id="swift-code" type="text" name="swift-code" className="form-input flex-1" defaultValue={params.bankInfo.swiftCode} placeholder="Enter SWIFT Number" />
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Contract state:</div>
+                                <div>Signed</div>
                             </div>
-                            <div className="flex items-center mt-4">
-                                <label htmlFor="iban-code" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    IBAN Number
-                                </label>
-                                <input id="iban-code" type="text" name="iban-code" className="form-input flex-1" defaultValue={params.bankInfo.ibanNo} placeholder="Enter IBAN Number" />
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Group Activity</div>
+                                <div>Not Locked</div>
                             </div>
-                            <div className="flex items-center mt-4">
-                                <label htmlFor="country" className="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">
-                                    Country
-                                </label>
-                                <select id="country" name="country" className="form-select flex-1" defaultValue={params.bankInfo.country}>
-                                    <option value="">Choose Country</option>
-                                    <option value="United States">United States</option>
-                                    <option value="United Kingdom">United Kingdom</option>
-                                    <option value="Canada">Canada</option>
-                                    <option value="Australia">Australia</option>
-                                    <option value="Germany">Germany</option>
-                                    <option value="Sweden">Sweden</option>
-                                    <option value="Denmark">Denmark</option>
-                                    <option value="Norway">Norway</option>
-                                    <option value="New-Zealand">New Zealand</option>
-                                    <option value="Afghanistan">Afghanistan</option>
-                                    <option value="Albania">Albania</option>
-                                    <option value="Algeria">Algeria</option>
-                                    <option value="American-Samoa">Andorra</option>
-                                    <option value="Angola">Angola</option>
-                                    <option value="Antigua Barbuda">Antigua &amp; Barbuda</option>
-                                    <option value="Argentina">Argentina</option>
-                                    <option value="Armenia">Armenia</option>
-                                    <option value="Aruba">Aruba</option>
-                                    <option value="Austria">Austria</option>
-                                    <option value="Azerbaijan">Azerbaijan</option>
-                                    <option value="Bahamas">Bahamas</option>
-                                    <option value="Bahrain">Bahrain</option>
-                                    <option value="Bangladesh">Bangladesh</option>
-                                    <option value="Barbados">Barbados</option>
-                                    <option value="Belarus">Belarus</option>
-                                    <option value="Belgium">Belgium</option>
-                                    <option value="Belize">Belize</option>
-                                    <option value="Benin">Benin</option>
-                                    <option value="Bermuda">Bermuda</option>
-                                    <option value="Bhutan">Bhutan</option>
-                                    <option value="Bolivia">Bolivia</option>
-                                    <option value="Bosnia">Bosnia &amp; Herzegovina</option>
-                                    <option value="Botswana">Botswana</option>
-                                    <option value="Brazil">Brazil</option>
-                                    <option value="British">British Virgin Islands</option>
-                                    <option value="Brunei">Brunei</option>
-                                    <option value="Bulgaria">Bulgaria</option>
-                                    <option value="Burkina">Burkina Faso</option>
-                                    <option value="Burundi">Burundi</option>
-                                    <option value="Cambodia">Cambodia</option>
-                                    <option value="Cameroon">Cameroon</option>
-                                    <option value="Cape">Cape Verde</option>
-                                    <option value="Cayman">Cayman Islands</option>
-                                    <option value="Central-African">Central African Republic</option>
-                                    <option value="Chad">Chad</option>
-                                    <option value="Chile">Chile</option>
-                                    <option value="China">China</option>
-                                    <option value="Colombia">Colombia</option>
-                                    <option value="Comoros">Comoros</option>
-                                    <option value="Costa-Rica">Costa Rica</option>
-                                    <option value="Croatia">Croatia</option>
-                                    <option value="Cuba">Cuba</option>
-                                    <option value="Cyprus">Cyprus</option>
-                                    <option value="Czechia">Czechia</option>
-                                    <option value="Côte">Côte d'Ivoire</option>
-                                    <option value="Djibouti">Djibouti</option>
-                                    <option value="Dominica">Dominica</option>
-                                    <option value="Dominican">Dominican Republic</option>
-                                    <option value="Ecuador">Ecuador</option>
-                                    <option value="Egypt">Egypt</option>
-                                    <option value="El-Salvador">El Salvador</option>
-                                    <option value="Equatorial-Guinea">Equatorial Guinea</option>
-                                    <option value="Eritrea">Eritrea</option>
-                                    <option value="Estonia">Estonia</option>
-                                    <option value="Ethiopia">Ethiopia</option>
-                                    <option value="Fiji">Fiji</option>
-                                    <option value="Finland">Finland</option>
-                                    <option value="France">France</option>
-                                    <option value="Gabon">Gabon</option>
-                                    <option value="Georgia">Georgia</option>
-                                    <option value="Ghana">Ghana</option>
-                                    <option value="Greece">Greece</option>
-                                    <option value="Grenada">Grenada</option>
-                                    <option value="Guatemala">Guatemala</option>
-                                    <option value="Guernsey">Guernsey</option>
-                                    <option value="Guinea">Guinea</option>
-                                    <option value="Guinea-Bissau">Guinea-Bissau</option>
-                                    <option value="Guyana">Guyana</option>
-                                    <option value="Haiti">Haiti</option>
-                                    <option value="Honduras">Honduras</option>
-                                    <option value="Hong-Kong">Hong Kong SAR China</option>
-                                    <option value="Hungary">Hungary</option>
-                                    <option value="Iceland">Iceland</option>
-                                    <option value="India">India</option>
-                                    <option value="Indonesia">Indonesia</option>
-                                    <option value="Iran">Iran</option>
-                                    <option value="Iraq">Iraq</option>
-                                    <option value="Ireland">Ireland</option>
-                                    <option value="Israel">Israel</option>
-                                    <option value="Italy">Italy</option>
-                                    <option value="Jamaica">Jamaica</option>
-                                    <option value="Japan">Japan</option>
-                                    <option value="Jordan">Jordan</option>
-                                    <option value="Kazakhstan">Kazakhstan</option>
-                                    <option value="Kenya">Kenya</option>
-                                    <option value="Kuwait">Kuwait</option>
-                                    <option value="Kyrgyzstan">Kyrgyzstan</option>
-                                    <option value="Laos">Laos</option>
-                                    <option value="Latvia">Latvia</option>
-                                    <option value="Lebanon">Lebanon</option>
-                                    <option value="Lesotho">Lesotho</option>
-                                    <option value="Liberia">Liberia</option>
-                                    <option value="Libya">Libya</option>
-                                    <option value="Liechtenstein">Liechtenstein</option>
-                                    <option value="Lithuania">Lithuania</option>
-                                    <option value="Luxembourg">Luxembourg</option>
-                                    <option value="Macedonia">Macedonia</option>
-                                    <option value="Madagascar">Madagascar</option>
-                                    <option value="Malawi">Malawi</option>
-                                    <option value="Malaysia">Malaysia</option>
-                                    <option value="Maldives">Maldives</option>
-                                    <option value="Mali">Mali</option>
-                                    <option value="Malta">Malta</option>
-                                    <option value="Mauritania">Mauritania</option>
-                                    <option value="Mauritius">Mauritius</option>
-                                    <option value="Mexico">Mexico</option>
-                                    <option value="Moldova">Moldova</option>
-                                    <option value="Monaco">Monaco</option>
-                                    <option value="Mongolia">Mongolia</option>
-                                    <option value="Montenegro">Montenegro</option>
-                                    <option value="Morocco">Morocco</option>
-                                    <option value="Mozambique">Mozambique</option>
-                                    <option value="Myanmar">Myanmar (Burma)</option>
-                                    <option value="Namibia">Namibia</option>
-                                    <option value="Nepal">Nepal</option>
-                                    <option value="Netherlands">Netherlands</option>
-                                    <option value="Nicaragua">Nicaragua</option>
-                                    <option value="Niger">Niger</option>
-                                    <option value="Nigeria">Nigeria</option>
-                                    <option value="North-Korea">North Korea</option>
-                                    <option value="Oman">Oman</option>
-                                    <option value="Pakistan">Pakistan</option>
-                                    <option value="Palau">Palau</option>
-                                    <option value="Palestinian">Palestinian Territories</option>
-                                    <option value="Panama">Panama</option>
-                                    <option value="Papua">Papua New Guinea</option>
-                                    <option value="Paraguay">Paraguay</option>
-                                    <option value="Peru">Peru</option>
-                                    <option value="Philippines">Philippines</option>
-                                    <option value="Poland">Poland</option>
-                                    <option value="Portugal">Portugal</option>
-                                    <option value="Puerto">Puerto Rico</option>
-                                    <option value="Qatar">Qatar</option>
-                                    <option value="Romania">Romania</option>
-                                    <option value="Russia">Russia</option>
-                                    <option value="Rwanda">Rwanda</option>
-                                    <option value="Réunion">Réunion</option>
-                                    <option value="Samoa">Samoa</option>
-                                    <option value="San-Marino">San Marino</option>
-                                    <option value="Saudi-Arabia">Saudi Arabia</option>
-                                    <option value="Senegal">Senegal</option>
-                                    <option value="Serbia">Serbia</option>
-                                    <option value="Seychelles">Seychelles</option>
-                                    <option value="Sierra-Leone">Sierra Leone</option>
-                                    <option value="Singapore">Singapore</option>
-                                    <option value="Slovakia">Slovakia</option>
-                                    <option value="Slovenia">Slovenia</option>
-                                    <option value="Solomon-Islands">Solomon Islands</option>
-                                    <option value="Somalia">Somalia</option>
-                                    <option value="South-Africa">South Africa</option>
-                                    <option value="South-Korea">South Korea</option>
-                                    <option value="Spain">Spain</option>
-                                    <option value="Sri-Lanka">Sri Lanka</option>
-                                    <option value="Sudan">Sudan</option>
-                                    <option value="Suriname">Suriname</option>
-                                    <option value="Swaziland">Swaziland</option>
-                                    <option value="Switzerland">Switzerland</option>
-                                    <option value="Syria">Syria</option>
-                                    <option value="Sao-Tome-and-Principe">São Tomé &amp; Príncipe</option>
-                                    <option value="Tajikistan">Tajikistan</option>
-                                    <option value="Tanzania">Tanzania</option>
-                                    <option value="Thailand">Thailand</option>
-                                    <option value="Timor-Leste">Timor-Leste</option>
-                                    <option value="Togo">Togo</option>
-                                    <option value="Tonga">Tonga</option>
-                                    <option value="Trinidad-and-Tobago">Trinidad &amp; Tobago</option>
-                                    <option value="Tunisia">Tunisia</option>
-                                    <option value="Turkey">Turkey</option>
-                                    <option value="Turkmenistan">Turkmenistan</option>
-                                    <option value="Uganda">Uganda</option>
-                                    <option value="Ukraine">Ukraine</option>
-                                    <option value="UAE">United Arab Emirates</option>
-                                    <option value="Uruguay">Uruguay</option>
-                                    <option value="Uzbekistan">Uzbekistan</option>
-                                    <option value="Vanuatu">Vanuatu</option>
-                                    <option value="Venezuela">Venezuela</option>
-                                    <option value="Vietnam">Vietnam</option>
-                                    <option value="Yemen">Yemen</option>
-                                    <option value="Zambia">Zambia</option>
-                                    <option value="Zimbabwe">Zimbabwe</option>
-                                </select>
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">Country:</div>
+                                <div>Ghana</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="mt-8">
-                    <div className="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th className="w-1">Quantity</th>
-                                    <th className="w-1">Price</th>
-                                    <th>Total</th>
-                                    <th className="w-1"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {items.length <= 0 && (
+                <div className="grid gap-4 w-full ">
+                    <div className="panel h-full w-full mb-4">
+                        <div className="flex items-center justify-between mb-5">
+                            <h5 className="font-semibold text-lg dark:text-white-light">Group Members</h5>
+                        </div>
+                        <div className="table-responsive">
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td colSpan={5} className="!text-center font-semibold">
-                                            No Item Available
+                                        <th className="ltr:rounded-l-md rtl:rounded-r-md">Member Name</th>
+                                        <th>Email</th>
+                                        <th>Phone Number</th>
+                                        <th>DOB</th>
+                                        <th>Occupation</th>
+                                        <th>Status</th>
+                                        <th>Date Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
+                                        <td className="min-w-[150px] text-black dark:text-white">
+                                            <div className="flex items-center">
+                                                <img className="w-8 h-8 rounded-md ltr:mr-3 rtl:ml-3 object-cover" src="/assets/images/profile-6.jpeg" alt="avatar" />
+                                                <span className="whitespace-nowrap">Luke Ivory</span>
+                                            </div>
+                                        </td>
+                                        <td className="text-primary">LukeIvory@gmail.com</td>
+                                        <td>0240844556</td>
+                                        <td>0240844556</td>
+                                        <td>Approved</td>
+                                        <td>Approved</td>
+                                        <td>0240844556</td>
+                                        <td className="flex flex-wrap flex-row">
+                                            <button className="hover:text-red-800 has-tooltip">
+                                                <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-16">Delete From Group</span>
+
+                                                <IconTrash />
+                                            </button>
+
+                                            <button className="hover:text-red-800 has-tooltip">
+                                                <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-8">UnApprove</span>
+
+                                                <IconX />
+                                            </button>
                                         </td>
                                     </tr>
-                                )}
-                                {items.map((item: any, index: any) => {
-                                    return (
-                                        <tr className="align-top" key={item.id}>
-                                            <td>
-                                                <input type="text" className="form-input min-w-[200px]" placeholder="Enter Item Name" defaultValue={item.title} />
-                                                <textarea className="form-textarea mt-4" placeholder="Enter Description" defaultValue={item.description}></textarea>
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="number"
-                                                    className="form-input w-32"
-                                                    placeholder="Quantity"
-                                                    min={0}
-                                                    defaultValue={item.quantity}
-                                                    onChange={(e) => changeQuantityPrice('quantity', e.target.value, item.id)}
-                                                />
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="number"
-                                                    className="form-input w-32"
-                                                    placeholder="Price"
-                                                    min={0}
-                                                    defaultValue={item.amount}
-                                                    onChange={(e) => changeQuantityPrice('price', e.target.value, item.id)}
-                                                />
-                                            </td>
-                                            <td>${item.quantity * item.amount}</td>
-                                            <td>
-                                                <button type="button" onClick={() => removeItem(item)}>
-                                                    <IconX className="w-5 h-5" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="flex justify-between sm:flex-row flex-col mt-6 px-4">
-                        <div className="sm:mb-0 mb-6">
-                            <button type="button" className="btn btn-primary" onClick={() => addItem()}>
-                                Add Item
-                            </button>
+                                </tbody>
+                            </table>
                         </div>
-                        <div className="sm:w-2/5">
-                            <div className="flex items-center justify-between">
-                                <div>Subtotal</div>
-                                <div>$265.00</div>
-                            </div>
-                            <div className="flex items-center justify-between mt-4">
-                                <div>Tax(%)</div>
-                                <div>0%</div>
-                            </div>
-                            <div className="flex items-center justify-between mt-4">
-                                <div>Shipping Rate($)</div>
-                                <div>$0.00</div>
-                            </div>
-                            <div className="flex items-center justify-between mt-4">
-                                <div>Discount(%)</div>
-                                <div>0%</div>
-                            </div>
-                            <div className="flex items-center justify-between mt-4 font-semibold">
-                                <div>Total</div>
-                                <div>$265.00</div>
-                            </div>
+                    </div>
+                    <div className="panel h-full w-full mb-4">
+                        <div className="flex items-center justify-between mb-5">
+                            <h5 className="font-semibold text-lg dark:text-white-light">My Beneficiaries</h5>
+                        </div>
+                        <div className="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th className="ltr:rounded-l-md rtl:rounded-r-md">Member Name</th>
+                                        <th>Email</th>
+                                        <th>Phone Number</th>
+                                        <th>DOB</th>
+                                        <th>Relationship</th>
+                                        <th>Date Added</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
+                                        <td className="min-w-[150px] text-black dark:text-white">
+                                            <div className="flex items-center">
+                                                <img className="w-8 h-8 rounded-md ltr:mr-3 rtl:ml-3 object-cover" src="/assets/images/profile-6.jpeg" alt="avatar" />
+                                                <span className="whitespace-nowrap">Luke Ivory</span>
+                                            </div>
+                                        </td>
+                                        <td className="text-primary">LukeIvory@gmail.com</td>
+                                        <td>0240844556</td>
+                                        <td>0240844556</td>
+                                        <td>Approved</td>
+                                        <td>0240844556</td>
+                                        <td className="flex flex-wrap flex-row">
+                                            <button className="hover:text-red-800 has-tooltip">
+                                                <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-16">Delete From Group</span>
+
+                                                <IconTrash />
+                                            </button>
+
+                                            <button className="hover:text-red-800 has-tooltip">
+                                                <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-8">UnApprove</span>
+
+                                                <IconX />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -493,6 +360,9 @@ const MemberGroupEdit = () => {
                     <textarea id="notes" name="notes" className="form-textarea min-h-[130px]" placeholder="Notes...." defaultValue={params.notes}></textarea>
                 </div>
             </div>
+
+            <AddNewGroupMember AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
+            <AddNewBeneficiary AddUserModal={AddNewBeneficiaryModal} setAddUserModal={setAddNewBeneficiaryModal} />
         </div>
     );
 };

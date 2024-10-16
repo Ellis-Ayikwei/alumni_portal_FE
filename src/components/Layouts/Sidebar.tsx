@@ -209,7 +209,7 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                             <li className="menu nav-item">
-                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
+                                <NavLink to="/member/mypayments" className="nav-link group">
                                     <div className="flex items-center">
                                         <IconCashBanknotes className="group-hover:!text-primary shrink-0" />
                                         <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Payments</span>

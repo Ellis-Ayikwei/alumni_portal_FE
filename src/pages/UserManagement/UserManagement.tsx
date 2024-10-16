@@ -23,6 +23,7 @@ import { setPageTitle } from '../../store/themeConfigSlice';
 import { GetUserData } from '../../store/usersSlice';
 import SaveNewUser from './userManagementUtils/addNewUser';
 import handleUserActivation from './userManagementUtils/userActivation';
+import AddNewUser from './userManagementUtils/addNewUser';
 
 const col = ['username', 'email', 'phone', 'address', 'created_at', 'dob', 'role', 'azure_id', 'id'];
 
@@ -507,7 +508,7 @@ const UserManagement = () => {
                     />
                 </div>
             </div>
-            <SaveNewUser AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
+            <AddNewUser AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
         </div>
     );
 };

@@ -75,13 +75,18 @@ const roles = [
     { value: 'SALES', label: 'Sales' },
     { value: 'MEMBER', label: 'Member' },
 ];
+const genders = [
+    { value: 'NOT SELECTED', label: 'Not selected', isDisabled: 'option--is-disabled' },
+    { value: 'MALE', label: 'Male' },
+    { value: 'FEMALE', label: 'Female' },
+];
 
-interface SaveNewUserProps {
+interface AddNewGroupMemberProps {
     AddUserModal: boolean;
     setAddUserModal: (value: boolean) => void;
 }
 
-const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
+const AddNewGroupMember = ({ AddUserModal, setAddUserModal }: AddNewGroupMemberProps) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const dispatch = useDispatch();
@@ -259,6 +264,12 @@ const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
                                             />
                                             <div className="text-danger mt-2" id="startDateErr"></div>
                                         </div>
+                                        <div className="mb-5">
+                                            <label htmlFor="gender">
+                                                Gender <span className="text-red-600">*</span>
+                                            </label>
+                                            <Select defaultValue={genders[0]} id="role" options={genders} isSearchable={false} onChange={(e) => setParams({ ...params, role: e?.value })} required />
+                                        </div>
 
                                         {/* <div className="mb-5">
                                         <label htmlFor="password1">Email</label>
@@ -378,4 +389,4 @@ const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
     );
 };
 
-export default AddNewUser;
+export default AddNewGroupMember;

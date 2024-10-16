@@ -3,12 +3,13 @@ import AlumniGroupManagementpage from '../pages/AlumniGroupManagement/AlumniGrou
 import ContractManagementpage from '../pages/ContractsManagement/Contractsmanagementpage';
 import AdminDashboard from '../pages/Dasboard/AdminDashboard';
 import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
+import MemberGroupPreview from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupPreview ';
 import MyGroups from '../pages/MemberOnly/MyAlumniGroups';
+import MyPayments from '../pages/MemberOnly/MyPayments';
 import AccountSetting from '../pages/UserManagement/AccountSetting';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
-import MemberGroupPreview from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupPreview ';
-import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/MembergroupEdit';
+import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupEdit';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -73,7 +74,10 @@ const routes = [
         path: '/member/groups/edit',
         element: <MemberGroupEdit />,
     },
-
+    {
+        path: '/member/mypayments',
+        element: <MyPayments />,
+    },
     // {
     //     path: '/auth/boxed-lockscreen',
     //     element: <UnlockBoxed />,

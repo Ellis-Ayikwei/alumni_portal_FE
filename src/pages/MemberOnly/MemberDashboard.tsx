@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import Dropdown from '../../components/Dropdown';
 import IconArrowForward from '../../components/Icon/IconArrowForward';
 import IconArrowLeft from '../../components/Icon/IconArrowLeft';
+import IconBell from '../../components/Icon/IconBell';
 import IconBolt from '../../components/Icon/IconBolt';
 import IconCashBanknotes from '../../components/Icon/IconCashBanknotes';
 import IconChecks from '../../components/Icon/IconChecks';
@@ -379,7 +380,20 @@ const MemberDashboard = () => {
                 </li>
             </ul>
             <div className="pt-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 text-white">
+                <div className="panel flex items-center justify-between overflow-x-auto whitespace-nowrap p-3 text-primary">
+                    <div className="flex items-center">
+                        <div className=" rounded-full bg-primary p-1.5 text-white ring-2 ring-primary/30 ltr:mr-3 rtl:ml-3">
+                            <IconBell />
+                        </div>
+                        <span className="ltr:mr-3 rtl:ml-3">Payment : </span>
+                        <p>Payment due for pacakage</p>
+                    </div>
+                    <button className="btn btn-info gap-2 bg-[#E7515A] text-white">
+                        <FontAwesomeIcon icon={faUnlockAlt} />
+                        Pay Now
+                    </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 text-white mt-3">
                     <div className="panel bg-gradient-to-r from-cyan-500 to-cyan-400">
                         <div className="flex justify-between">
                             <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold"> My Groups</div>
