@@ -1,22 +1,19 @@
 import { useEffect, useState } from 'react';
-import AnimateHeight from 'react-animate-height';
 import { useTranslation } from 'react-i18next';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { NavLink, useLocation } from 'react-router-dom';
 import { IRootState } from '../../store';
 import { toggleSidebar } from '../../store/themeConfigSlice';
-import IconCaretDown from '../Icon/IconCaretDown';
+import IconBox from '../Icon/IconBox';
 import IconCaretsDown from '../Icon/IconCaretsDown';
 import IconCashBanknotes from '../Icon/IconCashBanknotes';
-import IconChatNotification from '../Icon/IconChatNotification';
 import IconHeart from '../Icon/IconHeart';
 import IconHelpCircle from '../Icon/IconHelpCircle';
 import IconHome from '../Icon/IconHome';
 import IconMinus from '../Icon/IconMinus';
 import IconOpenBook from '../Icon/IconOpenBook';
 import IconUsersGroup from '../Icon/IconUsersGroup';
-import IconMenuCalendar from '../Icon/Menu/IconMenuCalendar';
 import IconMenuCharts from '../Icon/Menu/IconMenuCharts';
 import IconMenuDashboard from '../Icon/Menu/IconMenuDashboard';
 import IconMenuDocumentation from '../Icon/Menu/IconMenuDocumentation';
@@ -70,7 +67,7 @@ const Sidebar = () => {
                     <div className="flex justify-between items-center px-4 py-3">
                         <NavLink to="/" className="main-logo flex items-center shrink-0">
                             <img className="w-8 ml-[5px] flex-none" src="/assets/images/logo.svg" alt="logo" />
-                            <span className="text-2xl ltr:ml-1.5 rtl:mr-1.5 font-semibold align-middle lg:inline dark:text-white-light">{t('VRISTO')}</span>
+                            <span className="text-2xl ltr:ml-1.5 rtl:mr-1.5 font-semibold align-middle lg:inline dark:text-white-light">ALUMNI ADMIN</span>
                         </NavLink>
 
                         <button
@@ -123,6 +120,14 @@ const Sidebar = () => {
                                         </NavLink>
                                     </li>
                                     <li className="nav-item">
+                                        <NavLink to="/insurancepackages" className="group">
+                                            <div className="flex items-center">
+                                                <IconBox className="group-hover:!text-primary shrink-0" />
+                                                <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Insurance Packages</span>
+                                            </div>
+                                        </NavLink>
+                                    </li>
+                                    <li className="nav-item">
                                         <NavLink to="/apps/scrumboard" className="group">
                                             <div className="flex items-center">
                                                 <IconMenuInvoice className="group-hover:!text-primary shrink-0" />
@@ -131,57 +136,18 @@ const Sidebar = () => {
                                         </NavLink>
                                     </li>
                                     <li className="nav-item">
+                                        <NavLink to="/apps/calendar" className="group">
+                                            <div className="flex items-center">
+                                                <IconMenuDocumentation className="group-hover:!text-primary shrink-0" />
+                                                <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Doc Samples</span>
+                                            </div>
+                                        </NavLink>
+                                    </li>
+                                    <li className="nav-item">
                                         <NavLink to="/apps/contacts" className="group">
                                             <div className="flex items-center">
                                                 <IconMenuCharts className="group-hover:!text-primary shrink-0" />
                                                 <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Reports & Analysis</span>
-                                            </div>
-                                        </NavLink>
-                                    </li>
-
-                                    <li className="menu nav-item">
-                                        <button type="button" className={`${currentMenu === 'invoice' ? 'active' : ''} nav-link group w-full`} onClick={() => toggleMenu('invoice')}>
-                                            <div className="flex items-center">
-                                                <IconMenuInvoice className="group-hover:!text-primary shrink-0" />
-                                                <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">{t('invoice')}</span>
-                                            </div>
-
-                                            <div className={currentMenu !== 'invoice' ? 'rtl:rotate-90 -rotate-90' : ''}>
-                                                <IconCaretDown />
-                                            </div>
-                                        </button>
-
-                                        <AnimateHeight duration={300} height={currentMenu === 'invoice' ? 'auto' : 0}>
-                                            <ul className="sub-menu text-gray-500">
-                                                <li>
-                                                    <NavLink to="/apps/invoice/list">{t('list')}</NavLink>
-                                                </li>
-                                                <li>
-                                                    <NavLink to="/apps/invoice/preview">{t('preview')}</NavLink>
-                                                </li>
-                                                <li>
-                                                    <NavLink to="/apps/invoice/add">{t('add')}</NavLink>
-                                                </li>
-                                                <li>
-                                                    <NavLink to="/apps/invoice/edit">{t('edit')}</NavLink>
-                                                </li>
-                                            </ul>
-                                        </AnimateHeight>
-                                    </li>
-
-                                    <li className="nav-item">
-                                        <NavLink to="/apps/calendar" className="group">
-                                            <div className="flex items-center">
-                                                <IconMenuCalendar className="group-hover:!text-primary shrink-0" />
-                                                <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Settings</span>
-                                            </div>
-                                        </NavLink>
-                                    </li>
-                                    <li className="nav-item">
-                                        <NavLink to="/apps/calendar" className="group">
-                                            <div className="flex items-center">
-                                                <IconChatNotification className="group-hover:!text-primary shrink-0" />
-                                                <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Notification</span>
                                             </div>
                                         </NavLink>
                                     </li>
@@ -217,7 +183,7 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                             <li className="menu nav-item">
-                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
+                                <NavLink to="/member/contracts" className="nav-link group">
                                     <div className="flex items-center">
                                         <IconOpenBook className="group-hover:!text-primary shrink-0" />
                                         <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Contracts</span>
@@ -225,7 +191,7 @@ const Sidebar = () => {
                                 </NavLink>
                             </li>
                             <li className="menu nav-item">
-                                <NavLink to="https://vristo.sbthemes.com" className="nav-link group">
+                                <NavLink to="/member/beneficiaries" className="nav-link group">
                                     <div className="flex items-center">
                                         <IconHeart className="group-hover:!text-primary shrink-0" />
                                         <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Beneficiaries</span>

@@ -3,13 +3,16 @@ import AlumniGroupManagementpage from '../pages/AlumniGroupManagement/AlumniGrou
 import ContractManagementpage from '../pages/ContractsManagement/Contractsmanagementpage';
 import AdminDashboard from '../pages/Dasboard/AdminDashboard';
 import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
+import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupEdit';
 import MemberGroupPreview from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupPreview ';
 import MyGroups from '../pages/MemberOnly/MyAlumniGroups';
+import MyBeneficiaries from '../pages/MemberOnly/MyBeneficiaries';
 import MyPayments from '../pages/MemberOnly/MyPayments';
 import AccountSetting from '../pages/UserManagement/AccountSetting';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
-import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupEdit';
+import MyContracts from '../pages/MemberOnly/MyContracts';
+import InsurancePacakes from '../pages/InsurancePackageManagement/InsurancePacakes';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -51,6 +54,10 @@ const routes = [
         element: <ContractManagementpage />,
     },
     {
+        path: '/insurancepackages',
+        element: <InsurancePacakes />,
+    },
+    {
         path: '/alumnigroups',
         element: <AlumniGroupManagementpage />,
     },
@@ -77,6 +84,14 @@ const routes = [
     {
         path: '/member/mypayments',
         element: <MyPayments />,
+    },
+    {
+        path: '/member/beneficiaries',
+        element: <MyBeneficiaries />,
+    },
+    {
+        path: '/member/contracts',
+        element: <MyContracts />,
     },
     // {
     //     path: '/auth/boxed-lockscreen',
