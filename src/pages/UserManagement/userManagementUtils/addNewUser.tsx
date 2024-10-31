@@ -9,7 +9,7 @@ import Select from 'react-select';
 import 'tippy.js/dist/tippy.css';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
-import { GetUserData } from '../../../store/usersSlice';
+import { GetUsersData } from '../../../store/usersSlice';
 import showMessage from './showMessage';
 
 export const dParams = {
@@ -157,10 +157,10 @@ const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
 
         try {
             const response = await axiosInstance.post('/users', payload);
-            if (response.status === 200) {
+            if (response.status === 201) {
                 showMessage(`User created successfully.`, 'success');
                 setParams(defaultParams);
-                dispatch(GetUserData() as any);
+                dispatch(GetUsersData() as any);
                 setAddUserModal(false);
             }
         } catch (error: any) {

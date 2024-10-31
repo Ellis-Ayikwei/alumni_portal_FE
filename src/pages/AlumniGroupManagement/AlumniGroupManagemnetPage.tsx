@@ -1,3 +1,4 @@
+import Tippy from '@tippyjs/react';
 import sortBy from 'lodash/sortBy';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
@@ -8,21 +9,26 @@ import Swal from 'sweetalert2';
 import 'tippy.js/dist/tippy.css';
 import Dropdown from '../../components/Dropdown';
 import IconBell from '../../components/Icon/IconBell';
+import IconBolt from '../../components/Icon/IconBolt';
 import IconCaretDown from '../../components/Icon/IconCaretDown';
 import IconChecks from '../../components/Icon/IconChecks';
 import IconEye from '../../components/Icon/IconEye';
 import IconFile from '../../components/Icon/IconFile';
 import IconPencil from '../../components/Icon/IconPencil';
-import IconPlusCircle from '../../components/Icon/IconPlusCircle';
+import IconPlus from '../../components/Icon/IconPlus';
 import IconPrinter from '../../components/Icon/IconPrinter';
 import IconRefresh from '../../components/Icon/IconRefresh';
+import IconTrash from '../../components/Icon/IconTrash';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconX from '../../components/Icon/IconX';
 import { IRootState } from '../../store';
 import { GetAlumniData } from '../../store/alumnigroupSlice';
 import { setPageTitle } from '../../store/themeConfigSlice';
-import SaveNewUser from '../UserManagement/userManagementUtils/addNewUser';
+import handleMultiUserActivation from '../UserManagement/userManagementUtils/multiUserActivation';
+import handleMultiUserDeActivation from '../UserManagement/userManagementUtils/multiUserDeActivation';
+import handleMultiUserDelete from '../UserManagement/userManagementUtils/multiUserDelete';
 import handleUserActivation from '../UserManagement/userManagementUtils/userActivation';
+import AddNewAlumniGroup from './alumniGroupManagementUtils/addNewGroup';
 
 const col = ['name', 'start_date', 'end_date', 'insurance_package', 'is_locked', 'president_id', 'id', 'create_at', 'updated_at'];
 
@@ -293,6 +299,7 @@ const AlumniGroupManagementpage = () => {
         { accessor: 'start_date', title: 'Start Date', sortable: true },
         { accessor: 'end_date', title: 'End Date', sortable: true },
         { accessor: 'insurance_package', title: 'Insurance Package', sortable: true },
+        { accessor: 'school', title: 'School', sortable: true },
         { accessor: 'status', title: 'Status', sortable: true },
         { accessor: 'president_id', title: 'President Id', sortable: true },
         { accessor: 'id', title: 'Id', sortable: true },
@@ -321,14 +328,10 @@ const AlumniGroupManagementpage = () => {
                     <h5 className="font-semibold text-lg dark:text-white-light">User Management</h5>
                 </div>
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
-                    <div className="flex items-center flex-wrap">
+                    <div className="flex items-center">
                         <button type="button" onClick={() => exportTable('csv')} className="btn btn-primary btn-sm m-1 ">
                             <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                             CSV
-                        </button>
-                        <button type="button" onClick={() => exportTable('txt')} className="btn btn-primary btn-sm m-1">
-                            <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                            TXT
                         </button>
                         <button type="button" className="btn btn-primary btn-sm m-1" onClick={handleDownloadExcel}>
                             <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
@@ -388,19 +391,65 @@ const AlumniGroupManagementpage = () => {
                         </button>
                     </div>
 
-                    <div className="ltr:ml-auto rtl:mr-auto">
-                        <input type="text" className="form-input w-auto" placeholder="Search..." value={search2} onChange={(e) => setSearch2(e.target.value)} />
+                    <div className={` gap-1 disabled:opacity-50 disabled:cursor-not-allowed disabled ${selectedRecords.length > 0 ? '!flex' : 'hidden'}`}>
+                        <div>
+                            <Tippy content="Delete">
+                                <button
+                                    type="button"
+                                    className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl"
+                                    onClick={() => handleMultiUserDelete(selectedRecords, dispatch, setSelectedRecords)}
+                                >
+                                    <IconTrash className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Activate">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMultiUserActivation(selectedRecords, dispatch)}
+                                    className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                >
+                                    <IconBolt className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Deactivate">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
+                                    className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                >
+                                    <IconX className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Add To Alumni Group">
+                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl" onClick={() => handleAddToAlumniGroup(selectedRecords, dispatch)}>
+                                    <IconUsersGroup className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
                     </div>
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => {
-                            setAddUserModal(true);
-                        }}
-                    >
-                        <IconPlusCircle className="ltr:mr-2 rtl:ml-2" />
-                        Add Alumni Group
-                    </button>
+                    <div className="ltr:ml-auto rtl:mr-auto flex gap-1">
+                        <div>
+                            <input type="text" className="form-input w-auto" placeholder="Search..." value={search2} onChange={(e) => setSearch2(e.target.value)} />
+                        </div>
+                        <Tippy content="Add New Alumni Group p-0">
+                            <button
+                                type="button"
+                                className="btn-success flex btn px-1 py-0"
+                                onClick={() => {
+                                    setAddUserModal(true);
+                                }}
+                            >
+                                <IconUsersGroup />
+                                <IconPlus />
+                            </button>
+                        </Tippy>
+                    </div>
                 </div>
                 <div className="datatables">
                     <DataTable
@@ -441,6 +490,7 @@ const AlumniGroupManagementpage = () => {
                                     return <div>{formatDate(validEnd_date)}</div>;
                                 },
                             },
+                            { accessor: 'school', title: 'School', sortable: true, hidden: hideCols.includes('school') },
                             { accessor: 'insurance_package', title: 'Insurance Package', sortable: true, hidden: hideCols.includes('insurance_package') },
                             {
                                 accessor: 'status',
@@ -449,7 +499,7 @@ const AlumniGroupManagementpage = () => {
                                 hidden: hideCols.includes('Active'),
                                 render: ({ is_locked }) => <span className={`badge bg-${getActivityColor(is_locked)}`}>{is_locked ? 'Active' : 'Locked'}</span>,
                             },
-                            { accessor: 'president_id', title: 'President ID', sortable: true, hidden: hideCols.includes('president_id') },
+                            { accessor: 'president', title: 'President', sortable: true, hidden: hideCols.includes('president_id') },
                             { accessor: 'id', title: 'ID', sortable: true, hidden: hideCols.includes('id') },
                             { accessor: 'create_at', title: 'Create At', sortable: true, hidden: hideCols.includes('create_at') },
                             { accessor: 'updated_at', title: 'Updated At', sortable: true, hidden: hideCols.includes('updated_at') },
@@ -499,7 +549,7 @@ const AlumniGroupManagementpage = () => {
                     />
                 </div>
             </div>
-            <SaveNewUser AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
+            <AddNewAlumniGroup AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
         </div>
     );
 };

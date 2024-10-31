@@ -2,41 +2,40 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosInstance from '../helper/axiosInstance';
 
 // Define the initial state type
-interface LoginState {
-    usersData: object;
+interface InsurancePackageState {
+    insurancePackages: object;
     loading: boolean;
     error: string | null;
 }
 
 // Define the initial state
-const initialState: LoginState = {
-    usersData: {},
+const initialState: InsurancePackageState = {
+    insurancePackages: {},
     loading: false,
     error: null,
 };
 
 // Create an async thunk for Login functionality
-export const GetUsersData = createAsyncThunk('users/getusers', async () => {
-    console.log("Getting USers ..... ")
-    const response = await axiosInstance.get('/users');
+export const GetInsurancePackages = createAsyncThunk('alumni/alumnidata', async () => {
+    const response = await axiosInstance.get('/insurance_packages');
     return response.data;
 });
 
 // Create a slice for Login functionality
-const usersSlice = createSlice({
-    name: 'usersdata',
+const insurancePackagesSlice = createSlice({
+    name: 'insurancePackages',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(GetUsersData.pending, (state) => {
+            .addCase(GetInsurancePackages.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(GetUsersData.fulfilled, (state, action) => {
-                state.usersData = action.payload;
+            .addCase(GetInsurancePackages.fulfilled, (state, action) => {
+                state.insurancePackages = action.payload;
                 state.loading = false;
             })
-            .addCase(GetUsersData.rejected, (state, action) => {
+            .addCase(GetInsurancePackages.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.error.message || 'An error occurred';
             });
@@ -44,4 +43,4 @@ const usersSlice = createSlice({
 });
 
 // Export the reducer to be used in the store
-export default usersSlice.reducer;
+export default insurancePackagesSlice.reducer;

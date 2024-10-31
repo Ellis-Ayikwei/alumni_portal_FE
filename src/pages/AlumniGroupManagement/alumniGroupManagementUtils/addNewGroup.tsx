@@ -4,93 +4,62 @@ import { eye } from 'react-icons-kit/feather/eye';
 import { eyeOff } from 'react-icons-kit/feather/eyeOff';
 import { useDispatch } from 'react-redux';
 import Select from 'react-select';
+import useSwr from 'swr';
 import 'tippy.js/dist/tippy.css';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
 import { GetUsersData } from '../../../store/usersSlice';
-import showMessage from './showMessage';
+import showMessage from '../../UserManagement/userManagementUtils/showMessage';
+import fetcher from '../../../helper/fetcher';
 
 export const dParams = {
-    id: null,
     name: '',
-    email: '',
-    phone: '',
-    role: 'REGULAR',
-    location: '',
-    relationshipTypes: '',
-    username: '',
-    password: '',
-    password1: '',
-    password2: '',
-    department: '',
-    job_title: '',
-    first_name: '',
-    last_name: '',
-    other_names: '',
-    address: '',
-    gender: '',
-    marital_status: '',
-    date_of_birth: '',
-    state_of_origin: '',
-    local_government: '',
-    blood_group: '',
-    genotype: '',
-    height: '',
-    weight: '',
-    eye_color: '',
-    hair_color: '',
-    skin_tone: '',
-    physical_challenge: '',
-    emergency_contact_name: '',
-    emergency_contact_phone: '',
-    emergency_contact_email: '',
-    next_of_kin_name: '',
-    next_of_kin_phone: '',
-    next_of_kin_email: '',
-    next_of_kin_address: '',
-    next_of_kin_relationship: '',
-    bank_name: '',
-    bank_account_number: '',
-    sort_code: '',
-    account_type: '',
-    bvn: '',
-    nin: '',
-    image: '',
-    medical_history: '',
-    medical_history_description: '',
-    medical_history_date: '',
-    medical_history_doctor_name: '',
-    medical_history_doctor_phone: '',
-    medical_history_doctor_email: '',
-    medical_history_doctor_address: '',
-};
+    start_date: '',
+    end_date: '',
+    school: '',
+    status: '',
+    package_id: '',
+    president_id: '',
+    president_user_id: '',
+    president: null}
 
-const relationshipTypes = [
-    { value: 'BROTHER', label: 'Brother' },
-    { value: 'SISTER', label: 'Sister' },
-    { value: 'MOTHER', label: 'Mother' },
-    { value: 'FATHER', label: 'Father' },
-    { value: 'SPOUSE', label: 'Spouse' },
-    { value: 'SON', label: 'Son' },
-    { value: 'DAUGHTER', label: 'Daughter' },
-    { value: 'FRIEND', label: 'Friend' },
-    { value: 'OTHER', label: 'Other' },
-];
-
-interface SaveNewUserProps {
+interface AddNewAlumniGroupProps {
     AddUserModal: boolean;
     setAddUserModal: (value: boolean) => void;
 }
 
-const AddNewBeneficiary = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupProps) => {
     const dispatch = useDispatch();
-
     const [value, setValue] = useState<any>('list');
     const [defaultParams, setDefaultParams] = useState({ ...dParams });
+    const [params, setParams] = useState({ ...dParams });
+    const { data: ins_packages, error: ins_error, isLoading: ins_loadng } = useSwr("/insurance_packages", fetcher);
 
-    const [params, setParams] = useState<any>(JSON.parse(JSON.stringify(defaultParams)));
+
+    console.log("the insurance packages", ins_packages)
+    const groups = [
+        { value: 'group1', label: 'group1' },
+        { value: 'group2', label: 'group2' },
+        { value: 'group3', label: 'group3' },
+    ];
+    const insurance_packages = [
+        { value: 'PLATINUM', label: 'PLATINUM' },
+        { value: 'GOLD', label: 'GOLD' },
+        { value: 'SILVER', label: 'SILVER' },
+        { value: 'BRONZE', label: 'BRONZE' },
+    ];
+    const users = [
+        { value: 'user1', label: 'user1' },
+        { value: 'user2', label: 'user2' },
+        { value: 'user3', label: 'user3' },
+    ];
+
+    const ContractStatus = [
+        { value: 'ACTIVE', label: 'ACTIVE' },
+        { value: 'INACTIVE', label: 'INACTIVE' },
+        { value: 'EXPIRED', label: 'EXPIRED' },
+        { value: 'TERMINATED', label: 'TERMINATED' },
+    ];
 
     const changeValue = (e: any) => {
         const { value, id } = e.target;
@@ -195,7 +164,7 @@ const AddNewBeneficiary = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="panel border-0 p-0 rounded-lg overflow-hidden w-full max-w-lg text-black dark:text-white-dark">
+                            <Dialog.Panel className="panel border-0 p-0 rounded-lg overflow-y-scroll w-full max-w-lg text-black dark:text-white-dark">
                                 <button
                                     type="button"
                                     onClick={() => setAddUserModal(false)}
@@ -203,121 +172,120 @@ const AddNewBeneficiary = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                                 >
                                     <IconX />
                                 </button>
-                                <div className="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">{params.id ? 'Edit Contact' : 'Add User'}</div>
+                                <div className="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">
+                                    <h4>Add Alumni Group</h4>
+                                </div>
                                 <div className="p-5">
                                     <form>
                                         <div className="mb-5">
-                                            <label htmlFor="first_name">
-                                                First Name <span className="text-red-600">*</span>
+                                            <label htmlFor="name">
+                                                Name <span className="text-red-600">*</span>
+                                            </label>
+                                            <input id="name" type="text" placeholder="Enter Name" className="form-input" value={params.name} onChange={(e) => changeValue(e)} required />
+                                        </div>
+                                        <div className="mb-5">
+                                            <label htmlFor="name">
+                                                School <span className="text-red-600">*</span>
+                                            </label>
+                                            <input id="name" type="text" placeholder="Enter School Name" className="form-input" value={params.school} onChange={(e) => changeValue(e)} required />
+                                        </div>
+                                        <div className="mb-5">
+                                            <label htmlFor="start_date">
+                                                Start Date <span className="text-red-600">*</span>
                                             </label>
                                             <input
-                                                id="first_name"
-                                                type="text"
-                                                placeholder="Enter First Name"
+                                                id="start_date"
+                                                type="date"
+                                                placeholder="Enter Start Date"
                                                 className="form-input"
-                                                value={params.first_name}
+                                                value={params.start_date}
                                                 onChange={(e) => changeValue(e)}
                                                 required
                                             />
                                         </div>
                                         <div className="mb-5">
-                                            <label htmlFor="last_name">
-                                                Last Name <span className="text-red-600">*</span>
+                                            <label htmlFor="end_date">
+                                                End Date <span className="text-red-600">*</span>
                                             </label>
-                                            <input id="last_name" type="text" placeholder="Enter Last Name" className="form-input" value={params.last_name} onChange={(e) => changeValue(e)} required />
+                                            <input id="end_date" type="date" placeholder="Enter End Date" className="form-input" value={params.end_date} onChange={(e) => changeValue(e)} required />
                                         </div>
                                         <div className="mb-5">
-                                            <label htmlFor="other_names">Other Names</label>
-                                            <input id="other_names" type="text" placeholder="Enter Other Names" className="form-input" value={params.other_names} onChange={(e) => changeValue(e)} />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="username">
-                                                Username <span className="text-red-600">*</span>
-                                            </label>
-                                            <input id="username" type="text" placeholder="Enter Username" className="form-input" value={params.username} onChange={(e) => changeValue(e)} required />
-                                        </div>
-
-                                        <div className="mb-5">
-                                            <label htmlFor="email">
-                                                Email <span className="text-red-600">*</span>
-                                            </label>
-                                            <input id="email" type="email" placeholder="Enter Email" className="form-input" value={params.email} onChange={(e) => changeValue(e)} required />
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="dateOfBirth">
-                                                Date Of Birth: <span className="text-red-600">*</span>
-                                            </label>
-                                            <input
-                                                id="dob"
-                                                type="date"
-                                                name="dob"
-                                                className="form-input"
-                                                placeholder="Date Of Birth"
-                                                value={params.dob || ''}
-                                                onChange={(event: any) => changeValue(event)}
+                                            <label htmlFor="insurance_package">Insurance Package</label>
+                                            <Select
+                                                defaultValue={params.insurance_package}
+                                                id="insurance_package"
+                                                options={insurance_packages}
+                                                isSearchable={true}
+                                                onChange={(e) => setParams({ ...params, insurance_package: e?.value })}
                                                 required
                                             />
-                                            <div className="text-danger mt-2" id="startDateErr"></div>
                                         </div>
-
-                                        {/* <div className="mb-5">
-                                        <label htmlFor="password1">Email</label>
-                                        <input id="password1" type="password" placeholder="Enter Email" className="form-input" value={params.email} onChange={(e) => changeValue(e)} />
-                                    </div> */}
-
                                         <div className="mb-5">
-                                            <label htmlFor="Relationship-Type">
-                                                Relationship Type <span className="text-red-600">*</span>
+                                            <label htmlFor="status">
+                                                Status <span className="text-red-600">*</span>
                                             </label>
                                             <Select
-                                                defaultValue={relationshipTypes[2]}
-                                                id="role"
-                                                options={relationshipTypes}
+                                                defaultValue={params.status}
+                                                id="status"
+                                                options={Object.values(ContractStatus)}
                                                 isSearchable={false}
-                                                onChange={(e) => setParams({ ...params, relationshipType: e?.value })}
+                                                onChange={(e) => setParams({ ...params, status: e?.value })}
                                                 required
                                             />
                                         </div>
                                         <div className="mb-5">
-                                            <label htmlFor="phone">
-                                                Phone Number <span className="text-red-600">*</span>
-                                            </label>
-                                            <input id="phone" type="text" placeholder="Enter Phone Number" className="form-input" value={params.phone} onChange={(e) => changeValue(e)} required />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="role">
-                                                Occupation <span className="text-red-600">*</span>
+                                            <label htmlFor="president_id">
+                                                President
                                             </label>
                                             <input
-                                                id="occupation"
-                                                type="text"
-                                                placeholder="Enter Occupation"
+                                                id="president_id"
+                                                type="number"
+                                                placeholder="Enter President Id"
                                                 className="form-input"
-                                                value={params.occupation}
+                                                value={params.president_id}
                                                 onChange={(e) => changeValue(e)}
                                                 required
                                             />
                                         </div>
                                         <div className="mb-5">
-                                            <label htmlFor="location">
-                                                Address <span className="text-red-600">*</span>
+                                            <label htmlFor="id">
+                                                Id <span className="text-red-600">*</span>
                                             </label>
-                                            <textarea
-                                                id="address"
-                                                rows={3}
-                                                placeholder="Enter Address"
-                                                className="form-textarea resize-none min-h-[130px]"
-                                                value={params.address}
+                                            <input id="id" type="number" placeholder="Enter Id" className="form-input" value={params.id} onChange={(e) => changeValue(e)} required />
+                                        </div>
+                                        <div className="mb-5">
+                                            <label htmlFor="create_at">
+                                                Create At <span className="text-red-600">*</span>
+                                            </label>
+                                            <input
+                                                id="create_at"
+                                                type="datetime-local"
+                                                placeholder="Enter Create At"
+                                                className="form-input"
+                                                value={params.create_at}
                                                 onChange={(e) => changeValue(e)}
                                                 required
-                                            ></textarea>
+                                            />
+                                        </div>
+                                        <div className="mb-5">
+                                            <label htmlFor="updated_at">
+                                                Updated At <span className="text-red-600">*</span>
+                                            </label>
+                                            <input
+                                                id="updated_at"
+                                                type="datetime-local"
+                                                placeholder="Enter Updated At"
+                                                className="form-input"
+                                                value={params.updated_at}
+                                                onChange={(e) => changeValue(e)}
+                                                required
+                                            />
                                         </div>
                                         <div className="flex justify-end items-center mt-8">
                                             <button type="button" className="btn btn-outline-danger" onClick={() => setAddUserModal(false)}>
                                                 Cancel
                                             </button>
-                                            <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={saveNewUser}>
+                                            <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4">
                                                 {params.id ? 'Update' : 'Add'}
                                             </button>
                                         </div>
@@ -332,4 +300,4 @@ const AddNewBeneficiary = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
     );
 };
 
-export default AddNewBeneficiary;
+export default AddNewAlumniGroup;

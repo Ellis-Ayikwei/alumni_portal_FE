@@ -1,7 +1,8 @@
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import CurrencyInput from 'react-currency-input-field';
 import IconX from '../../../components/Icon/IconX';
+import axiosInstance from '../../../helper/axiosInstance';
 
 interface AddInsurancePackageProps {
     viewModal: boolean;
@@ -14,10 +15,49 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
     const [images, setImages] = useState<any>([]);
     const maxNumber = 69;
 
-    // const onChange = (imageList: ImageListType, addUpdateIndex: number[] | undefined) => {
-    //     setImages(imageList as never[]);
-    //     console.log(imageList, addUpdateIndex);
-    // };
+    interface Insurance {
+        name: string;
+        description: string;
+        sum_assured: number;
+        monthly_premium_ghs: number;
+        annual_premium_ghs: number;
+        is_active: boolean;
+        benefits: any[];
+    }
+
+    const initialInsurance = {
+        name: '',
+        description: '',
+        sum_assured: 0,
+        monthly_premium_ghs: 0,
+        annual_premium_ghs: 0,
+        is_active: false,
+        bnfs: {},
+    };
+
+    const [insurance, setInsurance] = useState(initialInsurance);
+    const [benefits, setBenefits] = useState({});
+
+    interface InputChangeEvent extends React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> {}
+
+    const handleInputChange = (id: string, value: string | undefined) => {
+        setInsurance({ ...insurance, [id]: value, bnfs: benefits });
+    };
+
+    const handleBenefitChange = (id: string, value: string | undefined) => {
+        setBenefits({ ...benefits, [id]: value });
+    };
+
+    const handleSaveInsurance = async () => {
+        try {
+            const response = await axiosInstance.post('/insurance_packages', JSON.stringify(insurance));
+            console.log('data', response);
+        } catch (err) {}
+    };
+
+    useEffect(() => {
+        console.log('insurance', insurance);
+    }, [insurance]);
 
     return (
         <Transition appear show={viewModal} as={Fragment}>
@@ -59,59 +99,45 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
                                 <div className="p-5">
                                     {/* Contract Details Section */}
 
-                                    {/* <div className="panel" id="single_file">
-                                        <div className="mb-5">
-                                            <div className="custom-file-container" data-upload-id="packImage">
-                                                <label className="custom-file-container__custom-file"></label>
-                                                {images.length === 0 ? <img src="/assets/images/image.png" className="max-w-sm  m-auto" alt="" /> : ''}
-
-                                                <ImageUploading value={images} onChange={onChange} maxNumber={maxNumber}>
-                                                    {({ imageList, onImageUpload, onImageRemoveAll, onImageUpdate, onImageRemove, isDragging, dragProps }) => (
-                                                        <div className="upload__image-wrapper">
-                                                            {imageList.map((image, index) => (
-                                                                <div key={index} className="custom-file-container__image-preview relative">
-                                                                    <img src={image.dataURL} alt="img" className="m-auto" />
-                                                                </div>
-                                                            ))}
-                                                            &nbsp;
-                                                            <div className="flex justify-between">
-                                                                <button className="custom-file-container__custom-file__custom-file-control mt-2 btn btn-success" onClick={onImageUpload}>
-                                                                    {images.length === 0 ? 'Choose Image...' : 'Change Image...'}
-                                                                </button>
-                                                                {images.length > 0 ? (
-                                                                    <button
-                                                                        type="button"
-                                                                        className="custom-file-container__image-clear btn btn-danger gap-1 rounded-full"
-                                                                        title="Clear Image"
-                                                                        onClick={() => {
-                                                                            setImages([]);
-                                                                        }}
-                                                                    >
-                                                                        <IconTrash />
-                                                                    </button>
-                                                                ) : (
-                                                                    ''
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </ImageUploading>
-                                            </div>
-                                        </div>
-                                    </div> */}
-
                                     <form>
                                         <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="groupName" className="text-gray-600">
+                                            <label htmlFor="packageName" className="text-gray-600">
                                                 Package Name:
                                             </label>
-                                            <input type="text" id="groupName" className="font-semibold border border-gray-300 rounded p-1" placeholder="Enter Package Name" />
+                                            <input
+                                                type="text"
+                                                id="packageName"
+                                                className="font-semibold border border-gray-300 rounded p-1"
+                                                placeholder="Enter Package Name"
+                                                onChange={(e: InputChangeEvent) => handleInputChange('name', e.target.value)}
+                                            />
                                         </div>
                                         <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="description" className="text-gray-600">
+                                            <label htmlFor="packageDescription" className="text-gray-600">
                                                 Description:
                                             </label>
-                                            <textarea id="description" className="font-semibold border border-gray-300 rounded p-1" placeholder="Enter Package Description" />
+                                            <textarea
+                                                id="packageDescription"
+                                                className="font-semibold border border-gray-300 rounded p-1"
+                                                placeholder="Enter Package Description"
+                                                onChange={(e: InputChangeEvent) => handleInputChange('description', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between items-center mb-2 mt-2">
+                                            <label htmlFor="sumAssured" className="text-gray-600">
+                                                Sum Assured:
+                                            </label>
+                                            <div className="flex">
+                                                <CurrencyInput
+                                                    id="sumAssured"
+                                                    name="sumAssured"
+                                                    prefix="GH₵ "
+                                                    defaultValue={0}
+                                                    decimalsLimit={2}
+                                                    onValueChange={(value) => handleInputChange('sum_assured', value)}
+                                                    className="form-input"
+                                                />
+                                            </div>
                                         </div>
                                         <div className="text-xs p-1 font-semibold text-gray-800 mb-3 mt-5 w-full bg-white-light">
                                             <p>Benefits</p>
@@ -122,12 +148,12 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
                                             </label>
                                             <div className="flex">
                                                 <CurrencyInput
-                                                    id="money"
-                                                    name="money"
+                                                    id="deathMember"
+                                                    name="deathMember"
                                                     prefix="GH₵ "
                                                     defaultValue={0}
                                                     decimalsLimit={2}
-                                                    onValueChange={(value, name) => console.log(value, name)}
+                                                    onValueChange={(value) => handleBenefitChange('Death (Member)', value)}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
@@ -139,12 +165,12 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
                                             </label>
                                             <div className="flex">
                                                 <CurrencyInput
-                                                    id="money"
-                                                    name="money"
+                                                    id="deathSpouse"
+                                                    name="deathSpouse"
                                                     prefix="GH₵ "
                                                     defaultValue={0}
                                                     decimalsLimit={2}
-                                                    onValueChange={(value, name) => console.log(value, name)}
+                                                    onValueChange={(value) => handleBenefitChange('Death (Spouse)', value)}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
@@ -152,50 +178,50 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
                                         </div>
                                         <div className="flex justify-between items-center mb-2 mt-2">
                                             <label htmlFor="nominatedLives" className="text-gray-600">
-                                                2 nominated lives (Each):
+                                                2 Nominated Lives (Each):
                                             </label>
                                             <div className="flex">
                                                 <CurrencyInput
-                                                    id="money"
-                                                    name="money"
+                                                    id="nominatedLives"
+                                                    name="nominatedLives"
                                                     prefix="GH₵ "
                                                     defaultValue={0}
                                                     decimalsLimit={2}
-                                                    onValueChange={(value, name) => console.log(value, name)}
+                                                    onValueChange={(value) => handleBenefitChange('2 Nominated Lives (Each)', value)}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
                                             </div>
                                         </div>
                                         <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="criticalIllness" className="text-gray-600">
+                                            <label htmlFor="criticalIllnessMember" className="text-gray-600">
                                                 Critical Illness (Member):
                                             </label>
                                             <div className="flex">
                                                 <CurrencyInput
-                                                    id="money"
-                                                    name="money"
+                                                    id="criticalIllnessMember"
+                                                    name="criticalIllnessMember"
                                                     prefix="GH₵ "
                                                     defaultValue={0}
                                                     decimalsLimit={2}
-                                                    onValueChange={(value, name) => console.log(value, name)}
+                                                    onValueChange={(value) => handleBenefitChange('Critical Illness (Member)', value)}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
                                             </div>
                                         </div>
                                         <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="permanentDisability" className="text-gray-600">
+                                            <label htmlFor="permanentDisabilityMember" className="text-gray-600">
                                                 Permanent Disability (Member):
                                             </label>
                                             <div className="flex">
                                                 <CurrencyInput
-                                                    id="money"
-                                                    name="money"
+                                                    id="permanentDisabilityMember"
+                                                    name="permanentDisabilityMember"
                                                     prefix="GH₵ "
                                                     defaultValue={0}
                                                     decimalsLimit={2}
-                                                    onValueChange={(value, name) => console.log(value, name)}
+                                                    onValueChange={(value) => handleBenefitChange('Permanent Disability (Member)', value)}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
@@ -206,16 +232,16 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
                                         </div>
                                         <div className="flex justify-between items-center mb-2 mt-2">
                                             <label htmlFor="monthlyPremium" className="text-gray-600">
-                                                Monthly Premium :
+                                                Monthly Premium:
                                             </label>
                                             <div className="flex">
                                                 <CurrencyInput
-                                                    id="money"
-                                                    name="money"
+                                                    id="monthlyPremium"
+                                                    name="monthlyPremium"
                                                     prefix="GH₵ "
                                                     defaultValue={0}
                                                     decimalsLimit={2}
-                                                    onValueChange={(value, name) => console.log(value, name)}
+                                                    onValueChange={(value) => handleInputChange('monthly_premium_ghs', value)}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
@@ -223,16 +249,16 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
                                         </div>
                                         <div className="flex justify-between items-center mb-2 mt-2">
                                             <label htmlFor="annualPremium" className="text-gray-600">
-                                                Annual Premium :
+                                                Annual Premium:
                                             </label>
                                             <div className="flex">
                                                 <CurrencyInput
-                                                    id="money"
-                                                    name="money"
+                                                    id="annualPremium"
+                                                    name="annualPremium"
                                                     prefix="GH₵ "
                                                     defaultValue={0}
                                                     decimalsLimit={2}
-                                                    onValueChange={(value, name) => console.log(value, name)}
+                                                    onValueChange={(value) => handleInputChange('annual_premium_ghs', value)}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
@@ -244,8 +270,8 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
                                         <button type="button" className="btn btn-outline-danger" onClick={() => setViewModal(false)}>
                                             Close
                                         </button>
-                                        <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={() => setViewModal(false)}>
-                                            Save Changes
+                                        <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={handleSaveInsurance}>
+                                            Save
                                         </button>
                                     </div>
                                 </div>

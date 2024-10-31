@@ -1,13 +1,22 @@
+'use client';
+import { Button, Stack } from '@mantine/core';
+import { DatePicker, type DatesRangeValue } from '@mantine/dates';
+import { useDebouncedValue, useMediaQuery } from '@mantine/hooks';
+import { AnyAction, Dispatch } from '@reduxjs/toolkit';
+import Tippy from '@tippyjs/react';
+import dayjs from 'dayjs';
 import sortBy from 'lodash/sortBy';
+import { useContextMenu } from 'mantine-contextmenu';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import { downloadExcel } from 'react-export-table-to-excel';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import Select from 'react-select';
 import 'tippy.js/dist/tippy.css';
 import Dropdown from '../../components/Dropdown';
 import IconBell from '../../components/Icon/IconBell';
+import IconBolt from '../../components/Icon/IconBolt';
 import IconCaretDown from '../../components/Icon/IconCaretDown';
 import IconChecks from '../../components/Icon/IconChecks';
 import IconEye from '../../components/Icon/IconEye';
@@ -15,84 +24,128 @@ import IconFile from '../../components/Icon/IconFile';
 import IconPencil from '../../components/Icon/IconPencil';
 import IconPrinter from '../../components/Icon/IconPrinter';
 import IconRefresh from '../../components/Icon/IconRefresh';
+import IconTrash from '../../components/Icon/IconTrash';
+import IconUser from '../../components/Icon/IconUser';
 import IconUserPlus from '../../components/Icon/IconUserPlus';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconX from '../../components/Icon/IconX';
 import { IRootState } from '../../store';
 import { setPageTitle } from '../../store/themeConfigSlice';
-import { GetUserData } from '../../store/usersSlice';
-import SaveNewUser from './userManagementUtils/addNewUser';
-import handleUserActivation from './userManagementUtils/userActivation';
+import { GetUsersData } from '../../store/usersSlice';
 import AddNewUser from './userManagementUtils/addNewUser';
+import AddUserToGroup from './userManagementUtils/addUserToGroup';
+import handleMultiUserActivation from './userManagementUtils/multiUserActivation';
+import handleMultiUserDeActivation from './userManagementUtils/multiUserDeActivation';
+import handleMultiUserDelete from './userManagementUtils/multiUserDelete';
+import handleUserActivation from './userManagementUtils/userActivation';
 
 const col = ['username', 'email', 'phone', 'address', 'created_at', 'dob', 'role', 'azure_id', 'id'];
-
+const activityOption = [
+    { value: 'true', label: 'Active' },
+    { value: 'false', label: 'Inactive' },
+];
 const UserManagement = () => {
     const dispatch = useDispatch();
-    const [usersdata, setUsersData] = useState<any>([]);
+    // const [usersdata, setUsersData] = useState<any>([]);
     const usersData = useSelector((state: IRootState) => state.usersdata.usersData);
-    const userDataIsLoading = useSelector((state: IRootState) => state.usersdata.loading);
+    const userDataIsLoadingStatus = useSelector((state: IRootState) => state.usersdata.loading);
     const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
 
-
-    console.log("my role is ", myRole);
-    useEffect(() => {
-        dispatch(setPageTitle('Multiple Tables'));
-        dispatch(GetUserData() as any);
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (usersData) {
-            setInitialRecords2(sortBy(usersData, 'first_name'));
-        }
-    }, [usersData]);
+    const { showContextMenu } = useContextMenu();
+    const isTouch = useMediaQuery('(pointer: coarse)');
+    const [query, setQuery] = useState('');
+    const [debouncedQuery] = useDebouncedValue(query, 200);
+    const [AddUserToGroupModal, setAddUserToGroupModal] = useState(false);
+    const [usersToAddToALumniGroup, setUsersToAddToALumniGroup] = useState([]);
 
     const PAGE_SIZES = [10, 20, 30, 50, 100];
     const navigate = useNavigate();
 
-    const [page2, setPage2] = useState(1);
-    const [pageSize2, setPageSize2] = useState(PAGE_SIZES[0]);
-    const [initialRecords2, setInitialRecords2] = useState(sortBy(usersdata, 'first_name'));
-    const [recordsData2, setRecordsData2] = useState(initialRecords2);
-    const rowData = initialRecords2;
-    const [search2, setSearch2] = useState('');
-    const [sortStatus2, setSortStatus2] = useState<DataTableSortStatus>({
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+    const [initialRecords, setinitialRecords] = useState(sortBy(usersData, 'first_name'));
+    const [recordsData, setRecordsData] = useState(initialRecords);
+    const rowData = initialRecords;
+    const [search, setSearch] = useState('');
+    const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
         columnAccessor: 'first_name',
         direction: 'asc',
     });
 
+    const [selectedActivity, setSelectedActivity] = useState<string[]>([]);
+    const [birthdaySearchRange, setBirthdaySearchRange] = useState<DatesRangeValue>();
+
+    const [activeFilter, setActiveFilter] = useState<any>();
+    const resetActiveFilter = () => {
+        setRecordsData(initialRecords);
+        setActiveFilter;
+    };
     useEffect(() => {
-        setPage2(1);
-    }, [pageSize2]);
+        setRecordsData(
+            initialRecords.filter(({ first_name, last_name, dob, is_active }) => {
+                if (debouncedQuery !== '' && !`${first_name} ${last_name}`.toLowerCase().includes(debouncedQuery.trim().toLowerCase())) return false;
+
+                if (
+                    birthdaySearchRange &&
+                    birthdaySearchRange[0] &&
+                    birthdaySearchRange[1] &&
+                    (dayjs(birthdaySearchRange[0]).isAfter(dob, 'day') || dayjs(birthdaySearchRange[1]).isBefore(dob, 'day'))
+                )
+                    return false;
+                console.log(is_active, activeFilter);
+                if (typeof is_active !== 'undefined' && typeof activeFilter !== 'undefined' && is_active.toString() !== activeFilter.toString()) return false;
+
+                return true;
+            })
+        );
+    }, [debouncedQuery, birthdaySearchRange, activeFilter]);
 
     useEffect(() => {
-        const from = (page2 - 1) * pageSize2;
-        const to = from + pageSize2;
-        setRecordsData2([...initialRecords2.slice(from, to)]);
-    }, [page2, pageSize2, initialRecords2]);
+        dispatch(setPageTitle('Multiple Tables'));
+        dispatch(GetUsersData() as any);
+    }, [dispatch]);
 
     useEffect(() => {
-        setInitialRecords2(() => {
-            return usersdata.filter((item: any) => {
-                return (
-                    item.first_name.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.company.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.age.toString().toLowerCase().includes(search2.toLowerCase()) ||
-                    item.dob.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.email.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.phone.toLowerCase().includes(search2.toLowerCase())
-                );
+        if (usersData) {
+            setinitialRecords(sortBy(usersData, 'first_name'));
+        }
+    }, [usersData]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [pageSize]);
+
+    useEffect(() => {
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize;
+        setRecordsData([...initialRecords.slice(from, to)]);
+    }, [page, pageSize, initialRecords]);
+
+    useEffect(() => {
+        setRecordsData(() => {
+            return usersData.filter((item: any) => {
+                const accessors = Object.keys(item) as (keyof typeof item)[];
+                return accessors.some((accessor) => {
+                    const value = item[accessor];
+                    if (typeof value === 'string') {
+                        return value.toLowerCase().includes(search.toLowerCase());
+                    }
+                    if (typeof value === 'number') {
+                        return value.toString().includes(search.toLowerCase());
+                    }
+                    return false;
+                });
             });
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search2]);
+    }, [search]);
 
     useEffect(() => {
-        const data2 = sortBy(initialRecords2, sortStatus2.columnAccessor);
-        setInitialRecords2(sortStatus2.direction === 'desc' ? data2.reverse() : data2);
+        const data2 = sortBy(initialRecords, sortStatus.columnAccessor);
+        setinitialRecords(sortStatus.direction === 'desc' ? data2.reverse() : data2);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sortStatus2]);
+    }, [sortStatus]);
 
     const getActivityColor = (accessor: string | boolean) => {
         const colors = ['success', 'danger'];
@@ -130,11 +183,11 @@ const UserManagement = () => {
             .join(' ');
     };
 
-    const header = Object.keys(recordsData2[0] || {})
+    const header = Object.keys(recordsData[0] || {})
         .slice(1, -1)
         .map(capitalize);
 
-    const bodyData = recordsData2.map((item) => Object.values(item).slice(1, -1));
+    const bodyData = recordsData.map((item) => Object.values(item).slice(1, -1));
 
     function handleDownloadExcel() {
         downloadExcel({
@@ -256,27 +309,8 @@ const UserManagement = () => {
 
     const [AddUserModal, setAddUserModal] = useState<any>(false);
 
-    const showMessage = (msg = '', type = 'success') => {
-        const toast: any = Swal.mixin({
-            toast: true,
-            position: 'top',
-            showConfirmButton: false,
-            timer: 3000,
-            customClass: { container: 'toast' },
-        });
-        toast.fire({
-            icon: type,
-            title: msg,
-            padding: '10px 20px',
-        });
-    };
-
     const editUser = (user: any = null) => {
         navigate('/userAccountSetting');
-    };
-
-    const deleteUser = (user: any = null) => {
-        showMessage('User has been deleted successfully.');
     };
 
     const [selectedRecords, setSelectedRecords] = useState<any>([]);
@@ -306,11 +340,14 @@ const UserManagement = () => {
         { accessor: 'id', title: 'User id', sortable: true },
     ];
 
+    const handleNavigation = (payload: any) => {
+        navigate('/profile', { state: payload });
+    };
 
-  const handleNavigation = (payload: any) => {
-    // You can pass any data here in the state object
-    navigate('/profile', { state: payload });
-  };
+    const handleAddToAlumniGroup = (selectedRecords: any, dispatch: Dispatch<AnyAction>): void => {
+        setUsersToAddToALumniGroup(selectedRecords);
+        setAddUserToGroupModal(true);
+    };
 
     return (
         <div>
@@ -324,26 +361,22 @@ const UserManagement = () => {
                 </a>
             </div>
 
-            <div className="panel mt-6">
+            <div className="panel mt-6  rounded-lg shadow-lg">
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
-                    <h5 className="font-semibold text-lg dark:text-white-light">User Management</h5>
+                    <h5 className="font-semibold text-lg ">User Management</h5>
                 </div>
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
-                    <div className="flex items-center flex-wrap">
-                        <button type="button" onClick={() => exportTable('csv')} className="btn btn-primary btn-sm m-1 ">
-                            <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
+                    <div className="flex items-center flex-nowrap">
+                        <button type="button" onClick={() => exportTable('csv')} className="btn btn-primary btn-sm m-1 bg-[#38a169] hover:bg-[#2f855a]">
+                            <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2 text-white" />
                             CSV
                         </button>
-                        <button type="button" onClick={() => exportTable('txt')} className="btn btn-primary btn-sm m-1">
-                            <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                            TXT
-                        </button>
-                        <button type="button" className="btn btn-primary btn-sm m-1" onClick={handleDownloadExcel}>
-                            <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
+                        <button type="button" className="btn btn-primary btn-sm m-1 bg-[#4a8dff] hover:bg-[#3883e6]" onClick={handleDownloadExcel}>
+                            <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2 text-white" />
                             EXCEL
                         </button>
-                        <button type="button" onClick={() => exportTable('print')} className="btn btn-primary btn-sm m-1">
-                            <IconPrinter className="ltr:mr-2 rtl:ml-2" />
+                        <button type="button" onClick={() => exportTable('print')} className="btn btn-primary btn-sm m-1 bg-[#f6ad55] hover:bg-[#e68b3a]">
+                            <IconPrinter className="ltr:mr-2 rtl:ml-2 text-white" />
                             PRINT
                         </button>
                     </div>
@@ -391,29 +424,79 @@ const UserManagement = () => {
                     </div>
 
                     <div>
-                        <button type="button" className="btn btn-dark w-8 h-8 p-0 rounded-full" onClick={() => dispatch(GetUserData() as any)}>
-                            <IconRefresh className="w-5 h-5" />
-                        </button>
+                        <Tippy content="refresh">
+                            <button type="button" className="btn btn-dark w-8 h-8 p-0 rounded-full" onClick={() => dispatch(GetUsersData() as any)}>
+                                <IconRefresh className="w-5 h-5" />
+                            </button>
+                        </Tippy>
+                    </div>
+                    <div className={` gap-1 disabled:opacity-50 disabled:cursor-not-allowed disabled ${selectedRecords.length > 0 ? '!flex' : 'hidden'}`}>
+                        <div>
+                            <Tippy content="Delete">
+                                <button
+                                    type="button"
+                                    className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl"
+                                    onClick={() => handleMultiUserDelete(selectedRecords, dispatch, setSelectedRecords)}
+                                >
+                                    <IconTrash className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Activate">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMultiUserActivation(selectedRecords, dispatch)}
+                                    className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                >
+                                    <IconBolt className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Deactivate">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
+                                    className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                >
+                                    <IconX className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Add To Alumni Group">
+                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl" onClick={() => handleAddToAlumniGroup(selectedRecords, dispatch)}>
+                                    <IconUsersGroup className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
                     </div>
 
-                    <div className="ltr:ml-auto rtl:mr-auto">
-                        <input type="text" className="form-input w-auto" placeholder="Search..." value={search2} onChange={(e) => setSearch2(e.target.value)} />
+                    <div className="flex ltr:ml-auto rtl:mr-auto gap-1">
+                        <div className="relative">
+                            <input type="text" className="form-input w-auto pl-2 pr-12" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                            <button type="button" className="absolute inset-y-0 right-0 flex items-center px-2" onClick={() => setSearch('')}>
+                                <IconX className="w-5 h-5 text-gray-500 hover:text-gray-900" />
+                            </button>
+                        </div>
+                        <Tippy content="Add A New User">
+                            <button
+                                type="button"
+                                className="btn btn-success w-8  p-0 "
+                                onClick={() => {
+                                    setAddUserModal(true);
+                                }}
+                            >
+                                <IconUserPlus className="" />
+                            </button>
+                        </Tippy>
                     </div>
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => {
-                            setAddUserModal(true);
-                        }}
-                    >
-                        <IconUserPlus className="ltr:mr-2 rtl:ml-2" />
-                        Add User
-                    </button>
                 </div>
                 <div className="datatables">
                     <DataTable
                         className="whitespace-nowrap table-hover"
-                        records={recordsData2}
+                        records={recordsData}
                         columns={[
                             {
                                 accessor: 'first_name',
@@ -421,7 +504,11 @@ const UserManagement = () => {
                                 sortable: true,
                                 render: ({ first_name, last_name, id }) => (
                                     <div className="flex items-center w-max">
-                                        <img className="w-9 h-9 rounded-full ltr:mr-2 rtl:ml-2 object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
+                                        {false ? (
+                                            <img className="w-9 h-9 rounded-full ltr:mr-2 rtl:ml-2 object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
+                                        ) : (
+                                            <IconUser className="w-7 h-7 rounded-full bg-slate-400 ltr:mr-2 rtl:ml-2 p-1" />
+                                        )}
                                         <div>{first_name + ' ' + last_name}</div>
                                     </div>
                                 ),
@@ -429,24 +516,71 @@ const UserManagement = () => {
                             { accessor: 'username', title: 'Username', sortable: true, hidden: hideCols.includes('username') },
                             { accessor: 'email', title: 'Email', sortable: true, hidden: hideCols.includes('email') },
                             { accessor: 'phone', title: 'Phone No.', sortable: true, hidden: hideCols.includes('phone') },
-                            { accessor: 'address', title: 'Address', sortable: true, hidden: hideCols.includes('address') },
+                            {
+                                accessor: 'address',
+                                title: 'Address',
+                                sortable: true,
+                                hidden: hideCols.includes('address'),
+                            },
                             {
                                 accessor: 'dob',
                                 title: 'DOB',
                                 sortable: true,
                                 hidden: hideCols.includes('dob'),
-                                render: ({ dob }) => {
-                                    const validDob = dob as string | number | Date;
-
-                                    return <div>{formatDate(validDob)}</div>;
-                                },
+                                render: ({ dob }) => dayjs(dob).format('DD MMM YYYY'),
+                                filter: ({ close }) => (
+                                    <Stack>
+                                        <DatePicker className="max-w-sm" maxDate={new Date()} type="range" value={birthdaySearchRange} onChange={setBirthdaySearchRange} />
+                                        <Button
+                                            disabled={!birthdaySearchRange}
+                                            variant="light"
+                                            onClick={() => {
+                                                setBirthdaySearchRange(undefined);
+                                                close();
+                                            }}
+                                        >
+                                            Clear
+                                        </Button>
+                                    </Stack>
+                                ),
+                                filtering: Boolean(birthdaySearchRange),
                             },
                             {
                                 accessor: 'is_active',
                                 title: 'Active',
                                 sortable: true,
                                 hidden: hideCols.includes('Active'),
-                                render: ({ is_active }) => <span className={`badge bg-${getActivityColor(is_active)}`}>{is_active ? 'Active' : 'Inactive'}</span>,
+                                render: ({ is_active }) => {
+                                    const active = is_active as string | boolean;
+                                    return <span className={`badge bg-${getActivityColor(active)}`}>{active ? 'Active' : 'Inactive'}</span>;
+                                },
+                                filter: ({ close }) => (
+                                    <Stack>
+                                        <div className="text-end ltr:ml-auto rtl:mr-auto" onClick={close}>
+                                            <IconX />
+                                        </div>
+                                        <Select
+                                            className="max-w-sm"
+                                            value={activeFilter}
+                                            onChange={(selectedOption) => {
+                                                const value = selectedOption ? selectedOption.value : undefined;
+                                                console.log('value', activeFilter, value);
+                                                setActiveFilter(value);
+                                            }}
+                                            options={activityOption}
+                                        />
+                                        <Button
+                                            disabled={!activeFilter}
+                                            variant="light"
+                                            onClick={() => {
+                                                close();
+                                                resetActiveFilter();
+                                            }}
+                                        >
+                                            Clear
+                                        </Button>
+                                    </Stack>
+                                ),
                             },
                             {
                                 accessor: 'created_at',
@@ -459,56 +593,83 @@ const UserManagement = () => {
                                     return <div>{formatDate(created_at)}</div>;
                                 },
                             },
-                            { accessor: 'role', title: 'Role', sortable: true, hidden: hideCols.includes('role') },
+                            {
+                                accessor: 'role',
+                                title: 'Role',
+                                sortable: true,
+                                hidden: hideCols.includes('role'),
+                            },
                             { accessor: 'azure_id', title: 'Azure_id', sortable: true, hidden: hideCols.includes('azure_id') },
                             { accessor: 'id', title: 'User id', sortable: true, hidden: hideCols.includes('id') },
                         ]}
-                        totalRecords={initialRecords2.length}
-                        recordsPerPage={pageSize2}
-                        page={page2}
-                        onPageChange={(p) => setPage2(p)}
+                        totalRecords={initialRecords.length}
+                        recordsPerPage={pageSize}
+                        withTableBorder
+                        borderRadius="sm"
+                        withColumnBorders
+                        striped
+                        highlightOnHover
+                        page={page}
+                        onPageChange={(p) => setPage(p)}
                         recordsPerPageOptions={PAGE_SIZES}
-                        onRecordsPerPageChange={setPageSize2}
-                        sortStatus={sortStatus2}
-                        onSortStatusChange={setSortStatus2}
+                        onRecordsPerPageChange={setPageSize}
+                        sortStatus={sortStatus}
+                        onSortStatusChange={setSortStatus}
                         selectedRecords={selectedRecords}
                         onSelectedRecordsChange={setSelectedRecords}
                         onRowClick={(row) => console.log(row)}
-                        rowContextMenu={{
-                            items: (row) => [
+                        onRowContextMenu={({ record, event }) =>
+                            showContextMenu([
                                 {
                                     key: 'view',
-                                    title: `View user ${row.username}`,
+                                    title: `View user ${record.username}`,
                                     icon: <IconEye />,
-                                    onClick: () => handleNavigation(row),
+                                    onClick: () => handleNavigation(record),
                                 },
                                 {
                                     key: 'edit',
-                                    title: `Edit ${row.username}`,
+                                    title: `Edit ${record.username}`,
                                     icon: <IconPencil />,
-                                    onClick: () => editUser(row),
+                                    onClick: () => editUser(record),
                                 },
                                 {
-                                    key: row.is_active ? 'deactivate' : 'activate',
-                                    title: `${row.is_active ? 'Deactivate' : 'Activate'} ${row.username}`,
-                                    color: row.is_active ? 'red' : 'green',
-                                    icon: row.is_active ? <IconX /> : <IconChecks />,
-                                    onClick: () => handleUserActivation(row, dispatch),
+                                    key: record.is_active ? 'deactivate' : 'activate',
+                                    title: `${record.is_active ? 'Deactivate' : 'Activate'} ${record.username}`,
+                                    color: record.is_active ? 'red' : 'green',
+                                    icon: record.is_active ? <IconX /> : <IconChecks />,
+                                    onClick: () => handleUserActivation(record, dispatch),
                                 },
                                 {
                                     key: 'add to group',
-                                    title: `Add ${row.username} to an Alumni group`,
+                                    title: `Add ${record.username} to an Alumni group`,
+                                    color: '#ff00ff',
                                     icon: <IconUsersGroup />,
-                                    onClick: () => editUser(row),
+                                    onClick: () => editUser(record),
                                 },
-                            ],
-                        }}
+                            ])(event)
+                        }
+                        // onRowContextMenu={({ record, event }) =>
+                        //     showContextMenu([
+                        //         {
+                        //             key: 'view-company-details',
+                        //             icon: <IconEye />,
+                        //             title: `Show context Menu ${record.username}`,
+                        //             onClick: () =>
+                        //                 showNotification({
+                        //                     message: `Clicked on view context-menu action for company`,
+                        //                     withBorder: true,
+                        //                 }),
+                        //         },
+                        //     ])(event)
+                        // }
+                        textSelectionDisabled={isTouch}
                         minHeight={200}
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
             </div>
             <AddNewUser AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
+            <AddUserToGroup AddUserToGroupModal={AddUserToGroupModal} setAddUserToGroupModal={setAddUserToGroupModal} usersToAddToALumniGroup={usersToAddToALumniGroup} />
         </div>
     );
 };

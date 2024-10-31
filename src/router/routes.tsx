@@ -2,17 +2,18 @@ import { lazy } from 'react';
 import AlumniGroupManagementpage from '../pages/AlumniGroupManagement/AlumniGroupManagemnetPage';
 import ContractManagementpage from '../pages/ContractsManagement/Contractsmanagementpage';
 import AdminDashboard from '../pages/Dasboard/AdminDashboard';
+import InsurancePacakes from '../pages/InsurancePackageManagement/InsurancePackageManagement';
 import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
 import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupEdit';
 import MemberGroupPreview from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupPreview ';
 import MyGroups from '../pages/MemberOnly/MyAlumniGroups';
 import MyBeneficiaries from '../pages/MemberOnly/MyBeneficiaries';
+import MyContracts from '../pages/MemberOnly/MyContracts';
 import MyPayments from '../pages/MemberOnly/MyPayments';
 import AccountSetting from '../pages/UserManagement/AccountSetting';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
-import MyContracts from '../pages/MemberOnly/MyContracts';
-import InsurancePacakes from '../pages/InsurancePackageManagement/InsurancePacakes';
+import { RowContextMenuExample } from '../pages/UserManagement/UserManagement copy';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -92,6 +93,10 @@ const routes = [
     {
         path: '/member/contracts',
         element: <MyContracts />,
+    },
+    {
+        path: '/test',
+        element: <RowContextMenuExample />,
     },
     // {
     //     path: '/auth/boxed-lockscreen',

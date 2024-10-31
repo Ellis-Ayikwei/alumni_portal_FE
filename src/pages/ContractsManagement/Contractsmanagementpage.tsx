@@ -17,6 +17,7 @@ import IconPencil from '../../components/Icon/IconPencil';
 import IconPlusCircle from '../../components/Icon/IconPlusCircle';
 import IconPrinter from '../../components/Icon/IconPrinter';
 import IconRefresh from '../../components/Icon/IconRefresh';
+import IconSearch from '../../components/Icon/IconSearch';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconX from '../../components/Icon/IconX';
 import { IRootState } from '../../store';
@@ -24,7 +25,12 @@ import { GetAlumniData } from '../../store/alumnigroupSlice';
 import { setPageTitle } from '../../store/themeConfigSlice';
 import handleUserActivation from '../UserManagement/userManagementUtils/userActivation';
 import CreateNewContract from './contractManagementUtils/CreateNewContract';
-import IconSearch from '../../components/Icon/IconSearch';
+import Tippy from '@tippyjs/react';
+import IconTrash from '../../components/Icon/IconTrash';
+import handleMultiUserDelete from '../UserManagement/userManagementUtils/multiUserDelete';
+import handleMultiUserActivation from '../UserManagement/userManagementUtils/multiUserActivation';
+import handleMultiUserDeActivation from '../UserManagement/userManagementUtils/multiUserDeActivation';
+import IconBolt from '../../components/Icon/IconBolt';
 
 const col = ['name', 'start_date', 'end_date', 'insurance_package', 'is_locked', 'president_id', 'id', 'create_at', 'updated_at'];
 
@@ -330,10 +336,6 @@ const AlumniGroupManagementpage = () => {
                             <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                             CSV
                         </button>
-                        <button type="button" onClick={() => exportTable('txt')} className="btn btn-primary btn-sm m-1">
-                            <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
-                            TXT
-                        </button>
                         <button type="button" className="btn btn-primary btn-sm m-1" onClick={handleDownloadExcel}>
                             <IconFile className="w-5 h-5 ltr:mr-2 rtl:ml-2" />
                             EXCEL
@@ -391,7 +393,48 @@ const AlumniGroupManagementpage = () => {
                             <IconRefresh className="w-5 h-5" />
                         </button>
                     </div>
-
+                    <div className={` gap-1 disabled:opacity-50 disabled:cursor-not-allowed disabled ${selectedRecords.length > 0 ? '!flex' : 'hidden'}`}>
+                        <div>
+                            <Tippy content="Delete">
+                                <button
+                                    type="button"
+                                    className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl"
+                                    onClick={() => handleMultiUserDelete(selectedRecords, dispatch, setSelectedRecords)}
+                                >
+                                    <IconTrash className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Activate">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMultiUserActivation(selectedRecords, dispatch)}
+                                    className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                >
+                                    <IconBolt className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Deactivate">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
+                                    className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                >
+                                    <IconX className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                        <div>
+                            <Tippy content="Add To Alumni Group">
+                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl" onClick={() => handleAddToAlumniGroup(selectedRecords, dispatch)}>
+                                    <IconUsersGroup className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+                    </div>
                     <div className="ltr:ml-auto rtl:mr-auto">
                         <input type="text" className="form-input w-auto" placeholder="Search..." value={search2} onChange={(e) => setSearch2(e.target.value)} />
                     </div>
@@ -421,16 +464,16 @@ const AlumniGroupManagementpage = () => {
                                         <div>{name}</div>
                                     </div>
                                 ),
-                                
+
                                 filter: (
                                     <TextInput
                                         label="Employees"
                                         description="Show employees whose names include the specified text"
                                         placeholder="Search employees..."
-                                        leftSection={<IconSearch size={16} />}
+                                        leftSection={<IconSearch />}
                                         rightSection={
                                             <ActionIcon size="sm" variant="transparent" c="dimmed" onClick={() => setQuery('')}>
-                                                <IconX size={14} />
+                                                <IconX />
                                             </ActionIcon>
                                         }
                                         value={query}

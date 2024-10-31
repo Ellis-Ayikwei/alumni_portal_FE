@@ -7,7 +7,7 @@ import Select from 'react-select';
 import 'tippy.js/dist/tippy.css';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
-import { GetUserData } from '../../../store/usersSlice';
+import { GetUsersData } from '../../../store/usersSlice';
 import showMessage from './showMessage';
 
 export const dParams = {
@@ -170,7 +170,7 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
             if (response.status === 200) {
                 showMessage(`User created successfully.`, 'success');
                 setParams(defaultParams);
-                dispatch(GetUserData() as any);
+                dispatch(GetUsersData() as any);
                 setAddUserModal(false);
             }
         } catch (error: any) {
