@@ -1,19 +1,24 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useEffect, useState } from 'react';
 import CurrencyInput from 'react-currency-input-field';
+import { useDispatch } from 'react-redux';
+import Swal from 'sweetalert2';
 import IconSave from '../../../components/Icon/IconSave';
 import IconTrash from '../../../components/Icon/IconTrash';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
+import { GetInsurancePackages } from '../../../store/insurancePackageSlice';
+import confirmDeleteInsurance from './confirmDeleteInsurance';
 
-interface Insurance {
+export interface Insurance {
+    id: string;
     name: string;
     description: string;
     sum_assured: number;
     monthly_premium_ghs: number;
     annual_premium_ghs: number;
     is_active: boolean;
-    benefits: any[];
+    benefits: Benefit[];
 }
 
 interface EditInsurancePackageProps {
@@ -22,64 +27,74 @@ interface EditInsurancePackageProps {
     data: Insurance;
 }
 
+interface Benefit {
+    name: string;
+    id: string;
+    premium_payable: number;
+}
+
+type InputChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
+
 const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePackageProps) => {
-    const [Imgsrc, setImageSrc] = useState('');
-    const contractStatus = 'active';
-    const [images, setImages] = useState<any>([]);
-    const maxNumber = 69;
+    const [insurance, setInsurance] = useState<Insurance>(data);
+    const [benefits, setBenefits] = useState<Benefit[]>(data.benefits || []);
+    const [isDisabled, setIsdisabled] = useState(true);
+    const dispatch = useDispatch();
 
-    console.log('the data is', data);
-
-    const initialInsurance = {
-        name: data?.name || '',
-        description: data?.description || '',
-        sum_assured: data?.sum_assured || 0,
-        monthly_premium_ghs: data?.monthly_premium_ghs || 0,
-        annual_premium_ghs: data?.annual_premium_ghs || 0,
-        is_active: data?.is_active,
-        bnfs: data?.benefits || {},
+    const setDetfault = () => {
+        setInsurance(data);
+        setBenefits(data.benefits || []);
     };
-
-    console.log('the initial value', initialInsurance);
-
-    const [insurance, setInsurance] = useState({});
 
     useEffect(() => {
-        if (data) {
-            setInsurance({
-                name: data.name || '',
-                description: data.description || '',
-                sum_assured: data.sum_assured || 0,
-                monthly_premium_ghs: data.monthly_premium_ghs || 0,
-                annual_premium_ghs: data.annual_premium_ghs || 0,
-                is_active: data.is_active,
-                bnfs: data.benefits || [],
-            });
-        }
+        setDetfault();
     }, [data]);
 
-    const [benefits, setBenefits] = useState<any>({});
-
-    interface InputChangeEvent extends React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> {}
-
-    const handleInputChange = (id: string, value: string | undefined) => {
-        setInsurance({ ...insurance, [id]: value, bnfs: benefits });
+    const handleInputChange = (field: keyof Insurance, value: string | number) => {
+        setInsurance((prev) => ({ ...prev, [field]: value }));
     };
 
-    const handleBenefitChange = (id: string, value: string | undefined) => {
-        setBenefits({ ...benefits, [id]: value });
+    const handleBenefitChange = (name: string, value: string | undefined) => {
+        setBenefits((prevBenefits) => prevBenefits.map((benefit) => (benefit.name === name ? { ...benefit, premium_payable: Number(value) } : benefit)));
+        setIsdisabled(false);
+        console.log(benefits);
     };
 
     const handleSaveInsurance = async () => {
         try {
-            const response = await axiosInstance.post('/insurance_packages', JSON.stringify(insurance));
-            console.log('data', response);
-        } catch (err) {}
+            const updatedInsurance = { ...insurance, benefits };
+            await axiosInstance.put(`/insurance_packages/${insurance.id}`, JSON.stringify(updatedInsurance));
+        } catch (error) {
+            console.error('Error saving insurance package:', error);
+        }
     };
 
-    useEffect(() => {
-        console.log('insurance', insurance);
-    }, [insurance]);
+    const handleDeleteInsurance = async () => {
+        try {
+            const isDeleConfirmed = await confirmDeleteInsurance(dispatch);
+            if (isDeleConfirmed) {
+                const deleteResponse = await axiosInstance.delete(`/insurance_packages/${insurance.id}`);
+                if (deleteResponse.status === 200) {
+                    dispatch(GetInsurancePackages() as any);
+                    setViewModal(false);
+                    Swal.fire('Deleted!', '', 'success');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving insurance package:', error);
+        }
+    };
+
+    const handlePackageDeactivation = async (value: string) => {
+        const activityStatus = await axiosInstance.put(`/insurance_packages/${insurance.id}`, {
+            is_active: value === 'Activate' ? true : value === 'Deactivate' ? false : null,
+        });
+        if (activityStatus.status === 200) {
+            Swal.fire(`${value}d`, '', 'success');
+            dispatch(GetInsurancePackages() as any);
+            setViewModal(false);
+        }
+    };
 
     return (
         <Transition appear show={viewModal} as={Fragment}>
@@ -87,7 +102,7 @@ const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePa
                 as="div"
                 open={viewModal}
                 onClose={() => {
-                    setViewModal(false), setImages([]);
+                    setViewModal(false);
                 }}
             >
                 <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
@@ -112,7 +127,6 @@ const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePa
                                         className="text-white-dark hover:text-dark"
                                         onClick={() => {
                                             setViewModal(false);
-                                            setImages([]);
                                         }}
                                     >
                                         <IconX />
@@ -159,7 +173,7 @@ const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePa
                                                     defaultValue={0}
                                                     decimalsLimit={2}
                                                     value={insurance.sum_assured}
-                                                    onValueChange={(value) => handleInputChange('sum_assured', value)}
+                                                    onValueChange={(value) => handleInputChange('sum_assured', value ?? '')}
                                                     className="form-input"
                                                 />
                                             </div>
@@ -167,91 +181,30 @@ const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePa
                                         <div className="text-xs p-1 font-semibold text-gray-800 mb-3 mt-5 w-full bg-white-light">
                                             <p>Benefits</p>
                                         </div>
-                                        <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="deathMember" className="text-gray-600">
-                                                Death (Member):
-                                            </label>
-                                            <div className="flex">
-                                                <CurrencyInput
-                                                    id="deathMember"
-                                                    name="deathMember"
-                                                    prefix="GH₵ "
-                                                    defaultValue={0}
-                                                    decimalsLimit={2}
-                                                    onValueChange={(value) => handleBenefitChange('Death (Member)', value)}
-                                                    placeholder="Enter amount"
-                                                    className="form-input"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="deathSpouse" className="text-gray-600">
-                                                Death (Spouse):
-                                            </label>
-                                            <div className="flex">
-                                                <CurrencyInput
-                                                    id="deathSpouse"
-                                                    name="deathSpouse"
-                                                    prefix="GH₵ "
-                                                    defaultValue={0}
-                                                    decimalsLimit={2}
-                                                    onValueChange={(value) => handleBenefitChange('Death (Spouse)', value)}
-                                                    placeholder="Enter amount"
-                                                    className="form-input"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="nominatedLives" className="text-gray-600">
-                                                2 Nominated Lives (Each):
-                                            </label>
-                                            <div className="flex">
-                                                <CurrencyInput
-                                                    id="nominatedLives"
-                                                    name="nominatedLives"
-                                                    prefix="GH₵ "
-                                                    defaultValue={0}
-                                                    decimalsLimit={2}
-                                                    onValueChange={(value) => handleBenefitChange('2 Nominated Lives (Each)', value)}
-                                                    placeholder="Enter amount"
-                                                    className="form-input"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="criticalIllnessMember" className="text-gray-600">
-                                                Critical Illness (Member):
-                                            </label>
-                                            <div className="flex">
-                                                <CurrencyInput
-                                                    id="criticalIllnessMember"
-                                                    name="criticalIllnessMember"
-                                                    prefix="GH₵ "
-                                                    defaultValue={0}
-                                                    decimalsLimit={2}
-                                                    onValueChange={(value) => handleBenefitChange('Critical Illness (Member)', value)}
-                                                    placeholder="Enter amount"
-                                                    className="form-input"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center mb-2 mt-2">
-                                            <label htmlFor="permanentDisabilityMember" className="text-gray-600">
-                                                Permanent Disability (Member):
-                                            </label>
-                                            <div className="flex">
-                                                <CurrencyInput
-                                                    id="permanentDisabilityMember"
-                                                    name="permanentDisabilityMember"
-                                                    prefix="GH₵ "
-                                                    defaultValue={0}
-                                                    decimalsLimit={2}
-                                                    onValueChange={(value) => handleBenefitChange('Permanent Disability (Member)', value)}
-                                                    placeholder="Enter amount"
-                                                    className="form-input"
-                                                />
-                                            </div>
-                                        </div>
+
+                                        {Object.entries(benefits || {}).map(([key, value]) => {
+                                            const { name, id, premium_payable } = value as Benefit;
+                                            return (
+                                                <div key={key} className="flex justify-between items-center mb-2 mt-2">
+                                                    <label htmlFor={id} className="text-gray-600">
+                                                        {name}
+                                                    </label>
+                                                    <div className="flex">
+                                                        <CurrencyInput
+                                                            id={name}
+                                                            name={name}
+                                                            prefix="GH₵ "
+                                                            defaultValue={premium_payable}
+                                                            decimalsLimit={2}
+                                                            onValueChange={(value) => handleBenefitChange(name, value)}
+                                                            placeholder="Enter amount"
+                                                            className="form-input"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
                                         <div className="text-xs p-1 font-semibold text-gray-800 mb-3 mt-5 w-full bg-white-light">
                                             <p>Payment Terms</p>
                                         </div>
@@ -267,7 +220,7 @@ const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePa
                                                     defaultValue={0}
                                                     decimalsLimit={2}
                                                     value={insurance.monthly_premium_ghs}
-                                                    onValueChange={(value) => handleInputChange('monthly_premium_ghs', value)}
+                                                    onValueChange={(value) => handleInputChange('monthly_premium_ghs', value ?? '')}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
@@ -285,7 +238,7 @@ const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePa
                                                     defaultValue={0}
                                                     decimalsLimit={2}
                                                     value={insurance.annual_premium_ghs}
-                                                    onValueChange={(value) => handleInputChange('annual_premium_ghs', value)}
+                                                    onValueChange={(value) => handleInputChange('annual_premium_ghs', value ?? '')}
                                                     placeholder="Enter amount"
                                                     className="form-input"
                                                 />
@@ -294,22 +247,35 @@ const EditInsurancePackage = ({ viewModal, setViewModal, data }: EditInsurancePa
                                     </form>
 
                                     <div className="mt-8 flex items-center justify-end">
-                                        <button type="button" className="btn btn-outline-danger" onClick={() => setViewModal(false)}>
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-danger"
+                                            onClick={() => {
+                                                setViewModal(false);
+                                                setDetfault();
+                                                setIsdisabled(true);
+                                            }}
+                                        >
                                             <IconX /> Close
                                         </button>
-                                        <button type="button" className="btn btn-danger ltr:ml-4 rtl:mr-4" onClick={handleSaveInsurance}>
+                                        <button type="button" className="btn btn-danger ltr:ml-4 rtl:mr-4" onClick={handleDeleteInsurance}>
                                             <IconTrash />
                                         </button>
-                                        {false ? (
-                                            <button type="button" className="btn btn-warning ltr:ml-4 rtl:mr-4" onClick={handleSaveInsurance}>
+                                        {!insurance.is_active ? (
+                                            <button type="button" value="Activate" className="btn btn-warning ltr:ml-4 rtl:mr-4" onClick={(e) => handlePackageDeactivation(e.currentTarget.value)}>
                                                 Activate
                                             </button>
                                         ) : (
-                                            <button type="button" className="btn btn-danger bg-red-700 ltr:ml-4 rtl:mr-4" onClick={handleSaveInsurance}>
+                                            <button
+                                                type="button"
+                                                value="Deactivate"
+                                                className="btn btn-danger bg-red-700 ltr:ml-4 rtl:mr-4"
+                                                onClick={(e) => handlePackageDeactivation(e.currentTarget.value)}
+                                            >
                                                 Deactivate
                                             </button>
                                         )}
-                                        <button type="button" className="btn btn-success ltr:ml-4 rtl:mr-4 gap-1" onClick={handleSaveInsurance}>
+                                        <button type="button" className={`btn btn-success ltr:ml-4 rtl:mr-4 gap-1`} onClick={handleSaveInsurance} disabled={isDisabled}>
                                             <IconSave />
                                             Save
                                         </button>

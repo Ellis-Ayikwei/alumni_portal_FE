@@ -1,23 +1,35 @@
-import { faBoxesStacked } from '@fortawesome/free-solid-svg-icons';
+import { faBoxesStacked, faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Tippy from '@tippyjs/react';
 import sortBy from 'lodash/sortBy';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import IconArrowBackward from '../../components/Icon/IconArrowBackward';
 import IconPencil from '../../components/Icon/IconPencil';
+import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import { IRootState } from '../../store';
 import { GetInsurancePackages } from '../../store/insurancePackageSlice';
 import { setPageTitle } from '../../store/themeConfigSlice';
 import AddInsurancePackage from './InsurancePackageManagementUtils/addInsuranceModal';
-import EditInsurancePackage from './InsurancePackageManagementUtils/editInsuranceModal';
+import EditInsurancePackage, { Insurance } from './InsurancePackageManagementUtils/editInsuranceModal';
 
 const InsurancePacakes = () => {
     const dispatch = useDispatch();
     const [addPackageModal, setAddPackageModal] = useState(false);
     const [editPackageModal, setEditPackageModal] = useState(false);
     const { insurancePackages, loading, error } = useSelector((state: IRootState) => state.insurancePackages) || { insurancePackages: [] };
-    const [datatoEdit, setDatatoEdit] = useState({});
+    const [datatoEdit, setDatatoEdit] = useState<Insurance>({
+        id: '',
+        name: '',
+        description: '',
+        sum_assured: 0,
+        monthly_premium_ghs: 0,
+        annual_premium_ghs: 0,
+        is_active: false,
+        benefits: [],
+    });
 
     useEffect(() => {
         dispatch(setPageTitle('Insurance Packages'));
@@ -25,30 +37,20 @@ const InsurancePacakes = () => {
 
     useEffect(() => {
         dispatch(GetInsurancePackages() as any);
-        console.log('the insurance packages', insurancePackages);
     }, []);
     const [tabs, setTabs] = useState<string[]>([]);
-    const toggleCode = (name: string) => {
-        if (tabs.includes(name)) {
-            setTabs((value) => value.filter((d) => d !== name));
-        } else {
-            setTabs([...tabs, name]);
-        }
+
+    const handleEditInsurancePackage = (data: any) => {
+        setEditPackageModal(true);
+        setDatatoEdit(data);
     };
 
-    const benefits = [
-        { bn_name: 'Death (Member)', bn_amounts: '20,000.00' },
-        { bn_name: 'Death (Spouse)', bn_amounts: '20,000.00' },
-        { bn_name: '2 nominated lives (Each)', bn_amounts: '10,000.00' },
-        { bn_name: 'Critical Illness (Member)', bn_amounts: '10,000.00' },
-        { bn_name: 'Permanent Disability (Member)', bn_amounts: '10,000.00' },
-    ];
+    let GHCedis = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'GHC',
+    });
 
-
-const handleEditInsurancePackage = (data: any) => {
-    setEditPackageModal(true);
-    setDatatoEdit(data)
-}
+    console.log('Dollars: ' + GHCedis.format(12222155));
 
     return (
         <div>
@@ -83,53 +85,81 @@ const handleEditInsurancePackage = (data: any) => {
                 </div>
             </div>
             <div className="pt-5 grid lg:grid-cols-3 xl:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-3">
-                {Array.isArray(insurancePackages) && insurancePackages.map((item: any) => (
-                    <div key={item.id} className="mb-5 items-center justify-center w-full ">
-                        <div className=" w-full bg-white shadow-[4px_6px_10px_-3px_#bfc9d4] rounded-xl rounded border border-white-light dark:border-[#1b2e4b] dark:bg-[#191e3a] dark:shadow-none">
-                            <div className="py-7 px-6">
-                                <div className="flex">
-                                    <p className="text-black text-xl mb-1.5 font-bold">{item.name}</p>
-                                    <p className={`text-${item.is_active ? 'green-300' : 'red-300'} text-sm mb-1.5 rtl:mr-auto ltr:ml-auto`}>{item.is_active ? 'Active' : 'Inactive'}</p>
-                                </div>
-                                <h5 className="text-white-dark text-sm font-bold mb-4">{item.description}</h5>
-                                <p className="text-white-dark">Benefits</p>
-                                <div className="gap-2">
-                                    {sortBy(item.benefits, ['name']).map(({ id, name, premium_payable }: { id: string; name: string; premium_payable: string }) => (
-                                        <div className="flex justify-between" key={id}>
-                                            <span className="text-gray-600">{name}:</span>
-                                            <span className="font-semibold">GHc {premium_payable}</span>
+                {Array.isArray(insurancePackages) && insurancePackages.length === 0 && (
+                    <p className="rtl:ml-auto ltr:mr-auto">
+                        No Insurance Package Found{' '}
+                        <b
+                            className="cursor-pointer"
+                            onClick={() => {
+                                setAddPackageModal(true);
+                            }}
+                        >
+                            Add a package
+                        </b>
+                    </p>
+                )}
+                {Array.isArray(insurancePackages) &&
+                    insurancePackages.map((item: any) => (
+                        <div key={item.id} className="mb-5 items-center justify-center w-full ">
+                            <div className=" w-full bg-white shadow-[4px_6px_10px_-3px_#bfc9d4] rounded-xl rounded border border-white-light dark:border-[#1b2e4b] dark:bg-[#191e3a] dark:shadow-none">
+                                <div className="py-7 px-6">
+                                    <div className="flex">
+                                        <p className="text-black text-xl mb-1.5 font-bold">{item.name}</p>
+                                        <p
+                                            className={`${
+                                                item.is_active ? 'bg-green-300' : 'bg-red-300'
+                                            } text-slate-400 text-sm mb-1.5 flex items-center gap-1 rtl:mr-auto ltr:ml-auto rounded-full px-2`}
+                                        >
+                                            {item.is_active ? <FontAwesomeIcon icon={faCheckCircle} /> : <FontAwesomeIcon icon={faTimesCircle} />} {item.is_active ? 'Active' : 'Inactive'}
+                                        </p>
+                                    </div>
+                                    <h5 className="text-white-dark text-sm font-bold mb-4">{item.description}</h5>
+                                    <p className="text-white-dark">Benefits</p>
+                                    <div className="gap-2">
+                                        {sortBy(item.benefits, ['name']).map(({ id, name, premium_payable }: { id: string; name: string; premium_payable: string }) => (
+                                            <div className="flex justify-between" key={id}>
+                                                <span className="text-gray-600">{name}:</span>
+                                                <span className="font-semibold">{GHCedis.format(parseInt(premium_payable))}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-3">
+                                        <p className="text-white-dark">Payments terms</p>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Monthly Premium GH:</span>
+                                            <span className="font-semibold">{GHCedis.format(parseInt(item.monthly_premium_ghs))}</span>
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Annual Premium:</span>
+                                            <span className="font-semibold">{GHCedis.format(parseInt(item.annual_premium_ghs))}</span>
+                                        </div>
+                                    </div>
 
-                                <div className="mt-3">
-                                    <p className="text-white-dark">Payments terms</p>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Monthly Premium GH:</span>
-                                        <span className="font-semibold">Ghc {item.monthly_premium_ghs}</span>
+                                    <div className="mt-6 pt-4 before:w-[250px] before:h-[1px] before:bg-white-light before:inset-x-0 before:top-0 before:absolute before:mx-auto dark:before:bg-[#1b2e4b]">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600 text-lg">Sum Assured:</span>
+                                            <span className="font-bold text-xl">{GHCedis.format(parseInt(item.sum_assured))}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Annual Premium:</span>
-                                        <span className="font-semibold">GHc {item.annual_premium_ghs}</span>
-                                    </div>
-                                </div>
-
-                                <div className="relative flex justify-between mt-6 pt-4 before:w-[250px] before:h-[1px] before:bg-white-light before:inset-x-0 before:top-0 before:absolute before:mx-auto dark:before:bg-[#1b2e4b]">
-                                    <div className="flex items-center font-semibold gap-2">
-                                        <div className="text-[#515365] dark:text-white-dark">56 Groups </div>
-                                        <div className="text-[#515365] dark:text-white-dark">Active</div>
-                                    </div>
-                                    <div className="flex font-semibold">
-                                        <button className="btn btn-primary flex items-center ltr:mr-3 rtl:ml-3" onClick={() => handleEditInsurancePackage(item)}>
-                                            <IconPencil className="w-4 h-4 ltr:mr-1 rtl:ml-1" />
-                                            Edit
-                                        </button>
+                                    <div className="relative flex justify-between mt-6 pt-4 before:w-[250px] before:h-[1px] before:bg-white-light before:inset-x-0 before:top-0 before:absolute before:mx-auto dark:before:bg-[#1b2e4b]">
+                                        <Tippy content={'Subscribed Group'}>
+                                            <div className="flex items-center font-semibold gap-2 border-2 border-[#515365] dark:border-white-dark px-2 py-1 rounded">
+                                                <IconUsersGroup className="w-5 h-5" />
+                                                <div className="text-[#515365] dark:text-white-dark">56 Groups </div>
+                                            </div>
+                                        </Tippy>
+                                        <div className="flex font-semibold">
+                                            <button className="btn btn-primary flex items-center ltr:mr-auto rtl:ml-auto disabled" onClick={() => handleEditInsurancePackage(item)}>
+                                                <IconPencil className="w-4 h-4 ltr:mr-1 rtl:ml-1" />
+                                                Edit
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
             </div>
 
             <EditInsurancePackage viewModal={editPackageModal} setViewModal={setEditPackageModal} data={datatoEdit} />

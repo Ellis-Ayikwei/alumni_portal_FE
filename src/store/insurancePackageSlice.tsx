@@ -18,6 +18,7 @@ const initialState: InsurancePackageState = {
 // Create an async thunk for Login functionality
 export const GetInsurancePackages = createAsyncThunk('alumni/alumnidata', async () => {
     const response = await axiosInstance.get('/insurance_packages');
+    console.log(response.data);
     return response.data;
 });
 

@@ -1,8 +1,11 @@
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import CurrencyInput from 'react-currency-input-field';
+import Swal from 'sweetalert2';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
+import { useDispatch } from 'react-redux';
+import { GetInsurancePackages } from '../../../store/insurancePackageSlice';
 
 interface AddInsurancePackageProps {
     viewModal: boolean;
@@ -10,6 +13,7 @@ interface AddInsurancePackageProps {
 }
 
 const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackageProps) => {
+    const dispatch = useDispatch();
     const [Imgsrc, setImageSrc] = useState('');
     const contractStatus = 'active';
     const [images, setImages] = useState<any>([]);
@@ -51,13 +55,18 @@ const AddInsurancePackage = ({ viewModal, setViewModal }: AddInsurancePackagePro
     const handleSaveInsurance = async () => {
         try {
             const response = await axiosInstance.post('/insurance_packages', JSON.stringify(insurance));
-            console.log('data', response);
+            if ((response.status = 200)) {
+                Swal.fire('package added', '', 'success');
+                setViewModal(false);
+                dispatch(GetInsurancePackages() as any);
+            }
         } catch (err) {}
     };
 
-    useEffect(() => {
-        console.log('insurance', insurance);
-    }, [insurance]);
+
+
+
+
 
     return (
         <Transition appear show={viewModal} as={Fragment}>
