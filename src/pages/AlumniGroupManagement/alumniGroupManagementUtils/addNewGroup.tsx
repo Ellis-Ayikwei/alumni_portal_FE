@@ -1,3 +1,5 @@
+import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState } from 'react';
 import { eye } from 'react-icons-kit/feather/eye';
@@ -8,9 +10,8 @@ import useSwr from 'swr';
 import 'tippy.js/dist/tippy.css';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
-import { GetUsersData } from '../../../store/usersSlice';
-import showMessage from '../../UserManagement/userManagementUtils/showMessage';
 import fetcher from '../../../helper/fetcher';
+import showMessage from '../../UserManagement/userManagementUtils/showMessage';
 
 export const dParams = {
     name: '',
@@ -19,9 +20,8 @@ export const dParams = {
     school: '',
     status: '',
     package_id: '',
-    president_id: '',
     president_user_id: '',
-    president: null}
+};
 
 interface AddNewAlumniGroupProps {
     AddUserModal: boolean;
@@ -32,39 +32,31 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
     const dispatch = useDispatch();
     const [value, setValue] = useState<any>('list');
     const [defaultParams, setDefaultParams] = useState({ ...dParams });
-    const [params, setParams] = useState({ ...dParams });
-    const { data: ins_packages, error: ins_error, isLoading: ins_loadng } = useSwr("/insurance_packages", fetcher);
+    const [params, setParams] = useState<{ [key: string]: string }>({ ...dParams });
+    const { data: users_data, error: users_error, isLoading: users_loadng } = useSwr('/users', fetcher);
+    const { data: packages_data, error: packages_error, isLoading: packages_loadng } = useSwr('/insurance_packages', fetcher);
+    console.log('the users data', users_data);
 
-
-    console.log("the insurance packages", ins_packages)
-    const groups = [
-        { value: 'group1', label: 'group1' },
-        { value: 'group2', label: 'group2' },
-        { value: 'group3', label: 'group3' },
-    ];
-    const insurance_packages = [
-        { value: 'PLATINUM', label: 'PLATINUM' },
-        { value: 'GOLD', label: 'GOLD' },
-        { value: 'SILVER', label: 'SILVER' },
-        { value: 'BRONZE', label: 'BRONZE' },
-    ];
-    const users = [
-        { value: 'user1', label: 'user1' },
-        { value: 'user2', label: 'user2' },
-        { value: 'user3', label: 'user3' },
-    ];
+    const insurance_packages = packages_data?.map((pkg: any) => {
+        return { value: pkg.id, label: pkg.name };
+    });
+    const users = users_data?.map((user: any) => {
+        return { value: user.id, label: `${user.first_name} ${user.last_name}`, icon: <FontAwesomeIcon icon={faUser} /> };
+    });
 
     const ContractStatus = [
         { value: 'ACTIVE', label: 'ACTIVE' },
-        { value: 'INACTIVE', label: 'INACTIVE' },
+        { value: 'LOCKED', label: 'LOCKED' },
         { value: 'EXPIRED', label: 'EXPIRED' },
         { value: 'TERMINATED', label: 'TERMINATED' },
     ];
 
+    console.log('contract status', typeof ContractStatus);
+
     const changeValue = (e: any) => {
         const { value, id } = e.target;
-        console.log('value', value);
         setParams({ ...params, [id]: value });
+        console.log('params', params);
     };
 
     const [password, setPassword] = useState('');
@@ -85,52 +77,37 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
         setPassword(e.target.value);
     };
 
-    const saveNewUser = async () => {
+    const SaveNewGroup = async () => {
         console.log('params', params);
-        if (!params.first_name) {
-            showMessage('First Name is required.', 'error');
-            return true;
+        const requiredFields = [
+            { field: 'name', message: 'Group name is required.' },
+            { field: 'school', message: 'Group school is required.' },
+            { field: 'start_date', message: 'Group start date is required.' },
+            { field: 'end_date', message: 'Group end date is required.' },
+            { field: 'president_user_id', message: 'Group president is required.' },
+            { field: 'status', message: 'Group status is required.' },
+        ];
+
+        for (let { field, message } of requiredFields) {
+            if (!params[field]) {
+                showMessage(message, 'error');
+                return true;
+            }
         }
-        if (!params.email) {
-            showMessage('Email is required.', 'error');
-            return true;
-        }
-        if (!params.phone) {
-            showMessage('Phone is required.', 'error');
-            return true;
-        }
-        if (!params.username) {
-            showMessage('Username is required.', 'error');
-            return true;
-        }
-        if (!params.password) {
-            showMessage('Password is required.', 'error');
-            return true;
-        }
-        if (!params.password1) {
-            showMessage('Confirm Password is required.', 'error');
-            return true;
-        }
+
         if (params.password !== params.password1) {
             showMessage('Passwords do not match.', 'error');
             return true;
         }
-        if (!params.dob) {
-            showMessage('Date of Birth is required.', 'error');
-            return true;
-        }
-        if (!params.role) {
-            showMessage('Occupation is required.', 'error');
-            return true;
-        }
         const payload = JSON.stringify({ ...params });
+        console.log('payload', payload);
 
         try {
-            const response = await axiosInstance.post('/users', payload);
+            const response = await axiosInstance.post('/alumni_groups', payload);
             if (response.status === 200) {
-                showMessage(`User created successfully.`, 'success');
+                showMessage(`Group Created Successfully.`, 'success');
                 setParams(defaultParams);
-                dispatch(GetUsersData() as any);
+                // dispatch(GetUsersData() as any);
                 setAddUserModal(false);
             }
         } catch (error: any) {
@@ -184,10 +161,10 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
                                             <input id="name" type="text" placeholder="Enter Name" className="form-input" value={params.name} onChange={(e) => changeValue(e)} required />
                                         </div>
                                         <div className="mb-5">
-                                            <label htmlFor="name">
+                                            <label htmlFor="school">
                                                 School <span className="text-red-600">*</span>
                                             </label>
-                                            <input id="name" type="text" placeholder="Enter School Name" className="form-input" value={params.school} onChange={(e) => changeValue(e)} required />
+                                            <input id="school" type="text" placeholder="Enter School Name" className="form-input" value={params.school} onChange={(e) => changeValue(e)} required />
                                         </div>
                                         <div className="mb-5">
                                             <label htmlFor="start_date">
@@ -210,13 +187,23 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
                                             <input id="end_date" type="date" placeholder="Enter End Date" className="form-input" value={params.end_date} onChange={(e) => changeValue(e)} required />
                                         </div>
                                         <div className="mb-5">
+                                            <label htmlFor="president">President</label>
+                                            <Select
+                                                defaultValue={params.president_user_id}
+                                                id="president_id"
+                                                options={users}
+                                                isSearchable={false}
+                                                onChange={(e: any) => setParams({ ...params, president_user_id: e?.value })}
+                                            />
+                                        </div>
+                                        <div className="mb-5">
                                             <label htmlFor="insurance_package">Insurance Package</label>
                                             <Select
-                                                defaultValue={params.insurance_package}
-                                                id="insurance_package"
+                                                defaultValue={params.package_id}
+                                                id="package_id"
                                                 options={insurance_packages}
                                                 isSearchable={true}
-                                                onChange={(e) => setParams({ ...params, insurance_package: e?.value })}
+                                                onChange={(e: any) => setParams({ ...params, package_id: e.value })}
                                                 required
                                             />
                                         </div>
@@ -227,66 +214,19 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
                                             <Select
                                                 defaultValue={params.status}
                                                 id="status"
-                                                options={Object.values(ContractStatus)}
+                                                options={ContractStatus}
                                                 isSearchable={false}
-                                                onChange={(e) => setParams({ ...params, status: e?.value })}
+                                                onChange={(e: any) => setParams({ ...params, status: e?.value })}
                                                 required
                                             />
                                         </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="president_id">
-                                                President
-                                            </label>
-                                            <input
-                                                id="president_id"
-                                                type="number"
-                                                placeholder="Enter President Id"
-                                                className="form-input"
-                                                value={params.president_id}
-                                                onChange={(e) => changeValue(e)}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="id">
-                                                Id <span className="text-red-600">*</span>
-                                            </label>
-                                            <input id="id" type="number" placeholder="Enter Id" className="form-input" value={params.id} onChange={(e) => changeValue(e)} required />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="create_at">
-                                                Create At <span className="text-red-600">*</span>
-                                            </label>
-                                            <input
-                                                id="create_at"
-                                                type="datetime-local"
-                                                placeholder="Enter Create At"
-                                                className="form-input"
-                                                value={params.create_at}
-                                                onChange={(e) => changeValue(e)}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="updated_at">
-                                                Updated At <span className="text-red-600">*</span>
-                                            </label>
-                                            <input
-                                                id="updated_at"
-                                                type="datetime-local"
-                                                placeholder="Enter Updated At"
-                                                className="form-input"
-                                                value={params.updated_at}
-                                                onChange={(e) => changeValue(e)}
-                                                required
-                                            />
-                                        </div>
+
                                         <div className="flex justify-end items-center mt-8">
                                             <button type="button" className="btn btn-outline-danger" onClick={() => setAddUserModal(false)}>
                                                 Cancel
                                             </button>
-                                            <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4">
-                                                {params.id ? 'Update' : 'Add'}
+                                            <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={SaveNewGroup}>
+                                                Add
                                             </button>
                                         </div>
                                     </form>

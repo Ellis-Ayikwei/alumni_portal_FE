@@ -364,7 +364,7 @@ const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
                                                 Cancel
                                             </button>
                                             <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={saveNewUser}>
-                                                {params.id ? 'Update' : 'Add'}
+                                                Add
                                             </button>
                                         </div>
                                     </form>

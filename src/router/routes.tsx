@@ -4,8 +4,6 @@ import ContractManagementpage from '../pages/ContractsManagement/Contractsmanage
 import AdminDashboard from '../pages/Dasboard/AdminDashboard';
 import InsurancePacakes from '../pages/InsurancePackageManagement/InsurancePackageManagement';
 import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
-import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupEdit';
-import MemberGroupPreview from '../pages/MemberOnly/MyAlumniGroupUtils/MemberGroupPreview ';
 import MyGroups from '../pages/MemberOnly/MyAlumniGroups';
 import MyBeneficiaries from '../pages/MemberOnly/MyBeneficiaries';
 import MyContracts from '../pages/MemberOnly/MyContracts';
@@ -14,6 +12,8 @@ import AccountSetting from '../pages/UserManagement/AccountSetting';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
 import { RowContextMenuExample } from '../pages/UserManagement/UserManagement copy';
+import GroupPreview from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupPreview';
+import GroupEdit from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupEdit';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -59,6 +59,10 @@ const routes = [
         element: <InsurancePacakes />,
     },
     {
+        path: '/alumnigroups/:id',
+        element: <AlumniGroupManagementpage />,
+    },
+    {
         path: '/alumnigroups',
         element: <AlumniGroupManagementpage />,
     },
@@ -75,12 +79,12 @@ const routes = [
         element: <MyGroups />,
     },
     {
-        path: '/member/groups/preview',
-        element: <MemberGroupPreview />,
+        path: '/member/groups/preview/:group_id',
+        element: <GroupPreview />,
     },
     {
-        path: '/member/groups/edit',
-        element: <MemberGroupEdit />,
+        path: '/member/groups/edit/:group_id',
+        element: <GroupEdit />,
     },
     {
         path: '/member/mypayments',

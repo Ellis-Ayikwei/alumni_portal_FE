@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
     baseURL: apiUrl,
 	withCredentials: true,
     headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'Application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With',

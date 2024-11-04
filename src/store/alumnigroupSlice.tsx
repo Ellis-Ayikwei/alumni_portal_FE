@@ -3,14 +3,14 @@ import axiosInstance from '../helper/axiosInstance';
 
 // Define the initial state type
 interface AlumniGroupState {
-    alumniData: object;
+    alumniGroups: object;
     loading: boolean;
     error: string | null;
 }
 
 // Define the initial state
 const initialState: AlumniGroupState = {
-    alumniData: {},
+    alumniGroups: {},
     loading: false,
     error: null,
 };
@@ -32,7 +32,7 @@ const alumniGroupSlice = createSlice({
                 state.loading = true;
             })
             .addCase(GetAlumniData.fulfilled, (state, action) => {
-                state.alumniData = action.payload;
+                state.alumniGroups = action.payload;
                 state.loading = false;
             })
             .addCase(GetAlumniData.rejected, (state, action) => {

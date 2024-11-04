@@ -76,14 +76,14 @@ const UserManagement = () => {
     const [selectedActivity, setSelectedActivity] = useState<string[]>([]);
     const [birthdaySearchRange, setBirthdaySearchRange] = useState<DatesRangeValue>();
 
-    const [activeFilter, setActiveFilter] = useState<any>();
+    const [activeFilter, setActiveFilter] = useState<string | undefined>();
     const resetActiveFilter = () => {
         setRecordsData(initialRecords);
         setActiveFilter;
     };
     useEffect(() => {
         setRecordsData(
-            initialRecords.filter(({ first_name, last_name, dob, is_active }) => {
+            initialRecords.filter(({ first_name, last_name, dob, is_active }:{first_name: any, last_name: any, dob: any, is_active: any }) => {
                 if (debouncedQuery !== '' && !`${first_name} ${last_name}`.toLowerCase().includes(debouncedQuery.trim().toLowerCase())) return false;
 
                 if (
@@ -94,7 +94,7 @@ const UserManagement = () => {
                 )
                     return false;
                 console.log(is_active, activeFilter);
-                if (typeof is_active !== 'undefined' && typeof activeFilter !== 'undefined' && is_active.toString() !== activeFilter.toString()) return false;
+                if (typeof is_active !== 'undefined' && activeFilter !== undefined && is_active.toString() !== activeFilter.toString()) return false;
 
                 return true;
             })
@@ -435,7 +435,7 @@ const UserManagement = () => {
                             <Tippy content="Delete">
                                 <button
                                     type="button"
-                                    className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl"
+                                    className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl shadow-md"
                                     onClick={() => handleMultiUserDelete(selectedRecords, dispatch, setSelectedRecords)}
                                 >
                                     <IconTrash className="w-5 h-5 text-white" />
@@ -447,7 +447,7 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => handleMultiUserActivation(selectedRecords, dispatch)}
-                                    className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                    className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconBolt className="w-5 h-5 text-white" />
                                 </button>
@@ -458,7 +458,7 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
-                                    className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                    className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconX className="w-5 h-5 text-white" />
                                 </button>
@@ -466,7 +466,7 @@ const UserManagement = () => {
                         </div>
                         <div>
                             <Tippy content="Add To Alumni Group">
-                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl" onClick={() => handleAddToAlumniGroup(selectedRecords, dispatch)}>
+                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl shadow-md" onClick={() => handleAddToAlumniGroup(selectedRecords, dispatch)}>
                                     <IconUsersGroup className="w-5 h-5 text-white" />
                                 </button>
                             </Tippy>
@@ -527,7 +527,9 @@ const UserManagement = () => {
                                 title: 'DOB',
                                 sortable: true,
                                 hidden: hideCols.includes('dob'),
-                                render: ({ dob }) => dayjs(dob).format('DD MMM YYYY'),
+                                render: ({ dob }) => {
+                                    const usrDob = dob as string | number | Date | undefined;
+                                    return dayjs(usrDob).format('DD MMM YYYY')},
                                 filter: ({ close }) => (
                                     <Stack>
                                         <DatePicker className="max-w-sm" maxDate={new Date()} type="range" value={birthdaySearchRange} onChange={setBirthdaySearchRange} />
@@ -648,20 +650,7 @@ const UserManagement = () => {
                                 },
                             ])(event)
                         }
-                        // onRowContextMenu={({ record, event }) =>
-                        //     showContextMenu([
-                        //         {
-                        //             key: 'view-company-details',
-                        //             icon: <IconEye />,
-                        //             title: `Show context Menu ${record.username}`,
-                        //             onClick: () =>
-                        //                 showNotification({
-                        //                     message: `Clicked on view context-menu action for company`,
-                        //                     withBorder: true,
-                        //                 }),
-                        //         },
-                        //     ])(event)
-                        // }
+                       
                         textSelectionDisabled={isTouch}
                         minHeight={200}
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}

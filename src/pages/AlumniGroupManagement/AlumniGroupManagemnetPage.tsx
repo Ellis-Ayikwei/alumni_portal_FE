@@ -1,4 +1,5 @@
 import Tippy from '@tippyjs/react';
+import dayjs from 'dayjs';
 import sortBy from 'lodash/sortBy';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
@@ -14,11 +15,13 @@ import IconCaretDown from '../../components/Icon/IconCaretDown';
 import IconChecks from '../../components/Icon/IconChecks';
 import IconEye from '../../components/Icon/IconEye';
 import IconFile from '../../components/Icon/IconFile';
+import IconLock from '../../components/Icon/IconLock';
 import IconPencil from '../../components/Icon/IconPencil';
 import IconPlus from '../../components/Icon/IconPlus';
 import IconPrinter from '../../components/Icon/IconPrinter';
 import IconRefresh from '../../components/Icon/IconRefresh';
 import IconTrash from '../../components/Icon/IconTrash';
+import IconUserPlus from '../../components/Icon/IconUserPlus';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconX from '../../components/Icon/IconX';
 import { IRootState } from '../../store';
@@ -29,85 +32,80 @@ import handleMultiUserDeActivation from '../UserManagement/userManagementUtils/m
 import handleMultiUserDelete from '../UserManagement/userManagementUtils/multiUserDelete';
 import handleUserActivation from '../UserManagement/userManagementUtils/userActivation';
 import AddNewAlumniGroup from './alumniGroupManagementUtils/addNewGroup';
+import { renderStatus } from './alumniGroupManagementUtils/renderStatus';
+import { useContextMenu } from 'mantine-contextmenu';
+import IconLockDots from '../../components/Icon/IconLockDots';
+import AddMembersToGroup from './alumniGroupManagementUtils/addMembersToGroup';
 
 const col = ['name', 'start_date', 'end_date', 'insurance_package', 'is_locked', 'president_id', 'id', 'create_at', 'updated_at'];
 
 const AlumniGroupManagementpage = () => {
     const dispatch = useDispatch();
     const [alumnidata, setUsersData] = useState<any>([]);
-    const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniData);
-    const userDataIsLoading = useSelector((state: IRootState) => state.alumnidata.loading);
+    const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniGroups);
     const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
-
+    const [addMembersToGroupModal, setAddMembersToGroupModal] = useState(false);
+    const { showContextMenu } = useContextMenu();
     console.log('my role is ', myRole);
+   
     useEffect(() => {
         dispatch(setPageTitle('Multiple Tables'));
         dispatch(GetAlumniData() as any);
     }, [dispatch]);
 
-    useEffect(() => {
-        if (alumniData) {
-            setInitialRecords2(sortBy(alumniData, 'name'));
-        }
-    }, [alumniData]);
-
     const PAGE_SIZES = [10, 20, 30, 50, 100];
     const navigate = useNavigate();
 
-    const [page2, setPage2] = useState(1);
-    const [pageSize2, setPageSize2] = useState(PAGE_SIZES[0]);
-    const [initialRecords2, setInitialRecords2] = useState(sortBy(alumnidata, 'name'));
-    const [recordsData2, setRecordsData2] = useState(initialRecords2);
-    const rowData = initialRecords2;
-    const [search2, setSearch2] = useState('');
-    const [sortStatus2, setSortStatus2] = useState<DataTableSortStatus>({
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+    const [initialGroupsRecords, setInitialGroupsRecords] = useState(sortBy(alumnidata, 'name'));
+    const [recordsData, setRecordsData] = useState(initialGroupsRecords);
+    const rowData = initialGroupsRecords;
+    const [search, setSearch] = useState('');
+    const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
         columnAccessor: 'name',
         direction: 'asc',
     });
 
     useEffect(() => {
-        setPage2(1);
-    }, [pageSize2]);
+        if (alumniData) {
+            setInitialGroupsRecords(sortBy(alumniData, 'name'));
+        }
+        console.log('alumni data is ', alumniData);
+    }, [alumniData]);
 
     useEffect(() => {
-        const from = (page2 - 1) * pageSize2;
-        const to = from + pageSize2;
-        setRecordsData2([...initialRecords2.slice(from, to)]);
-    }, [page2, pageSize2, initialRecords2]);
+        setPage(1);
+    }, [pageSize]);
 
     useEffect(() => {
-        setInitialRecords2(() => {
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize;
+        setRecordsData([...initialGroupsRecords.slice(from, to)]);
+    }, [page, pageSize, initialGroupsRecords]);
+
+    useEffect(() => {
+        setInitialGroupsRecords(() => {
             return alumnidata.filter((item: any) => {
                 return (
-                    item.name.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.company.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.age.toString().toLowerCase().includes(search2.toLowerCase()) ||
-                    item.dob.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.email.toLowerCase().includes(search2.toLowerCase()) ||
-                    item.phone.toLowerCase().includes(search2.toLowerCase())
+                    item.name.toLowerCase().includes(search.toLowerCase()) ||
+                    item.company.toLowerCase().includes(search.toLowerCase()) ||
+                    item.age.toString().toLowerCase().includes(search.toLowerCase()) ||
+                    item.dob.toLowerCase().includes(search.toLowerCase()) ||
+                    item.email.toLowerCase().includes(search.toLowerCase()) ||
+                    item.phone.toLowerCase().includes(search.toLowerCase())
                 );
             });
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search2]);
+    }, [search]);
 
     useEffect(() => {
-        const data2 = sortBy(initialRecords2, sortStatus2.columnAccessor);
-        setInitialRecords2(sortStatus2.direction === 'desc' ? data2.reverse() : data2);
+        const data2 = sortBy(initialGroupsRecords, sortStatus.columnAccessor);
+        setInitialGroupsRecords(sortStatus.direction === 'desc' ? data2.reverse() : data2);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sortStatus2]);
-
-    const getActivityColor = (accessor: string | boolean) => {
-        const colors = ['success', 'danger'];
-        if (accessor === true) {
-            return colors[0];
-        } else if (accessor === false || accessor === 'disapproved') {
-            return colors[1];
-        } else {
-            return '';
-        }
-    };
+    }, [sortStatus]);
 
     useEffect(() => {
         dispatch(setPageTitle('Export Table'));
@@ -134,11 +132,11 @@ const AlumniGroupManagementpage = () => {
             .join(' ');
     };
 
-    const header = Object.keys(recordsData2[0] || {})
+    const header = Object.keys(recordsData[0] || {})
         .slice(1, -1)
         .map(capitalize);
 
-    const bodyData = recordsData2.map((item) => Object.values(item).slice(1, -1));
+    const bodyData = recordsData.map((item) => Object.values(item).slice(1, -1));
 
     function handleDownloadExcel() {
         downloadExcel({
@@ -275,10 +273,23 @@ const AlumniGroupManagementpage = () => {
         });
     };
 
-    const editUser = (user: any = null) => {
-        navigate('/userAccountSetting');
+
+    const editGroup = (group: any = null) => {
+        const params = new URLSearchParams();
+        params.append('param1', 'value1');
+        params.append('param2', 'value2');
+        navigate(`/member/groups/edit/${group.id}`);
     };
 
+    const viewGroup = (group: any = null) => {
+        const params = new URLSearchParams();
+        params.append('param1', 'value1');
+        params.append('param2', 'value2');
+        navigate(`/member/groups/preview/${group.id}`);
+    };
+
+
+    
     const deleteUser = (user: any = null) => {
         showMessage('User has been deleted successfully.');
     };
@@ -325,7 +336,7 @@ const AlumniGroupManagementpage = () => {
 
             <div className="panel mt-6">
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
-                    <h5 className="font-semibold text-lg dark:text-white-light">User Management</h5>
+                    <h5 className="font-semibold text-lg dark:text-white-light">Alumni Groups Management</h5>
                 </div>
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
                     <div className="flex items-center">
@@ -396,7 +407,7 @@ const AlumniGroupManagementpage = () => {
                             <Tippy content="Delete">
                                 <button
                                     type="button"
-                                    className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl"
+                                    className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl shadow-md"
                                     onClick={() => handleMultiUserDelete(selectedRecords, dispatch, setSelectedRecords)}
                                 >
                                     <IconTrash className="w-5 h-5 text-white" />
@@ -408,7 +419,7 @@ const AlumniGroupManagementpage = () => {
                                 <button
                                     type="button"
                                     onClick={() => handleMultiUserActivation(selectedRecords, dispatch)}
-                                    className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                    className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconBolt className="w-5 h-5 text-white" />
                                 </button>
@@ -419,23 +430,36 @@ const AlumniGroupManagementpage = () => {
                                 <button
                                     type="button"
                                     onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
-                                    className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl disabled:"
+                                    className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconX className="w-5 h-5 text-white" />
                                 </button>
                             </Tippy>
                         </div>
                         <div>
-                            <Tippy content="Add To Alumni Group">
-                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl" onClick={() => handleAddToAlumniGroup(selectedRecords, dispatch)}>
-                                    <IconUsersGroup className="w-5 h-5 text-white" />
+                            <Tippy content="Lock">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
+                                    className="btn bg-yellow-500 hover:bg-yellow-800 h-8 w-8 px-1 rounded-xl shadow-md"
+                                >
+                                    <IconLock className="w-5 h-5 text-white" />
+                                </button>
+                            </Tippy>
+                        </div>
+
+                        <div>
+                            <Tippy content="Add Members">
+                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl shadow-md"
+                                 onClick={() => setAddMembersToGroupModal(true)}>
+                                    <IconUserPlus className="w-5 h-5 text-white" />
                                 </button>
                             </Tippy>
                         </div>
                     </div>
                     <div className="ltr:ml-auto rtl:mr-auto flex gap-1">
                         <div>
-                            <input type="text" className="form-input w-auto" placeholder="Search..." value={search2} onChange={(e) => setSearch2(e.target.value)} />
+                            <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
                         </div>
                         <Tippy content="Add New Alumni Group p-0">
                             <button
@@ -454,18 +478,22 @@ const AlumniGroupManagementpage = () => {
                 <div className="datatables">
                     <DataTable
                         className="whitespace-nowrap table-hover"
-                        records={recordsData2}
+                        records={recordsData}
                         columns={[
                             {
                                 accessor: 'name',
                                 title: 'Name',
                                 sortable: true,
-                                render: ({ name, id }) => (
-                                    <div className="flex items-center w-max">
-                                        <img className="w-9 h-9 rounded-full ltr:mr-2 rtl:ml-2 object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
-                                        <div>{name}</div>
-                                    </div>
-                                ),
+                                render: ({ name, id }) => {
+                                    const grpName = name as string;
+
+                                    return (
+                                        <div className="flex items-center w-max">
+                                            <img className="w-9 h-9 rounded-full ltr:mr-2 rtl:ml-2 object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
+                                            <div>{grpName}</div>
+                                        </div>
+                                    );
+                                },
                             },
 
                             {
@@ -476,7 +504,7 @@ const AlumniGroupManagementpage = () => {
                                 render: ({ start_date }) => {
                                     const validStart_date = start_date as string | number | Date;
 
-                                    return <div>{formatDate(validStart_date)}</div>;
+                                    return dayjs(validStart_date).format('DD MMM YYYY');
                                 },
                             },
                             {
@@ -487,68 +515,95 @@ const AlumniGroupManagementpage = () => {
                                 render: ({ end_date }) => {
                                     const validEnd_date = end_date as string | number | Date;
 
-                                    return <div>{formatDate(validEnd_date)}</div>;
+                                    return dayjs(validEnd_date).format('DD MMM YYYY');
                                 },
                             },
                             { accessor: 'school', title: 'School', sortable: true, hidden: hideCols.includes('school') },
-                            { accessor: 'insurance_package', title: 'Insurance Package', sortable: true, hidden: hideCols.includes('insurance_package') },
+                            { accessor: 'insurance_package.name', title: 'Insurance Package', sortable: true, hidden: hideCols.includes('insurance_package') },
                             {
                                 accessor: 'status',
                                 title: 'Status',
                                 sortable: true,
                                 hidden: hideCols.includes('Active'),
-                                render: ({ is_locked }) => <span className={`badge bg-${getActivityColor(is_locked)}`}>{is_locked ? 'Active' : 'Locked'}</span>,
+                                render: ({ status }) => {
+                                    const grpStatus = status as string;
+                                    console.log('status from grp ......................', grpStatus);
+                                    return renderStatus(grpStatus);
+                                },
                             },
-                            { accessor: 'president', title: 'President', sortable: true, hidden: hideCols.includes('president_id') },
+                            { accessor: 'president.username', title: 'President', sortable: true, hidden: hideCols.includes('president') },
                             { accessor: 'id', title: 'ID', sortable: true, hidden: hideCols.includes('id') },
-                            { accessor: 'create_at', title: 'Create At', sortable: true, hidden: hideCols.includes('create_at') },
-                            { accessor: 'updated_at', title: 'Updated At', sortable: true, hidden: hideCols.includes('updated_at') },
+                            {
+                                accessor: 'created_at',
+                                title: 'Date Created',
+                                sortable: true,
+                                hidden: hideCols.includes('create_at'),
+                                render: ({ created_at }) => {
+                                    const grpDtCreated = created_at as string | number | Date;
+                                    return dayjs(grpDtCreated).format('DD MMM YYYY');
+                                },
+                            },
+                            {
+                                accessor: 'updated_at',
+                                title: 'Last Updated',
+                                sortable: true,
+                                hidden: hideCols.includes('updated_at'),
+                                render: ({ updated_at }) => {
+                                    const grpDtUpdated = updated_at as string | number | Date;
+                                    return dayjs(grpDtUpdated).format('DD MMM YYYY');
+                                },
+                            },
                         ]}
-                        totalRecords={initialRecords2.length}
-                        recordsPerPage={pageSize2}
-                        page={page2}
-                        onPageChange={(p) => setPage2(p)}
+                        totalRecords={initialGroupsRecords.length}
+                        recordsPerPage={pageSize}
+                        page={page}
+                        withTableBorder
+                        withColumnBorders
+                        striped
+                        highlightOnHover
+                        onPageChange={(p) => setPage(p)}
                         recordsPerPageOptions={PAGE_SIZES}
-                        onRecordsPerPageChange={setPageSize2}
-                        sortStatus={sortStatus2}
-                        onSortStatusChange={setSortStatus2}
+                        onRecordsPerPageChange={setPageSize}
+                        sortStatus={sortStatus}
+                        onSortStatusChange={setSortStatus}
                         selectedRecords={selectedRecords}
                         onSelectedRecordsChange={setSelectedRecords}
                         onRowClick={(row) => console.log(row)}
-                        rowContextMenu={{
-                            items: (row) => [
+                        onRowContextMenu={({ record, event }) =>
+                            showContextMenu([
                                 {
                                     key: 'view',
-                                    title: `View user ${row.username}`,
+                                    title: `View group`,
                                     icon: <IconEye />,
-                                    onClick: () => handleNavigation(row),
+                                    onClick: () => viewGroup(record),
                                 },
                                 {
                                     key: 'edit',
-                                    title: `Edit ${row.username}`,
+                                    title: `Edit`,
                                     icon: <IconPencil />,
-                                    onClick: () => editUser(row),
+                                    onClick: () => editGroup(record),
                                 },
                                 {
-                                    key: row.is_active ? 'deactivate' : 'activate',
-                                    title: `${row.is_active ? 'Deactivate' : 'Activate'} ${row.username}`,
-                                    color: row.is_active ? 'red' : 'green',
-                                    icon: row.is_active ? <IconX /> : <IconChecks />,
-                                    onClick: () => handleUserActivation(row, dispatch),
+                                    key: record.status === "LOCKED" ? 'Lock' : 'Activate' ,
+                                    title: `${record.status === "LOCKED" ? 'Lock' : 'Activate'}`,
+                                    color: record.status === "LOCKED" ? 'red' : 'green',
+                                    icon: record.status === "LOCKED" ? <IconLock /> : <IconChecks />,
+                                    onClick: () => handleUserActivation(record, dispatch),
                                 },
                                 {
                                     key: 'add to group',
-                                    title: `Add ${row.username} to an Alumni group`,
-                                    icon: <IconUsersGroup />,
-                                    onClick: () => editUser(row),
+                                    title: `Add members to group`,
+                                    icon: <IconUserPlus />,
+                                    onClick: () => editUser(record),
                                 },
-                            ],
-                        }}
+                            ])(event)
+                        }
                         minHeight={200}
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
             </div>
+            <AddMembersToGroup AddMembersToGroupModal={addMembersToGroupModal} setAddMembersToGroupModal={setAddMembersToGroupModal} groups={selectedRecords} />
             <AddNewAlumniGroup AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
         </div>
     );
