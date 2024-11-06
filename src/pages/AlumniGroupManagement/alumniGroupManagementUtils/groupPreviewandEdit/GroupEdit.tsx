@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Tippy from '@tippyjs/react';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import { RWebShare } from 'react-web-share';
 import Swal from 'sweetalert2';
@@ -18,23 +18,27 @@ import IconShare from '../../../../components/Icon/IconShare';
 import IconTrash from '../../../../components/Icon/IconTrash';
 import IconUserPlus from '../../../../components/Icon/IconUserPlus';
 import IconX from '../../../../components/Icon/IconX';
+import IconMenuUsers from '../../../../components/Icon/Menu/IconMenuUsers';
 import axiosInstance from '../../../../helper/axiosInstance';
+import ConfirmDialog from '../../../../helper/confirmDialog';
 import fetcher from '../../../../helper/fetcher';
 import showMessage from '../../../../helper/showMessage';
-import { IRootState } from '../../../../store';
-import { GetAlumniData } from '../../../../store/alumnigroupSlice';
 import { setPageTitle } from '../../../../store/themeConfigSlice';
 import AddNewBeneficiary from '../../../MemberOnly/MyAlumniGroupUtils/AddNewBeneficiary';
 import AddNewGroupMember from '../../../MemberOnly/MyAlumniGroupUtils/AddNewGroupMember';
+import AddMembersToGroup from '../addMembersToGroup';
 import ChangePackage from './changePackage';
 import MakePresident from './makepresident';
+import ShowBeneficiaries from './showBeneficiaries';
 
 const GroupEdit = () => {
     const dispatch = useDispatch();
     const { group_id } = useParams();
-    const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniGroups);
+    // const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniGroups);
+    const { data: alumniData, error: alumniData_error, isLoading: alumniData_loadng } = useSwr(`/alumni_groups/${group_id}`, fetcher);
     const { data: all_members, error: all_members_error, isLoading: all_members_loadng } = useSwr(`/group_members`, fetcher);
-    const group_members = all_members?.filter((group_member: any) => group_member.group_id == group_id);
+    const approved_members = all_members?.filter((group_member: any) => group_member.group_id == group_id && group_member.status === 'APPROVED');
+    const other_members = all_members?.filter((group_member: any) => group_member.group_id == group_id && (group_member.status === 'DISAPPROVED' || group_member.status === 'PENDING'));
     const [showBeneficiariesModal, setShowBeneficiariesModal] = useState<boolean>(false);
     const [benefactorId, setBenefactorId] = useState<string>('');
     const [group, setGroup] = useState<any>({});
@@ -43,25 +47,38 @@ const GroupEdit = () => {
         dispatch(setPageTitle('Edit Group'));
     });
 
-    useEffect(() => {
-        dispatch(GetAlumniData() as any);
-    }, [dispatch]);
-
     const [memberApprovalLaoding, setMemberApprovalLaoding] = useState<{ [key: string]: boolean }>({});
     const [makePresidentModal, setMakePresidentModal] = useState<boolean>(false);
     const [changeInsurancePackageModal, setChangeInsurancePackageModal] = useState<boolean>(false);
     const [isSaveLoading, setIsSaveLoading] = useState(false);
+    const [addMembersToGroupModal, setAddMembersToGroupModal] = useState<boolean>(false);
+    const [discard, setDiscard] = useState<boolean>(false);
 
-    const [params, setParams] = useState<{ [key: string]: any }>({
-        name: '',
-        start_date: '',
-        end_date: '',
-        school: '',
-        status: '',
-        package_id: '',
-        description: '',
-        president_user_id: '',
-    });
+    const [AddUserModal, setAddUserModal] = useState(false);
+    const [AddNewBeneficiaryModal, setAddNewBeneficiaryModal] = useState(false);
+    const [activateSave, setActivateSave] = useState(false);
+    const [refreshData, setRefreshData] = useState(false);
+
+    const [params, setParams] = useState<{ [key: string]: any }>({});
+    useEffect(() => {
+        console.log('befor', group);
+        setGroup(alumniData);
+        console.log('after', group);
+    }, [alumniData, refreshData, mutate]);
+
+    useEffect(() => {
+        setParams({
+            name: group?.name,
+            start_date: group?.start_date,
+            end_date: group?.end_date,
+            school: group?.school,
+            status: group?.status,
+            package_id: group?.package_id,
+            description: group?.description,
+            president_user_id: group?.president_user_id,
+        });
+        console.log('triggered', params);
+    }, [group, discard]);
 
     const [imageSrc, setImageSrc] = useState('/assets/images/logo.svg');
 
@@ -94,43 +111,13 @@ const GroupEdit = () => {
 
         setParams(updatedParams);
         setChangedParams(updatedChangedParams);
-        console.log('the updated params', updatedParams);
-        console.log('the changed params', updatedChangedParams);
+        setActivateSave(true);
     };
 
-    const [AddUserModal, setAddUserModal] = useState(false);
-    const [AddNewBeneficiaryModal, setAddNewBeneficiaryModal] = useState(false);
-    const [ActivateSave, setActivateSave] = useState(false);
-    const [refreshData, setRefreshData] = useState(false);
-
-    const handleMemberApproval = async (action: string, member_id: string) => {
-        try {
-            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: true }));
-
-            const approvalResponse = await axiosInstance.put(`/group_members/${member_id}`, JSON.stringify({ status: action }));
-
-            if (approvalResponse.status === 200) {
-                Swal.fire(`${action} Successfully`, '', 'success');
-                mutate('/group_members');
-                setRefreshData(!refreshData);
-            }
-
-            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: false }));
-
-            return true;
-        } catch (error) {
-            Swal.fire('Failed', '', 'error');
-            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: false }));
-
-            console.log(error);
-        }
+    const handleVewBeneficiaries = (id: string) => {
+        setBenefactorId(id);
+        setShowBeneficiariesModal(true);
     };
-
-    useEffect(() => {
-        console.log('befor', group);
-        setGroup(Object.values(alumniData).find((group: any) => group?.id == group_id));
-        console.log('after', group);
-    }, [alumniData, refreshData]);
 
     const handleGroupInfoSave = async () => {
         try {
@@ -138,6 +125,7 @@ const GroupEdit = () => {
             if (response.status === 200) {
                 Swal.fire('Group Info Updated', '', 'success');
                 mutate('/alumni_groups');
+                setActivateSave(false);
                 setRefreshData(!refreshData);
             }
         } catch (error: any) {
@@ -155,6 +143,77 @@ const GroupEdit = () => {
         }
     };
 
+    const handleDiscardChanges = () => {
+        setChangedParams({});
+        setParams({
+            name: group?.name,
+            start_date: group?.start_date,
+            end_date: group?.end_date,
+            school: group?.school,
+            status: group?.status,
+            package_id: group?.package_id,
+            description: group?.description,
+            president_user_id: group?.president_user_id,
+        });
+        setDiscard(!discard);
+        setActivateSave(false);
+    };
+
+    const handleMemberApproval = async (action: string, member_id: string) => {
+        try {
+            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: true }));
+
+            const approvalResponse = await axiosInstance.put(`/group_members/${member_id}`, JSON.stringify({ status: action }));
+
+            if (approvalResponse.status === 200) {
+                Swal.fire(`${action} Successfully`, '', 'success');
+                mutate('/group_members');
+                setRefreshData(!refreshData);
+            }
+
+            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: false }));
+
+            return true;
+        } catch (error) {
+            showMessage('Failed', 'error');
+            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: false }));
+
+            console.log(error);
+        }
+    };
+    const handleMemberDeletion = async (member_id: string) => {
+        try {
+            const confirmDel = await ConfirmDialog({
+                title: 'Remove User From Group',
+                note: 'This Action annot Be undone.',
+                finalQuestion: 'Are you sure you want to remove this user from the group?',
+            });
+
+            if (!confirmDel) {
+                return false;
+            }
+
+            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: true }));
+            const approvalResponse = await axiosInstance.delete(`/group_members/${member_id}`);
+
+            if (approvalResponse.status === 200) {
+                Swal.fire('user removed from group', '', 'success');
+                mutate('/group_members');
+                mutate(`/alumni_groups/${group_id}`);
+                setRefreshData(!refreshData);
+            }
+
+            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: false }));
+
+            return true;
+        } catch (error) {
+            Swal.fire('Failed', '', 'error');
+            setMemberApprovalLaoding((prevLoading) => ({ ...prevLoading, [member_id]: false }));
+
+            console.log(error);
+        }
+    };
+
     return (
         <div className="flex xl:flex-col flex-col gap-2.5">
             <div className="flex items-center lg:justify-between flex-wrap gap-4 mb-6">
@@ -165,7 +224,7 @@ const GroupEdit = () => {
                 <div className="flex !gap-2">
                     <button
                         onClick={() => {
-                            setAddUserModal(true);
+                            setAddMembersToGroupModal(true);
                         }}
                         className="btn btn-primary gap-2 bg-blue-500 text-white"
                     >
@@ -188,15 +247,7 @@ const GroupEdit = () => {
                             </button>
                         </RWebShare>
                     </div>
-                    <button
-                        className="btn btn-info gap-2 bg-teal-500 text-white"
-                        onClick={() => {
-                            setAddNewBeneficiaryModal(true);
-                        }}
-                    >
-                        <FontAwesomeIcon icon={faHeartCirclePlus} />
-                        Add Beneficiary
-                    </button>
+                    
                 </div>
             </div>
             <div className="panel px-0 flex-1 py-6 ltr:xl:mr-6 rtl:xl:ml-6">
@@ -220,7 +271,7 @@ const GroupEdit = () => {
                                     id="schoolstartdate"
                                     className="form-input"
                                     onChange={(e) => handleItemChange(e)}
-                                    defaultValue={group?.start_date ? dayjs(group.start_date).format('YYYY-MM-DD') : ''}
+                                    defaultValue={params?.start_date ? dayjs(params.start_date).format('YYYY-MM-DD') : ''}
                                 />
                             </div>
                             <div>
@@ -233,7 +284,7 @@ const GroupEdit = () => {
                                     id="schoolstartdate"
                                     className="form-input"
                                     onChange={(e) => handleItemChange(e)}
-                                    defaultValue={group?.end_date ? dayjs(group?.end_date).format('YYYY-MM-DD') : ''}
+                                    defaultValue={params?.end_date ? dayjs(params?.end_date).format('YYYY-MM-DD') : ''}
                                 />
                             </div>
                         </div>
@@ -243,7 +294,15 @@ const GroupEdit = () => {
                             <label htmlFor="Alumni Group Name" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
                                 Alumni Group Name
                             </label>
-                            <input id="number" type="text" name="name" className="form-input lg:w-[250px] w-2/3" placeholder="#8801" defaultValue={group?.name} onChange={(e) => handleItemChange(e)} />
+                            <input
+                                id="number"
+                                type="text"
+                                name="name"
+                                className="form-input lg:w-[250px] w-2/3"
+                                placeholder="#8801"
+                                defaultValue={params?.name}
+                                onChange={(e) => handleItemChange(e)}
+                            />
                         </div>
                         <div className="flex items-center mt-2">
                             <label htmlFor="Alumni Group Name" className="flex-1 ltr:mr-2 rtl:ml-2 mb-0">
@@ -254,28 +313,33 @@ const GroupEdit = () => {
                                 id="description"
                                 name="description"
                                 className="form-textarea min-h-[100px]"
-                                placeholder="alumni-group-description"
+                                placeholder="alumni-params-description"
                                 onChange={(e) => handleItemChange(e)}
-                                defaultValue={group?.description}
+                                defaultValue={params?.description}
                             ></textarea>
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-2 px-3 ltr:ml-auto rtl:mr-auto justify-end items-end">
-                    <button className={`btn  btn-outline-danger flex items-center gap-2 p-2 rounded `}>
-                        <IconX className="w-6 h-6" />
-                        Discard Changes
-                    </button>
-                    <button className={`btn  btn-outline-success flex items-center gap-2 p-2 rounded `}>
-                        {true ? <IconSave className="w-6 h-6" /> : <IconLoader className="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />}
-                        Save Changes
-                    </button>
-                </div>
+                {activateSave && (
+                    <div className="flex gap-2 px-3 ltr:ml-auto rtl:mr-auto justify-end items-end">
+                        <button className={`btn  btn-outline-danger flex items-center gap-2 p-2 rounded `} onClick={handleDiscardChanges}>
+                            <IconX className="w-6 h-6" />
+                            Discard Changes
+                        </button>
+                        <button onClick={handleGroupInfoSave} className={`btn  btn-outline-success flex items-center gap-2 p-2 rounded `}>
+                            {true ? <IconSave className="w-6 h-6" /> : <IconLoader className="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />}
+                            Save Changes
+                        </button>
+                    </div>
+                )}
                 <hr className="border-white-light dark:border-[#1b2e4b] my-6" />
                 <div className="flex justify-between lg:flex-row flex-col gap-6 flex-wrap p-3">
                     <div className="flex-1">
                         <div className="space-y-1 text-white-dark">
                             <div>President:</div>
+                            <div className="text-black dark:text-white font-semibold">
+                                {group?.president?.first_name} {group?.president?.last_name}
+                            </div>
                             <div className="text-black dark:text-white font-semibold">{group?.president?.username}</div>
                             <div>{group?.president?.address}</div>
                             <div>{group?.president?.email}</div>
@@ -327,7 +391,11 @@ const GroupEdit = () => {
                 <div className="grid gap-4 w-full ">
                     <div className="panel h-full w-full mb-4">
                         <div className="flex items-center justify-between mb-5">
-                            <h5 className="font-semibold text-lg dark:text-white-light">Group Members</h5>
+                            <h5 className="font-semibold text-lg dark:text-white-light">Group Members - Approved</h5>
+                            <div className="flex items-center gap-2 rounded-full px-2 py-1 bg-green-200">
+                                <IconMenuUsers />
+                                <span>{approved_members?.length}</span>
+                            </div>
                         </div>
                         <div className="table-responsive">
                             <table>
@@ -340,11 +408,12 @@ const GroupEdit = () => {
                                         <th>Occupation</th>
                                         <th>Status</th>
                                         <th>Date Joined</th>
+                                        <th>Beneficiaries</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {group_members?.map((member: any) => (
+                                    {approved_members?.map((member: any) => (
                                         <tr key={member?.id} className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
                                             <td className="min-w-[150px] text-black dark:text-white">
                                                 <div className="flex items-center">
@@ -361,6 +430,13 @@ const GroupEdit = () => {
                                             <td>{member?.user_info?.occupation}</td>
                                             <td>{member?.status}</td>
                                             <td>{dayjs(member?.created_at).format('DD MMM YYYY')} </td>
+                                            <td>
+                                                <p className="ltr:ml-auto rtl:mr-auto text-secondary">
+                                                    <button type="button" className="text-primary font-semibold hover:underline group" onClick={() => handleVewBeneficiaries(member.id)}>
+                                                        beneficiaries{' '}
+                                                    </button>
+                                                </p>
+                                            </td>
                                             <td className="flex flex-wrap flex-row">
                                                 {(member?.status === 'PENDING' || member?.status === 'DISAPPROVED') && (
                                                     <button onClick={() => handleMemberApproval('APPROVED', member?.id)} className="hover:text-green-500 has-tooltip">
@@ -383,7 +459,7 @@ const GroupEdit = () => {
                                                     </button>
                                                 )}
 
-                                                <button className="hover:text-red-800 has-tooltip">
+                                                <button className="hover:text-red-800 has-tooltip" onClick={() => handleMemberDeletion(member.id)}>
                                                     <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-16">Delete From Group</span>
 
                                                     <IconTrash />
@@ -395,9 +471,15 @@ const GroupEdit = () => {
                             </table>
                         </div>
                     </div>
+                </div>
+                <div className="grid gap-4 w-full ">
                     <div className="panel h-full w-full mb-4">
                         <div className="flex items-center justify-between mb-5">
-                            <h5 className="font-semibold text-lg dark:text-white-light">My Beneficiaries</h5>
+                            <h5 className="font-semibold text-lg dark:text-white-light">Group Members - Pending Approval And Disapproved</h5>
+                            <div className="flex items-center gap-2 rounded-full px-2 py-1 bg-red-200">
+                                <IconMenuUsers />
+                                <span>{other_members?.length}</span>
+                            </div>
                         </div>
                         <div className="table-responsive">
                             <table>
@@ -407,54 +489,85 @@ const GroupEdit = () => {
                                         <th>Email</th>
                                         <th>Phone Number</th>
                                         <th>DOB</th>
-                                        <th>Relationship</th>
-                                        <th>Benefactor</th>
-                                        <th>Date Added</th>
+                                        <th>Occupation</th>
+                                        <th>Status</th>
+                                        <th>Date Joined</th>
+                                        <th>Beneficiaries</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
-                                        <td className="min-w-[150px] text-black dark:text-white">
-                                            <div className="flex items-center">
-                                                <img className="w-8 h-8 rounded-md ltr:mr-3 rtl:ml-3 object-cover" src="/assets/images/profile-6.jpeg" alt="avatar" />
-                                                <span className="whitespace-nowrap">Luke Ivory</span>
-                                            </div>
-                                        </td>
-                                        <td className="text-primary">LukeIvory@gmail.com</td>
-                                        <td>0240844556</td>
-                                        <td>0240844556</td>
-                                        <td>Approved</td>
-                                        <td>0240844556</td>
-                                        <td className="flex flex-wrap flex-row">
-                                            <button className="hover:text-red-800 has-tooltip">
-                                                <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-16">Delete From Group</span>
+                                    {other_members?.map((member: any) => (
+                                        <tr key={member?.id} className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
+                                            <td className="min-w-[150px] text-black dark:text-white">
+                                                <div className="flex items-center">
+                                                    <img className="w-8 h-8 rounded-md ltr:mr-3 rtl:ml-3 object-cover" src="/assets/images/profile-6.jpeg" alt="avatar" />
+                                                    <span className="whitespace-nowrap">
+                                                        {' '}
+                                                        {member?.user_info?.first_name} {member?.user_info?.last_name}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="text-primary">{member?.user_info?.email}</td>
+                                            <td>{member?.user_info?.phone}</td>
+                                            <td>{dayjs(member?.user_info?.dob).format('DD MMM YYYY')}</td>
+                                            <td>{member?.user_info?.occupation}</td>
+                                            <td>{member?.status}</td>
+                                            <td>{dayjs(member?.created_at).format('DD MMM YYYY')} </td>
+                                            <td>
+                                                <p className="ltr:ml-auto rtl:mr-auto text-secondary">
+                                                    <button type="button" className="text-primary font-semibold hover:underline group" onClick={() => handleVewBeneficiaries(member.id)}>
+                                                        beneficiaries{' '}
+                                                    </button>
+                                                </p>
+                                            </td>
+                                            <td className="flex flex-wrap flex-row">
+                                                {(member?.status === 'PENDING' || member?.status === 'DISAPPROVED') && (
+                                                    <button onClick={() => handleMemberApproval('APPROVED', member?.id)} className="hover:text-green-500 has-tooltip">
+                                                        <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-green-500 -mt-8">Appprove</span>
+                                                        {memberApprovalLaoding[member?.id] ? (
+                                                            <IconLoader className="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                        ) : (
+                                                            <IconChecks />
+                                                        )}
+                                                    </button>
+                                                )}
+                                                {(member?.status === 'PENDING' || member?.status === 'APPROVED') && (
+                                                    <button onClick={() => handleMemberApproval('DISAPPROVED', member?.id)} className="hover:text-red-800 has-tooltip">
+                                                        <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-8">DISAPPROVE</span>
+                                                        {memberApprovalLaoding[member?.id] ? (
+                                                            <IconLoader className="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />
+                                                        ) : (
+                                                            <IconX />
+                                                        )}
+                                                    </button>
+                                                )}
 
-                                                <IconTrash />
-                                            </button>
+                                                <button className="hover:text-red-800 has-tooltip" onClick={() => handleMemberDeletion(member.id)}>
+                                                    <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-16">Delete From Group</span>
 
-                                            <button className="hover:text-red-800 has-tooltip">
-                                                <span className="tooltip rounded shadow-lg p-1 bg-gray-100 text-red-500 -mt-8">UnApprove</span>
-
-                                                <IconX />
-                                            </button>
-                                        </td>
-                                    </tr>
+                                                    <IconTrash />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-                <div className="mt-8 px-4">
+                {/* <div className="mt-8 px-4">
                     <label htmlFor="notes">Notes</label>
                     <textarea id="notes" name="notes" className="form-textarea min-h-[130px]" placeholder="Notes...." defaultValue={params.notes}></textarea>
-                </div>
+                </div> */}
             </div>
 
             <AddNewGroupMember AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
             <AddNewBeneficiary AddUserModal={AddNewBeneficiaryModal} setAddUserModal={setAddNewBeneficiaryModal} />
             <MakePresident showModal={makePresidentModal} setShowModal={setMakePresidentModal} groupId={group?.id} />
             <ChangePackage showModal={changeInsurancePackageModal} setShowModal={setChangeInsurancePackageModal} groupId={group?.id} />
+            <ShowBeneficiaries showBeneficiariesModal={showBeneficiariesModal} setShowBeneficiariesModal={setShowBeneficiariesModal} benefactorId={benefactorId} />
+            <AddMembersToGroup AddMembersToGroupModal={addMembersToGroupModal} setAddMembersToGroupModal={setAddMembersToGroupModal} groups={[group]} />
         </div>
     );
 };

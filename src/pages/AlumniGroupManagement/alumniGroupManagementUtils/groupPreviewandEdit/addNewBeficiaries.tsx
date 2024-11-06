@@ -8,33 +8,47 @@ import { useDispatch } from 'react-redux';
 import Select from 'react-select';
 import useSwr from 'swr';
 import 'tippy.js/dist/tippy.css';
-import IconX from '../../../components/Icon/IconX';
-import axiosInstance from '../../../helper/axiosInstance';
-import fetcher from '../../../helper/fetcher';
-import showMessage from '../../UserManagement/userManagementUtils/showMessage';
+import IconLoader from '../../../../components/Icon/IconLoader';
+import IconX from '../../../../components/Icon/IconX';
+import axiosInstance from '../../../../helper/axiosInstance';
+import fetcher from '../../../../helper/fetcher';
+import showMessage from '../../../UserManagement/userManagementUtils/showMessage';
 
 export const dParams = {
-    name: '',
-    start_date: '',
-    end_date: '',
-    school: '',
-    status: '',
-    package_id: '',
-    president_user_id: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    address: '',
+    other_names: '',
+    date_of_birth: '',
+    benefactor_user_id: '',
+    relationship_type: '',
 };
 
+const relationshiptype = [
+    { value: 'SPOUSE', label: 'SPOUSE' },
+    { value: 'CHILD', label: 'CHILD' },
+    { value: 'PARENT', label: 'PARENT' },
+    { value: 'SIBLING', label: 'SIBLING' },
+    { value: 'OTHER', label: 'OTHER' },
+];
+
 interface AddNewAlumniGroupProps {
-    AddUserModal: boolean;
-    setAddUserModal: (value: boolean) => void;
+    showModal: boolean;
+    setShowModal: (value: boolean) => void;
+    benefactorId?: string;
 }
 
-const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupProps) => {
+const AddNewBeneficiaries = ({ showModal, setShowModal, benefactorId }: AddNewAlumniGroupProps) => {
     const dispatch = useDispatch();
     const [value, setValue] = useState<any>('list');
     const [defaultParams, setDefaultParams] = useState({ ...dParams });
     const [params, setParams] = useState<{ [key: string]: string }>({ ...dParams });
     const { data: users_data, error: users_error, isLoading: users_loadng } = useSwr('/users', fetcher);
     const { data: packages_data, error: packages_error, isLoading: packages_loadng } = useSwr('/insurance_packages', fetcher);
+    const [isSavedLoading, setIsSaveLoading] = useState(false);
+
     console.log('the users data', users_data);
 
     const insurance_packages = packages_data?.map((pkg: any) => {
@@ -80,11 +94,9 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
     const SaveNewGroup = async () => {
         console.log('params', params);
         const requiredFields = [
-            { field: 'name', message: 'Group name is required.' },
-            { field: 'school', message: 'Group school is required.' },
-            { field: 'start_date', message: 'Group start date is required.' },
-            { field: 'end_date', message: 'Group end date is required.' },
-            { field: 'status', message: 'Group status is required.' },
+            { field: 'first_name', message: 'First name is required.' },
+            { field: 'last_name', message: 'Last name is required.' },
+            { field: 'email', message: 'Email is required.' },
         ];
 
         for (let { field, message } of requiredFields) {
@@ -98,19 +110,19 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
             showMessage('Passwords do not match.', 'error');
             return true;
         }
-        const payload = JSON.stringify({ ...params });
+        const payload = JSON.stringify({ ...params, benefactor_user_id: befactoryId || params.benefactor_user_id });
         console.log('payload', payload);
 
         try {
-            const response = await axiosInstance.post('/alumni_groups', payload);
+            const response = await axiosInstance.post('/beneficiaries', payload);
             if (response.status === 200) {
-                showMessage(`Group Created Successfully.`, 'success');
+                showMessage(`Beneficiary Added Successfully.`, 'success');
                 setParams(defaultParams);
-                // dispatch(GetUsersData() as any);
-                setAddUserModal(false);
+                setIsSaveLoading(false);
+                setShowModal(false);
             }
         } catch (error: any) {
-            if (error.response && error.response.data) {
+            if (error.response?.data) {
                 const parser = new DOMParser();
                 const errorData = error.response.data;
                 const doc = parser.parseFromString(errorData, 'text/html');
@@ -120,12 +132,12 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
                 showMessage(`${errorMessage}`, 'error');
             }
         } finally {
-            // setParams(defaultParams);
+            setIsSaveLoading(false);
         }
     };
     return (
-        <Transition appear show={AddUserModal} as={Fragment}>
-            <Dialog as="div" open={AddUserModal} onClose={() => setAddUserModal(false)} className="relative z-[51]">
+        <Transition appear show={showModal} as={Fragment}>
+            <Dialog as="div" open={showModal} onClose={() => setShowModal(false)} className="relative z-[51]">
                 <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
                     <div className="fixed inset-0 bg-[black]/60" />
                 </Transition.Child>
@@ -143,89 +155,94 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
                             <Dialog.Panel className="panel border-0 p-0 rounded-lg overflow-y-scroll w-full max-w-lg text-black dark:text-white-dark">
                                 <button
                                     type="button"
-                                    onClick={() => setAddUserModal(false)}
+                                    onClick={() => setShowModal(false)}
                                     className="absolute top-4 ltr:right-4 rtl:left-4 text-gray-400 hover:text-gray-800 dark:hover:text-gray-600 outline-none"
                                 >
                                     <IconX />
                                 </button>
                                 <div className="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">
-                                    <h4>Add Alumni Group</h4>
+                                    <h4>Add Beneficiary</h4>
                                 </div>
                                 <div className="p-5">
                                     <form>
                                         <div className="mb-5">
-                                            <label htmlFor="name">
-                                                Name <span className="text-red-600">*</span>
-                                            </label>
-                                            <input id="name" type="text" placeholder="Enter Name" className="form-input" value={params.name} onChange={(e) => changeValue(e)} required />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="school">
-                                                School <span className="text-red-600">*</span>
-                                            </label>
-                                            <input id="school" type="text" placeholder="Enter School Name" className="form-input" value={params.school} onChange={(e) => changeValue(e)} required />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="start_date">
-                                                Start Date <span className="text-red-600">*</span>
+                                            <label htmlFor="first_name">
+                                                First Name <span className="text-red-600">*</span>
                                             </label>
                                             <input
-                                                id="start_date"
-                                                type="date"
-                                                placeholder="Enter Start Date"
+                                                id="first_name"
+                                                type="text"
+                                                placeholder="Enter First Name"
                                                 className="form-input"
-                                                value={params.start_date}
+                                                value={params.first_name}
                                                 onChange={(e) => changeValue(e)}
                                                 required
                                             />
                                         </div>
+
                                         <div className="mb-5">
-                                            <label htmlFor="end_date">
-                                                End Date <span className="text-red-600">*</span>
+                                            <label htmlFor="last_name">
+                                                Last Name <span className="text-red-600">*</span>
                                             </label>
-                                            <input id="end_date" type="date" placeholder="Enter End Date" className="form-input" value={params.end_date} onChange={(e) => changeValue(e)} required />
-                                        </div>
-                                        {/* <div className="mb-5">
-                                            <label htmlFor="president">President</label>
-                                            <Select
-                                                defaultValue={params.president_user_id}
-                                                id="president_id"
-                                                options={users}
-                                                isSearchable={false}
-                                                onChange={(e: any) => setParams({ ...params, president_user_id: e?.value })}
-                                            />
-                                        </div> */}
-                                        <div className="mb-5">
-                                            <label htmlFor="insurance_package">Insurance Package</label>
-                                            <Select
-                                                defaultValue={params.package_id}
-                                                id="package_id"
-                                                options={insurance_packages}
-                                                isSearchable={true}
-                                                onChange={(e: any) => setParams({ ...params, package_id: e.value })}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="status">
-                                                Status <span className="text-red-600">*</span>
-                                            </label>
-                                            <Select
-                                                defaultValue={params.status}
-                                                id="status"
-                                                options={ContractStatus}
-                                                isSearchable={false}
-                                                onChange={(e: any) => setParams({ ...params, status: e?.value })}
-                                                required
-                                            />
+                                            <input id="last_name" type="text" placeholder="Enter Last Name" className="form-input" value={params.last_name} onChange={(e) => changeValue(e)} required />
                                         </div>
 
+                                        <div className="mb-5">
+                                            <label htmlFor="email">
+                                                Email <span className="text-red-600">*</span>
+                                            </label>
+                                            <input id="email" type="email" placeholder="Enter Email" className="form-input" value={params.email} onChange={(e) => changeValue(e)} required />
+                                        </div>
+
+                                        <div className="mb-5">
+                                            <label htmlFor="phone">Phone Number</label>
+                                            <input id="phone" type="tel" placeholder="Enter Phone Number" className="form-input" value={params.phone} onChange={(e) => changeValue(e)} />
+                                        </div>
+
+                                        <div className="mb-5">
+                                            <label htmlFor="address">Address</label>
+                                            <textarea id="address" placeholder="Enter Address" className="form-input" value={params.address} onChange={(e) => changeValue(e)} />
+                                        </div>
+
+                                        <div className="mb-5">
+                                            <label htmlFor="other_names">Other Names</label>
+                                            <input id="other_names" type="text" placeholder="Enter Other Names" className="form-input" value={params.other_names} onChange={(e) => changeValue(e)} />
+                                        </div>
+
+                                        <div className="mb-5">
+                                            <label htmlFor="date_of_birth">Date of Birth</label>
+                                            <input id="date_of_birth" type="date" className="form-input" value={params.date_of_birth} onChange={(e) => changeValue(e)} />
+                                        </div>
+
+                                       {!benefactorId && <div className="mb-5">
+                                            <label htmlFor="insurance_package">Benefactor</label>
+                                            <Select
+                                                defaultValue={params.benefactor_user_id}
+                                                id="package_id"
+                                                options={users}
+                                                isSearchable={true}
+                                                onChange={(e: any) => setParams({ ...params, benefactor_user_id: e.value })}
+                                                required
+                                            />
+                                        </div>}
+
+                                        <div className="mb-5">
+                                            <label htmlFor="insurance_package">Relationship Type</label>
+                                            <Select
+                                                defaultValue={params.relationship_type}
+                                                id="relationship_type"
+                                                options={relationshiptype}
+                                                isSearchable={true}
+                                                onChange={(e: any) => setParams({ ...params, relationship_type: e.value })}
+                                                required
+                                            />
+                                        </div>
                                         <div className="flex justify-end items-center mt-8">
-                                            <button type="button" className="btn btn-outline-danger" onClick={() => setAddUserModal(false)}>
+                                            <button type="button" className="btn btn-outline-danger" onClick={() => setShowModal(false)}>
                                                 Cancel
                                             </button>
                                             <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={SaveNewGroup}>
-                                                Add
+                                                {isSavedLoading ? <IconLoader className="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" /> : 'add'}
                                             </button>
                                         </div>
                                     </form>
@@ -239,4 +256,4 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
     );
 };
 
-export default AddNewAlumniGroup;
+export default AddNewBeneficiaries;

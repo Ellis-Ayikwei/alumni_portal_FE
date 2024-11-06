@@ -2,9 +2,13 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Select, { StylesConfig } from 'react-select';
+import { mutate } from 'swr';
 import 'tippy.js/dist/tippy.css';
+import IconLoader from '../../../components/Icon/IconLoader';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
+import extractErrorMessage from '../../../helper/extractErrorMessage';
+import showMessage from '../../../helper/showMessage';
 import { IRootState } from '../../../store';
 import { GetUsersData } from '../../../store/usersSlice';
 
@@ -35,8 +39,9 @@ const roles = [
 const AddMembersToGroup = ({ AddMembersToGroupModal, setAddMembersToGroupModal, groups }: AddMembersToGroupProps) => {
     const dispatch = useDispatch();
     const usersData = useSelector((state: IRootState) => state.usersdata.usersData);
-    const [selectedUsers, setSelectedUsers] = useState<any>([]);
+    const [selectedUsers, setSelectedUsers] = useState<{ value: string; label: string }[]>([]);
     const [usersToAddToALumniGroup, setUsersToAddToALumniGroup] = useState<any>(usersData);
+    const [isSaveLoading, setIsSaveLoading] = useState(false);
 
     useEffect(() => {
         dispatch(GetUsersData() as any);
@@ -56,29 +61,33 @@ const AddMembersToGroup = ({ AddMembersToGroupModal, setAddMembersToGroupModal, 
 
     useEffect(() => {
         console.log(selectedUsers);
-    }, [selectedUsers]);
+        console.log('the group', groups);
+        console.log('the type of group', typeof groups);
+    }, [AddMembersToGroupModal]);
 
     const handleAddMembersToGroup = async () => {
-        if (selectedUsers.length > 0) {
-            const promises = selectedUsers.map((user: any) => {
-                groups.forEach((group: any) => {
-                    return axiosInstance.post(`/alumni_groups/${group.id}/members`, {
-                        user_id: user.value,
-                    });
-                });
-            });
-
-            const allPromises = await Promise.allSettled(promises);
-
-            const failedPromises = allPromises.filter((promise) => promise.status === 'rejected');
-
-            if (failedPromises.length > 0) {
-                console.error('Failed to add users to group:', failedPromises);
-            }
-            if (allPromises.length > 0) {
-                setAddMembersToGroupModal(false);
-            }
+        setIsSaveLoading(true);
+        if (selectedUsers.length === 0) {
+            setIsSaveLoading(false);
+            return;
         }
+
+        const addMemberPromises = selectedUsers.map(({ value: userId }: { value: string }) =>
+            groups.map(({ id: groupId }: { id: string }) => axiosInstance.post(`/alumni_groups/${groupId}/members`, { user_id: userId }))
+        );
+
+        const responses = await Promise.allSettled(addMemberPromises.flat());
+
+        const failedResponses = responses.filter(({ status }) => status !== 'fulfilled');
+
+        if (failedResponses.length > 0) {
+            const errorMessage = failedResponses[0].status === 'rejected' ? extractErrorMessage(failedResponses[0].reason.response.data) : 'An error occurred';
+            showMessage(errorMessage || 'An error occurred', 'error');
+        }
+
+        setAddMembersToGroupModal(false);
+        mutate('/group_members');
+        setIsSaveLoading(false);
     };
 
     return (
@@ -108,17 +117,12 @@ const AddMembersToGroup = ({ AddMembersToGroupModal, setAddMembersToGroupModal, 
                                 </button>
                                 <div className="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">{'Add User To An Alumni Group'}</div>
                                 <div className="p-5">
-                                    Add members to these groups{' '}
-                                    <b>
-                                        {groups.map((group: any) => (
-                                            <p>{group.name},</p>
-                                        ))}
-                                    </b>
+                                    Add members to <b>{Array.isArray(groups) && groups?.map((group: any) => <p key={group?.id}>{group?.name},</p>)}</b>
                                     <div className="mb-5 mt-5">
                                         <label htmlFor="role">Select members to add</label>
                                         <Select
                                             id="role"
-                                            onChange={(selectedValues) => setSelectedUsers(selectedValues)}
+                                            onChange={(selectedValues) => setSelectedUsers(selectedValues as { value: string; label: string }[])}
                                             options={users}
                                             isSearchable={true}
                                             required
@@ -132,7 +136,7 @@ const AddMembersToGroup = ({ AddMembersToGroupModal, setAddMembersToGroupModal, 
                                             Cancel
                                         </button>
                                         <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4" onClick={handleAddMembersToGroup}>
-                                            Add
+                                            {!isSaveLoading ? 'Add' : <IconLoader className="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />}
                                         </button>
                                     </div>
                                 </div>

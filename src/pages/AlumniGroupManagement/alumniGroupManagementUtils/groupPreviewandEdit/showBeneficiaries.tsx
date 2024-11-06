@@ -1,10 +1,13 @@
+import { faHeartCirclePlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import useSwr from 'swr';
 import 'tippy.js/dist/tippy.css';
 import IconX from '../../../../components/Icon/IconX';
 import fetcher from '../../../../helper/fetcher';
+import AddNewBeneficiaries from './addNewBeficiaries';
 
 export const dParams = {
     name: '',
@@ -22,14 +25,13 @@ interface showBeneficiariesProps {
     benefactorId: string;
 }
 
+
 const ShowBeneficiaries = ({ showBeneficiariesModal, setShowBeneficiariesModal, benefactorId }: showBeneficiariesProps) => {
     const dispatch = useDispatch();
-    const { data: member_data, error: member_error, isLoading: member_loadng } = useSwr(
-        showBeneficiariesModal ? `/group_members/${benefactorId}` : null,
-        fetcher
-    );
+    const { data: member_data, error: member_error, isLoading: member_loadng } = useSwr(showBeneficiariesModal ? `/group_members/${benefactorId}` : null, fetcher);
 
-    // console.log('the member data', member_data);
+    const [showModal, setShowModal] = useState(false);
+
     return (
         <Transition appear show={showBeneficiariesModal} as={Fragment}>
             <Dialog as="div" open={showBeneficiariesModal} onClose={() => setShowBeneficiariesModal(false)} className="relative z-[51]">
@@ -55,10 +57,14 @@ const ShowBeneficiaries = ({ showBeneficiariesModal, setShowBeneficiariesModal, 
                                 >
                                     <IconX />
                                 </button>
-                                <div className="text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">
+                                <div className="flex justify-between text-lg font-medium bg-[#fbfbfb] dark:bg-[#121c2c] ltr:pl-5 rtl:pr-5 py-3 ltr:pr-[50px] rtl:pl-[50px]">
                                     <h4>
                                         Beneficiaries of <b>{member_data?.user_info?.username}</b>
                                     </h4>
+                                    <button onClick={() => setShowModal(true)} className="btn btn-info gap-2 bg-teal-500 text-white">
+                                        <FontAwesomeIcon icon={faHeartCirclePlus} />
+                                        Add Beneficiary
+                                    </button>
                                 </div>
                                 <div className="p-5">
                                     <div className="table-responsive">
@@ -72,16 +78,20 @@ const ShowBeneficiaries = ({ showBeneficiariesModal, setShowBeneficiariesModal, 
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {member_data?.beneficiaries?.map((bnf: any) => <tr className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
-                                                    <td className="min-w-[150px] text-black dark:text-white">
-                                                        <div className="flex items-center">
-                                                            <span className="whitespace-nowrap">{bnf.first_name} {bnf.last_name}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="text-primary">{bnf.email}</td>
-                                                    <td>{bnf.phone}</td>
-                                                    <td>{bnf.relationship_types}</td>
-                                                </tr>)}
+                                                {member_data?.beneficiaries?.map((bnf: any) => (
+                                                    <tr className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
+                                                        <td className="min-w-[150px] text-black dark:text-white">
+                                                            <div className="flex items-center">
+                                                                <span className="whitespace-nowrap">
+                                                                    {bnf.first_name} {bnf.last_name}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="text-primary">{bnf.email}</td>
+                                                        <td>{bnf.phone}</td>
+                                                        <td>{bnf.relationship_types}</td>
+                                                    </tr>
+                                                ))}
                                             </tbody>
                                         </table>
                                     </div>
@@ -89,6 +99,7 @@ const ShowBeneficiaries = ({ showBeneficiariesModal, setShowBeneficiariesModal, 
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>
+                    <AddNewBeneficiaries showModal={showModal} setShowModal={setShowModal} />
                 </div>
             </Dialog>
         </Transition>

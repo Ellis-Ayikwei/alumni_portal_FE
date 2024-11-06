@@ -7,8 +7,8 @@ import 'tippy.js/dist/tippy.css';
 import IconX from '../../../../components/Icon/IconX';
 import axiosInstance from '../../../../helper/axiosInstance';
 import fetcher from '../../../../helper/fetcher';
-import { GetAlumniData } from '../../../../store/alumnigroupSlice';
 import showMessage from '../../../../helper/showMessage';
+import { GetAlumniData } from '../../../../store/alumnigroupSlice';
 
 export const dParams = {
     name: '',
@@ -24,22 +24,23 @@ interface MakePresidentProps {
     showModal: boolean;
     setShowModal: (value: boolean) => void;
     groupId: string;
+    currentPresident: string;
 }
 
-const MakePresident = ({ showModal, setShowModal, groupId }: MakePresidentProps) => {
+const MakePresident = ({ showModal, setShowModal, groupId, currentPresident }: MakePresidentProps) => {
     const dispatch = useDispatch();
-    const [selectedOption, setSelectedOption] = useState(null);
+    const [selectedOption, setSelectedOption] = useState<any>(null);
     const { data, error, isLoading } = useSwr(`/group_members`, fetcher);
     const [isSaveLoading, setIsSaveLoading] = useState(false);
 
     const groupMembers = data
-        ?.filter((member: any) => member.group_id === groupId)
+        ?.filter((member: any) => member.group_id === groupId && member.user_id !== currentPresident && member.status === 'APPROVED')
         .map((member: any) => ({
-            value: member.user_id,
+            value: member,
             label: `${member.user_info.first_name} ${member.user_info.last_name}`,
         }));
 
-    console.log('the president', groupMembers);
+    console.log('the president', data);
 
     const OptionStyles: StylesConfig<any, true> = {
         menuList: (provided, state) => ({
@@ -54,7 +55,9 @@ const MakePresident = ({ showModal, setShowModal, groupId }: MakePresidentProps)
             return;
         }
         const payload = {
-            president_user_id: selectedOption,
+            president_user_id: selectedOption.user_id,
+            id: selectedOption.id,
+            is_president: true,
         };
 
         try {
