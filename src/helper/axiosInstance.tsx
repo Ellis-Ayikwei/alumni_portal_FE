@@ -1,7 +1,7 @@
 import axios from 'axios';
 import getCookie from './getCookies';
 // const apiUrl = 'https://127.0.0.1/sc/api/v1';
-const apiUrl = 'http://127.0.0.1:5004/alumni/api/v1';
+const apiUrl = 'http://192.168.100.52:5004/alumni/api/v1';
 
 const axiosInstance = axios.create({
     baseURL: apiUrl,

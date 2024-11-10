@@ -14,10 +14,8 @@ const fetcher = async (url: string, config: object = {}): Promise<any> => {
             throw new Error('No URL provided');
         }
         const response = await axiosInstance.get(url, config);
-        console.log(`Fetched data from swr for URL ${url}:`, response.data);
         return response.data;
     } catch (error) {
-        console.error(`Error fetching data for URL ${url}:`, error);
         throw error;
     }
 };

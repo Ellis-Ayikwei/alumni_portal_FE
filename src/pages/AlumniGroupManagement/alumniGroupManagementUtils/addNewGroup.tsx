@@ -12,15 +12,15 @@ import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
 import fetcher from '../../../helper/fetcher';
 import showMessage from '../../UserManagement/userManagementUtils/showMessage';
+import { GetAlumniData } from '../../../store/alumnigroupSlice';
 
 export const dParams = {
     name: '',
     start_date: '',
     end_date: '',
     school: '',
-    status: '',
+    status: 'ACTIVATED',
     package_id: '',
-    president_user_id: '',
 };
 
 interface AddNewAlumniGroupProps {
@@ -35,7 +35,6 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
     const [params, setParams] = useState<{ [key: string]: string }>({ ...dParams });
     const { data: users_data, error: users_error, isLoading: users_loadng } = useSwr('/users', fetcher);
     const { data: packages_data, error: packages_error, isLoading: packages_loadng } = useSwr('/insurance_packages', fetcher);
-    console.log('the users data', users_data);
 
     const insurance_packages = packages_data?.map((pkg: any) => {
         return { value: pkg.id, label: pkg.name };
@@ -45,13 +44,10 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
     });
 
     const ContractStatus = [
-        { value: 'ACTIVE', label: 'ACTIVE' },
+        { value: 'ACTIVATED', label: 'ACTIVE' },
         { value: 'LOCKED', label: 'LOCKED' },
-        { value: 'EXPIRED', label: 'EXPIRED' },
-        { value: 'TERMINATED', label: 'TERMINATED' },
     ];
 
-    console.log('contract status', typeof ContractStatus);
 
     const changeValue = (e: any) => {
         const { value, id } = e.target;
@@ -59,32 +55,15 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
         console.log('params', params);
     };
 
-    const [password, setPassword] = useState('');
-    const [type, setType] = useState('password');
-    const [icon, setIcon] = useState(eyeOff);
-
-    const handleToggle = () => {
-        if (type === 'password') {
-            setIcon(eye);
-            setType('text');
-        } else {
-            setIcon(eyeOff);
-            setType('password');
-        }
-    };
-
-    const handlePasswordChange = (e: any) => {
-        setPassword(e.target.value);
-    };
-
+ 
+ 
+  
     const SaveNewGroup = async () => {
-        console.log('params', params);
         const requiredFields = [
             { field: 'name', message: 'Group name is required.' },
             { field: 'school', message: 'Group school is required.' },
             { field: 'start_date', message: 'Group start date is required.' },
             { field: 'end_date', message: 'Group end date is required.' },
-            { field: 'status', message: 'Group status is required.' },
         ];
 
         for (let { field, message } of requiredFields) {
@@ -103,10 +82,10 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
 
         try {
             const response = await axiosInstance.post('/alumni_groups', payload);
-            if (response.status === 200) {
+            if (response.status === 201) {
                 showMessage(`Group Created Successfully.`, 'success');
                 setParams(defaultParams);
-                // dispatch(GetUsersData() as any);
+                dispatch(GetAlumniData() as any);
                 setAddUserModal(false);
             }
         } catch (error: any) {
@@ -201,9 +180,10 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
                                                 defaultValue={params.package_id}
                                                 id="package_id"
                                                 options={insurance_packages}
-                                                isSearchable={true}
+                                                isSearchable={false}
                                                 onChange={(e: any) => setParams({ ...params, package_id: e.value })}
-                                                required
+                                                isClearable={true}
+        
                                             />
                                         </div>
                                         <div className="mb-5">
@@ -216,7 +196,9 @@ const AddNewAlumniGroup = ({ AddUserModal, setAddUserModal }: AddNewAlumniGroupP
                                                 options={ContractStatus}
                                                 isSearchable={false}
                                                 onChange={(e: any) => setParams({ ...params, status: e?.value })}
-                                                required
+                                                escapeClearsValue={true}
+                                                isClearable={true}
+                                            
                                             />
                                         </div>
 

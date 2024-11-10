@@ -14,6 +14,7 @@ import UserManagement from '../pages/UserManagement/UserManagement';
 import { RowContextMenuExample } from '../pages/UserManagement/UserManagement copy';
 import GroupPreview from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupPreview';
 import GroupEdit from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupEdit';
+import ContractPreview from '../pages/ContractsManagement/contractManagementUtils/contractPreviewandEdit/ContractPreview';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -53,6 +54,10 @@ const routes = [
     {
         path: '/contracts',
         element: <ContractManagementpage />,
+    },
+    {
+        path: '/contracts/preview/:contract_id',
+        element: <ContractPreview />,
     },
     {
         path: '/insurancepackages',

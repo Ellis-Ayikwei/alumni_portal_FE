@@ -1,26 +1,29 @@
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import useSwr from 'swr';
 import IconArrowBackward from '../../../../components/Icon/IconArrowBackward';
 import IconArrowLeft from '../../../../components/Icon/IconArrowLeft';
 import IconClock from '../../../../components/Icon/IconClock';
 import IconEdit from '../../../../components/Icon/IconEdit';
 import fetcher from '../../../../helper/fetcher';
+import { renderStatus } from '../../../../helper/renderStatus';
 import { IRootState } from '../../../../store';
+import { GetContractsData } from '../../../../store/contractsSlice';
 import { setPageTitle } from '../../../../store/themeConfigSlice';
 import ShowBeneficiaries from './showBeneficiaries';
 
 const GroupPreview = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { group_id } = useParams();
     const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniGroups);
     const { data: all_members, error: all_members_error, isLoading: all_members_loadng } = useSwr(`/group_members`, fetcher);
     const group_members = all_members?.filter((group_member: any) => group_member.group_id == group_id);
     const [showBeneficiariesModal, setShowBeneficiariesModal] = useState<boolean>(false);
-    const [benefactorId, setBenefactorId] = useState<string>('');
+    const [benefactorIds, setBenefactorIds] = useState<{ userId: string; memberId: string }>({ userId: '', memberId: '' });
     const group = Object.values(alumniData).find((group: any) => group.id == group_id);
 
     console.log('group data is ', group);
@@ -29,18 +32,22 @@ const GroupPreview = () => {
         dispatch(setPageTitle('Group Preview'));
     });
 
-    const handleVewBeneficiaries = (id: string) => {
-        setBenefactorId(id);
+    useEffect(() => {
+        dispatch(GetContractsData as any);
+    }, []);
+
+    const handleVewBeneficiaries = (user_id: string, member_id: string) => {
+        setBenefactorIds({ userId: user_id, memberId: member_id });
         setShowBeneficiariesModal(true);
     };
 
     return (
         <div>
             <div className="flex items-center lg:justify-between  flex-wrap gap-4 mb-6">
-                <Link to="/apps/invoice/edit" className="btn btn-danger gap-2">
+                <button onClick={() => navigate(-1)} className="btn btn-danger gap-2">
                     <IconArrowBackward />
                     Back
-                </Link>
+                </button>
                 <Link to={`/member/groups/edit/${group?.id}`} className="btn btn-warning gap-2">
                     <IconEdit />
                     Edit
@@ -48,7 +55,10 @@ const GroupPreview = () => {
             </div>
             <div className="panel">
                 <div className="flex justify-between flex-wrap gap-4 px-4">
-                    <div className="text-2xl font-semibold uppercase">{group?.name}</div>
+                    <div>
+                        <div className="text-2xl font-semibold uppercase">{group?.name}</div>
+                        <p className="text-white-dark">{group.id}</p>
+                    </div>
                     <div className="shrink-0">
                         <img src="/assets/images/logo.svg" alt="img" className="w-14 ltr:ml-auto rtl:mr-auto" />
                     </div>
@@ -81,15 +91,19 @@ const GroupPreview = () => {
                                 <div className="text-white-dark">Date Created:</div>
                                 <div>{dayjs(group?.created_at).format('DD MMM YYYY')}</div>
                             </div>
+                            <div className="flex items-center w-full justify-between mb-2">
+                                <div className="text-white-dark">All Contracts:</div>
+                                <div>{group?.contracts?.length}</div>
+                            </div>
                         </div>
                         <div className="xl:1/3 lg:w-2/5 sm:w-1/2">
                             <div className="flex items-center w-full justify-between mb-2">
-                                <div className="text-white-dark">Contract Name:</div>
-                                <div className="whitespace-nowrap">{group?.contract?.name}</div>
+                                <div className="text-white-dark">Current Contract Name:</div>
+                                <div className="whitespace-nowrap">{group?.current_contract?.name}</div>
                             </div>
                             <div className="flex items-center w-full justify-between mb-2">
-                                <div className="text-white-dark">Contract Id:</div>
-                                <div>{group?.contract?.id}</div>
+                                <div className="text-white-dark">Current Contract Id:</div>
+                                <div>{group?.current_contract?.id}</div>
                             </div>
                             <div className="flex items-center w-full justify-between mb-2">
                                 <div className="text-white-dark">Contract state:</div>
@@ -97,7 +111,7 @@ const GroupPreview = () => {
                             </div>
                             <div className="flex items-center w-full justify-between mb-2">
                                 <div className="text-white-dark">Group Activity</div>
-                                <div>{group?.contract?.status}</div>
+                                <div>{renderStatus(group?.status)}</div>
                             </div>
                         </div>
                     </div>
@@ -132,7 +146,11 @@ const GroupPreview = () => {
                                             <td>{member?.user_info?.phone}</td>
                                             <td>
                                                 <p className="ltr:ml-auto rtl:mr-auto text-secondary">
-                                                    <button type="button" className="text-primary font-semibold hover:underline group" onClick={() => handleVewBeneficiaries(member.id)}>
+                                                    <button
+                                                        type="button"
+                                                        className="text-primary font-semibold hover:underline group"
+                                                        onClick={() => handleVewBeneficiaries(member.user_id, member.id)}
+                                                    >
                                                         View beneficiaries{' '}
                                                         <IconArrowLeft className="ltr:ml-1 rtl:mr-1 inline-block relative transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2 rtl:rotate-180" />
                                                     </button>
@@ -225,7 +243,7 @@ const GroupPreview = () => {
                     </div>
                 </div>
             </div>
-            <ShowBeneficiaries showBeneficiariesModal={showBeneficiariesModal} setShowBeneficiariesModal={setShowBeneficiariesModal} benefactorId={benefactorId} />
+            {benefactorIds && <ShowBeneficiaries showBeneficiariesModal={showBeneficiariesModal} setShowBeneficiariesModal={setShowBeneficiariesModal} benefactorIds={benefactorIds} edit={false} />}
         </div>
     );
 };

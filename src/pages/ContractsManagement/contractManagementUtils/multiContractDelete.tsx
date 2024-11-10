@@ -3,20 +3,21 @@ import axiosInstance from '../../../helper/axiosInstance';
 import confirmDialog from '../../../helper/confirmDialog';
 import { GetUsersData } from '../../../store/usersSlice';
 import { GetAlumniData } from '../../../store/alumnigroupSlice';
+import { GetContractsData } from '../../../store/contractsSlice';
 
-const handleMultiGroupDelete = async (selectedGroups: { id: string }[], dispatch: Dispatch<AnyAction>, setSelectedrecords: any): Promise<boolean> => {
+const handleMultiContractDelete = async (selectedContracts : { id: string }[], dispatch: Dispatch<AnyAction>, setSelectedrecords: any): Promise<boolean> => {
     const isConfirmed = await confirmDialog({
-        title: 'Delete Groups',
+        title: 'Delete Contracts',
         body: ' This cannot be undone',
         note: 'It is recommended to deactivate the group instead.',
-        finalQuestion: 'Are you sure you want to delete this group?',
+        finalQuestion: 'Are you sure you want to delete this Contract(s)?',
     });
     if (!isConfirmed) {
         return false;
     }
 
-    const promises = selectedGroups.map((group) => {
-        return axiosInstance.delete(`/alumni_groups/${group.id}`);
+    const promises = selectedContracts.map((contract) => {
+        return axiosInstance.delete(`/contracts/${contract.id}`);
     });
 
     const results = await Promise.allSettled(promises);
@@ -26,9 +27,9 @@ const handleMultiGroupDelete = async (selectedGroups: { id: string }[], dispatch
         console.error('Failed to delete users:', failedDeletes);
     }
 
-    dispatch(GetAlumniData() as any);
+    dispatch(GetContractsData() as any);
     setSelectedrecords([]);
     return true;
 };
 
-export default handleMultiGroupDelete;
+export default handleMultiContractDelete;

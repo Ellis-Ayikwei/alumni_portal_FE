@@ -8,6 +8,7 @@ import insurancePackagesSlice from './insurancePackageSlice'
 import { FLUSH, PAUSE, PERSIST, persistReducer, persistStore, PURGE, REGISTER, REHYDRATE } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import alumniGroupSlice from './alumnigroupSlice';
+import contractsSlice from './contractsSlice';
 
 // Persist configuration
 const persistConfig = {
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
     usersdata: usersSlice,
     alumnidata: alumniGroupSlice,
     insurancePackages: insurancePackagesSlice,
+    allContacts: contractsSlice,
 });
 
 // Persist the combined reducer

@@ -1,12 +1,14 @@
 import Tippy from '@tippyjs/react';
 import dayjs from 'dayjs';
 import sortBy from 'lodash/sortBy';
+
+import { useMediaQuery } from '@mantine/hooks';
+import { useContextMenu } from 'mantine-contextmenu';
 import { DataTable, DataTableSortStatus } from 'mantine-datatable';
 import { useEffect, useState } from 'react';
 import { downloadExcel } from 'react-export-table-to-excel';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import 'tippy.js/dist/tippy.css';
 import Dropdown from '../../components/Dropdown';
 import IconBell from '../../components/Icon/IconBell';
@@ -24,18 +26,17 @@ import IconTrash from '../../components/Icon/IconTrash';
 import IconUserPlus from '../../components/Icon/IconUserPlus';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconX from '../../components/Icon/IconX';
+import { renderStatus } from '../../helper/renderStatus';
+import showMessage from '../../helper/showMessage';
 import { IRootState } from '../../store';
 import { GetAlumniData } from '../../store/alumnigroupSlice';
 import { setPageTitle } from '../../store/themeConfigSlice';
-import handleMultiUserActivation from '../UserManagement/userManagementUtils/multiUserActivation';
-import handleMultiUserDeActivation from '../UserManagement/userManagementUtils/multiUserDeActivation';
-import handleMultiUserDelete from '../UserManagement/userManagementUtils/multiUserDelete';
-import handleUserActivation from '../UserManagement/userManagementUtils/userActivation';
-import AddNewAlumniGroup from './alumniGroupManagementUtils/addNewGroup';
-import { renderStatus } from './alumniGroupManagementUtils/renderStatus';
-import { useContextMenu } from 'mantine-contextmenu';
-import IconLockDots from '../../components/Icon/IconLockDots';
 import AddMembersToGroup from './alumniGroupManagementUtils/addMembersToGroup';
+import AddNewAlumniGroup from './alumniGroupManagementUtils/addNewGroup';
+import handleMultiGroupActivation from './alumniGroupManagementUtils/multiGroupActivation';
+import handleMultiGroupDeActivation from './alumniGroupManagementUtils/multiGroupDeActivation';
+import handleMultiGroupDelete from './alumniGroupManagementUtils/multiGroupDelete';
+import handleMultiGroupLocking from './alumniGroupManagementUtils/multiGroupLocking';
 
 const col = ['name', 'start_date', 'end_date', 'insurance_package', 'is_locked', 'president_id', 'id', 'create_at', 'updated_at'];
 
@@ -47,8 +48,9 @@ const AlumniGroupManagementpage = () => {
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const [addMembersToGroupModal, setAddMembersToGroupModal] = useState(false);
     const { showContextMenu } = useContextMenu();
-    console.log('my role is ', myRole);
-   
+    const [searchParams] = useSearchParams();
+    const isTouch = useMediaQuery('(pointer: coarse)');
+
     useEffect(() => {
         dispatch(setPageTitle('Multiple Tables'));
         dispatch(GetAlumniData() as any);
@@ -62,7 +64,9 @@ const AlumniGroupManagementpage = () => {
     const [initialGroupsRecords, setInitialGroupsRecords] = useState(sortBy(alumnidata, 'name'));
     const [recordsData, setRecordsData] = useState(initialGroupsRecords);
     const rowData = initialGroupsRecords;
+    const [query, setQuery] = useState('');
     const [search, setSearch] = useState('');
+    const [packageName, setPackageName] = useState('');
     const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
         columnAccessor: 'name',
         direction: 'asc',
@@ -86,22 +90,6 @@ const AlumniGroupManagementpage = () => {
     }, [page, pageSize, initialGroupsRecords]);
 
     useEffect(() => {
-        setInitialGroupsRecords(() => {
-            return alumnidata.filter((item: any) => {
-                return (
-                    item.name.toLowerCase().includes(search.toLowerCase()) ||
-                    item.company.toLowerCase().includes(search.toLowerCase()) ||
-                    item.age.toString().toLowerCase().includes(search.toLowerCase()) ||
-                    item.dob.toLowerCase().includes(search.toLowerCase()) ||
-                    item.email.toLowerCase().includes(search.toLowerCase()) ||
-                    item.phone.toLowerCase().includes(search.toLowerCase())
-                );
-            });
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
-
-    useEffect(() => {
         const data2 = sortBy(initialGroupsRecords, sortStatus.columnAccessor);
         setInitialGroupsRecords(sortStatus.direction === 'desc' ? data2.reverse() : data2);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,15 +99,43 @@ const AlumniGroupManagementpage = () => {
         dispatch(setPageTitle('Export Table'));
     });
 
-    const formatDate = (date: any) => {
-        if (date) {
-            const dt = new Date(date);
-            const month = dt.getMonth() + 1 < 10 ? '0' + (dt.getMonth() + 1) : dt.getMonth() + 1;
-            const day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
-            return day + '/' + month + '/' + dt.getFullYear();
-        }
-        return '';
-    };
+    useEffect(() => {
+        const filterRecords = (item: any) => {
+            const accessors = Object.keys(item) as (keyof typeof item)[];
+            return accessors.some((accessor) => {
+                const value = item[accessor];
+                if (typeof value === 'string') {
+                    return value.toLowerCase().includes(search.toLowerCase());
+                }
+                if (typeof value === 'number') {
+                    return value.toString().includes(search.toLowerCase());
+                }
+                if (value instanceof Date) {
+                    return dayjs(value).format('DD MMM YYYY').includes(search.toLowerCase());
+                }
+                if (accessor === 'insurance_package') {
+                    return value.name.toLowerCase().includes(search.toLowerCase());
+                }
+                return false;
+            });
+        };
+
+        setRecordsData(() => {
+            return Object.values(alumniData)?.filter(filterRecords);
+        });
+
+        console.log('the alumni data', alumniData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search]);
+
+    useEffect(() => {
+        setPackageName(searchParams.get('package_name') || '');
+        setSearch(packageName);
+    }, []);
+
+    useEffect(() => {
+        setSearch(packageName);
+    }, [packageName]);
 
     // const header = ['Id', 'Firstname', 'Lastname', 'Email', 'Adress', 'Start Date', 'Phone', 'Role', 'id', 'Dob', 'azure_id'];
     const capitalize = (text: any) => {
@@ -258,38 +274,15 @@ const AlumniGroupManagementpage = () => {
 
     const [AddUserModal, setAddUserModal] = useState<any>(false);
 
-    const showMessage = (msg = '', type = 'success') => {
-        const toast: any = Swal.mixin({
-            toast: true,
-            position: 'top',
-            showConfirmButton: false,
-            timer: 3000,
-            customClass: { container: 'toast' },
-        });
-        toast.fire({
-            icon: type,
-            title: msg,
-            padding: '10px 20px',
-        });
-    };
-
-
     const editGroup = (group: any = null) => {
-        const params = new URLSearchParams();
-        params.append('param1', 'value1');
-        params.append('param2', 'value2');
         navigate(`/member/groups/edit/${group.id}`);
     };
 
     const viewGroup = (group: any = null) => {
-        const params = new URLSearchParams();
-        params.append('param1', 'value1');
-        params.append('param2', 'value2');
+        alert(Object.values(group));
         navigate(`/member/groups/preview/${group.id}`);
     };
 
-
-    
     const deleteUser = (user: any = null) => {
         showMessage('User has been deleted successfully.');
     };
@@ -317,10 +310,6 @@ const AlumniGroupManagementpage = () => {
         { accessor: 'create_at', title: 'Create At', sortable: true },
         { accessor: 'updated_at', title: 'Updated At', sortable: true },
     ];
-    const handleNavigation = (payload: any) => {
-        // You can pass any data here in the state object
-        navigate('/profile', { state: payload });
-    };
 
     return (
         <div>
@@ -408,7 +397,7 @@ const AlumniGroupManagementpage = () => {
                                 <button
                                     type="button"
                                     className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl shadow-md"
-                                    onClick={() => handleMultiUserDelete(selectedRecords, dispatch, setSelectedRecords)}
+                                    onClick={() => handleMultiGroupDelete(selectedRecords, dispatch, setSelectedRecords)}
                                 >
                                     <IconTrash className="w-5 h-5 text-white" />
                                 </button>
@@ -418,7 +407,7 @@ const AlumniGroupManagementpage = () => {
                             <Tippy content="Activate">
                                 <button
                                     type="button"
-                                    onClick={() => handleMultiUserActivation(selectedRecords, dispatch)}
+                                    onClick={() => handleMultiGroupActivation(selectedRecords, dispatch)}
                                     className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconBolt className="w-5 h-5 text-white" />
@@ -429,7 +418,7 @@ const AlumniGroupManagementpage = () => {
                             <Tippy content="Deactivate">
                                 <button
                                     type="button"
-                                    onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
+                                    onClick={() => handleMultiGroupDeActivation(selectedRecords, dispatch)}
                                     className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconX className="w-5 h-5 text-white" />
@@ -440,7 +429,7 @@ const AlumniGroupManagementpage = () => {
                             <Tippy content="Lock">
                                 <button
                                     type="button"
-                                    onClick={() => handleMultiUserDeActivation(selectedRecords, dispatch)}
+                                    onClick={() => handleMultiGroupLocking(selectedRecords, dispatch)}
                                     className="btn bg-yellow-500 hover:bg-yellow-800 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconLock className="w-5 h-5 text-white" />
@@ -450,16 +439,18 @@ const AlumniGroupManagementpage = () => {
 
                         <div>
                             <Tippy content="Add Members">
-                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl shadow-md"
-                                 onClick={() => setAddMembersToGroupModal(true)}>
+                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl shadow-md" onClick={() => setAddMembersToGroupModal(true)}>
                                     <IconUserPlus className="w-5 h-5 text-white" />
                                 </button>
                             </Tippy>
                         </div>
                     </div>
                     <div className="ltr:ml-auto rtl:mr-auto flex gap-1">
-                        <div>
-                            <input type="text" className="form-input w-auto" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                        <div className="relative">
+                            <input type="text" className="form-input w-auto pl-2 pr-12" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                            <button type="button" className="absolute inset-y-0 right-0 flex items-center px-2" onClick={() => setSearch('')}>
+                                <IconX className="w-5 h-5 text-gray-500 hover:text-gray-900" />
+                            </button>
                         </div>
                         <Tippy content="Add New Alumni Group p-0">
                             <button
@@ -488,10 +479,10 @@ const AlumniGroupManagementpage = () => {
                                     const grpName = name as string;
 
                                     return (
-                                        <div className="flex items-center w-max">
+                                        <button className="flex items-center w-max" onClick={() => navigate(`/member/groups/preview/${id}`)}>
                                             <img className="w-9 h-9 rounded-full ltr:mr-2 rtl:ml-2 object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
-                                            <div>{grpName}</div>
-                                        </div>
+                                            <div className="underline">{grpName}</div>
+                                        </button>
                                     );
                                 },
                             },
@@ -527,7 +518,6 @@ const AlumniGroupManagementpage = () => {
                                 hidden: hideCols.includes('Active'),
                                 render: ({ status }) => {
                                     const grpStatus = status as string;
-                                    console.log('status from grp ......................', grpStatus);
                                     return renderStatus(grpStatus);
                                 },
                             },
@@ -560,6 +550,7 @@ const AlumniGroupManagementpage = () => {
                         withTableBorder
                         withColumnBorders
                         striped
+                        textSelectionDisabled={isTouch}
                         highlightOnHover
                         onPageChange={(p) => setPage(p)}
                         recordsPerPageOptions={PAGE_SIZES}
@@ -584,17 +575,24 @@ const AlumniGroupManagementpage = () => {
                                     onClick: () => editGroup(record),
                                 },
                                 {
-                                    key: record.status === "LOCKED" ? 'Lock' : 'Activate' ,
-                                    title: `${record.status === "LOCKED" ? 'Lock' : 'Activate'}`,
-                                    color: record.status === "LOCKED" ? 'red' : 'green',
-                                    icon: record.status === "LOCKED" ? <IconLock /> : <IconChecks />,
-                                    onClick: () => handleUserActivation(record, dispatch),
+                                    key: record.status === 'LOCKED' ? 'Lock' : 'Activate',
+                                    title: `${record.status === 'LOCKED' ? 'Activate' : 'Lock'}`,
+                                    color: record.status === 'LOCKED' ? 'green' : 'red',
+                                    icon: record.status === 'LOCKED' ? <IconLock /> : <IconChecks />,
+                                    onClick: () => {
+                                        if (record.status === 'LOCKED') {
+                                            handleMultiGroupActivation([{ id: record.id as string }], dispatch);
+                                        } else {
+                                            handleMultiGroupLocking([{ id: record.id as string }], dispatch);
+                                        }
+                                    },
                                 },
                                 {
-                                    key: 'add to group',
-                                    title: `Add members to group`,
-                                    icon: <IconUserPlus />,
-                                    onClick: () => editUser(record),
+                                    hidden: record?.status === 'DEACTIVATED',
+                                    key: 'deactivate',
+                                    title: `Deactivate`,
+                                    icon: <IconX />,
+                                    onClick: () => handleMultiGroupDeActivation([{ id: record.id as string }], dispatch),
                                 },
                             ])(event)
                         }

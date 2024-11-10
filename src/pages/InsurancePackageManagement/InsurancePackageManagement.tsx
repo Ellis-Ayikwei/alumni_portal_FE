@@ -5,7 +5,7 @@ import Tippy from '@tippyjs/react';
 import sortBy from 'lodash/sortBy';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import IconArrowBackward from '../../components/Icon/IconArrowBackward';
 import IconPencil from '../../components/Icon/IconPencil';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
@@ -20,6 +20,8 @@ const InsurancePacakes = () => {
     const navigate = useNavigate();
     const [addPackageModal, setAddPackageModal] = useState(false);
     const [editPackageModal, setEditPackageModal] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const { insurancePackages, loading, error } = useSelector((state: IRootState) => state.insurancePackages) || { insurancePackages: [] };
     const [datatoEdit, setDatatoEdit] = useState<Insurance>({
         id: '',
@@ -39,6 +41,9 @@ const InsurancePacakes = () => {
     useEffect(() => {
         dispatch(GetInsurancePackages() as any);
     }, []);
+
+
+    
     const [tabs, setTabs] = useState<string[]>([]);
 
     const handleEditInsurancePackage = (data: any) => {
@@ -143,7 +148,12 @@ const InsurancePacakes = () => {
                                     </div>
                                     <div className="relative flex justify-between mt-6 pt-4 before:w-[250px] before:h-[1px] before:bg-white-light before:inset-x-0 before:top-0 before:absolute before:mx-auto dark:before:bg-[#1b2e4b]">
                                         <Tippy content={'Subscribed Group'}>
-                                            <div  onClick={() => navigate(`/alumnigroups/${item.id}`)} className="flex items-center font-semibold gap-2 border-2 border-[#515365] dark:border-white-dark px-2 py-1 rounded">
+                                            <div
+                                                onClick={() => {
+                                                    navigate({pathname:`/alumnigroups/${searchParams}`, search:`?package_name=${item.name}`});
+                                                }}
+                                                className="flex items-center font-semibold gap-2 border-2 border-[#515365] dark:border-white-dark px-2 py-1 rounded"
+                                            >
                                                 <IconUsersGroup className="w-5 h-5" />
                                                 <div className="text-[#515365] dark:text-white-dark">56 Groups </div>
                                             </div>

@@ -65,7 +65,7 @@ const UserManagement = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
     const [initialRecords, setinitialRecords] = useState(sortBy(usersData, 'first_name'));
-    const [recordsData, setRecordsData] = useState(initialRecords);
+    const [recordsData, setRecordsData] = useState<any[]>(initialRecords);
     const rowData = initialRecords;
     const [search, setSearch] = useState('');
     const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
@@ -124,7 +124,7 @@ const UserManagement = () => {
 
     useEffect(() => {
         setRecordsData(() => {
-            return usersData.filter((item: any) => {
+            return Object.values(usersData)?.filter((item: any) => {
                 const accessors = Object.keys(item) as (keyof typeof item)[];
                 return accessors.some((accessor) => {
                     const value = item[accessor];

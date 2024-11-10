@@ -1,6 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import Select, { StylesConfig } from 'react-select';
 import { mutate } from 'swr';
 import 'tippy.js/dist/tippy.css';
@@ -130,6 +131,12 @@ const AddMembersToGroup = ({ AddMembersToGroupModal, setAddMembersToGroupModal, 
                                             hideSelectedOptions={true}
                                             isMulti
                                         />
+                                    </div>
+                                    <div>
+                                        Can't find the user in the list?{' '}
+                                        <Link to="/alumni-group-management/add-user-to-group" className="text-primary-500 hover:text-primary-600">
+                                            Add New User
+                                        </Link>
                                     </div>
                                     <div className="flex justify-end items-center mt-8">
                                         <button type="button" className="btn btn-outline-danger" onClick={() => setAddMembersToGroupModal(false)}>

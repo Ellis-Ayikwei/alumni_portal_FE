@@ -1,14 +1,16 @@
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useState } from 'react';
-import { eye } from 'react-icons-kit/feather/eye';
-import { eyeOff } from 'react-icons-kit/feather/eyeOff';
-import { useDispatch } from 'react-redux';
+import { Fragment, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Select from 'react-select';
 import 'tippy.js/dist/tippy.css';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
-import { GetUsersData } from '../../../store/usersSlice';
+import { IRootState } from '../../../store';
+import { GetAlumniData } from '../../../store/alumnigroupSlice';
+import { GetInsurancePackages } from '../../../store/insurancePackageSlice';
 import showMessage from './showMessage';
+import { GetContractsData } from '../../../store/contractsSlice';
+import IconLoader from '../../../components/Icon/IconLoader';
 
 export const dParams = {
     id: null,
@@ -65,34 +67,33 @@ export const dParams = {
 };
 
 interface SaveNewUserProps {
-    AddUserModal: boolean;
-    setAddUserModal: (value: boolean) => void;
+    showModal: boolean;
+    setShowModal: (value: boolean) => void;
 }
 
-const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+const CreateNewContract = ({ showModal, setShowModal }: SaveNewUserProps) => {
+    const alumniGroups = useSelector((state: IRootState) => state.alumnidata.alumniGroups);
+    const { insurancePackages, loading, error } = useSelector((state: IRootState) => state.insurancePackages) || { insurancePackages: [] };
     const dispatch = useDispatch();
-    const [value, setValue] = useState<any>('list');
     const [defaultParams, setDefaultParams] = useState({ ...dParams });
     const [params, setParams] = useState<any>(JSON.parse(JSON.stringify(defaultParams)));
+    const [isSaveLoading, setIsSaveLoading] = useState(false);
 
-    const groups = [
-        { value: 'group1', label: 'group1' },
-        { value: 'group2', label: 'group2' },
-        { value: 'group3', label: 'group3' },
-    ];
-    const insurance_packages = [
-        { value: 'PLATINUM', label: 'PLATINUM' },
-        { value: 'GOLD', label: 'GOLD' },
-        { value: 'SILVER', label: 'SILVER' },
-        { value: 'BRONZE', label: 'BRONZE' },
-    ];
-    const users = [
-        { value: 'user1', label: 'user1' },
-        { value: 'user2', label: 'user2' },
-        { value: 'user3', label: 'user3' },
-    ];
+
+
+
+    useEffect(() => {
+        dispatch(GetAlumniData as any);
+    }, [dispatch, alumniGroups]);
+
+    useEffect(() => {
+        dispatch(GetInsurancePackages as any);
+        console.log(' the goten insurance packages', insurancePackages);
+    }, []);
+
+    const groups = Object.values(alumniGroups)?.map((group: any) => ({ value: group.id, label: group.name }));
+
+    const insurance_packages = Object.values(insurancePackages)?.map((insurance: any) => ({ value: insurance.id, label: insurance.name }));
 
     const ContractStatus = [
         { value: 'ACTIVE', label: 'ACTIVE' },
@@ -107,71 +108,34 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
         setParams({ ...params, [id]: value });
     };
 
-    const [password, setPassword] = useState('');
-    const [type, setType] = useState('password');
-    const [icon, setIcon] = useState(eyeOff);
+    const SaveNewContract = async () => {
+        setIsSaveLoading(true);
 
-    const handleToggle = () => {
-        if (type === 'password') {
-            setIcon(eye);
-            setType('text');
-        } else {
-            setIcon(eyeOff);
-            setType('password');
-        }
-    };
+        const requiredFields = [
+            { field: 'group_id', message: 'Group name is required.' },
+            { field: 'expiry_date', message: 'Expiry Date is required.' },
+            { field: 'status', message: 'Status is required.' },
+            { field: 'insurance_package_id', message: 'Insurance Package is required.' },
+        ];
 
-    const handlePasswordChange = (e: any) => {
-        setPassword(e.target.value);
-    };
+        for (let { field, message } of requiredFields) {
+            if (!params[field]) {
+                showMessage(message, 'error');
+                setIsSaveLoading(false);
+                return true;
+            }
+        }
 
-    const saveNewUser = async () => {
-        console.log('params', params);
-        if (!params.first_name) {
-            showMessage('First Name is required.', 'error');
-            return true;
-        }
-        if (!params.email) {
-            showMessage('Email is required.', 'error');
-            return true;
-        }
-        if (!params.phone) {
-            showMessage('Phone is required.', 'error');
-            return true;
-        }
-        if (!params.username) {
-            showMessage('Username is required.', 'error');
-            return true;
-        }
-        if (!params.password) {
-            showMessage('Password is required.', 'error');
-            return true;
-        }
-        if (!params.password1) {
-            showMessage('Confirm Password is required.', 'error');
-            return true;
-        }
-        if (params.password !== params.password1) {
-            showMessage('Passwords do not match.', 'error');
-            return true;
-        }
-        if (!params.dob) {
-            showMessage('Date of Birth is required.', 'error');
-            return true;
-        }
-        if (!params.role) {
-            showMessage('Occupation is required.', 'error');
-            return true;
-        }
         const payload = JSON.stringify({ ...params });
 
         try {
-            const response = await axiosInstance.post('/users', payload);
-            if (response.status === 200) {
-                showMessage(`User created successfully.`, 'success');
+            const response = await axiosInstance.post('/contracts', payload);
+            if (response.status === 201) {
+                showMessage(`Contract Created Successfully.`, 'success');
                 setParams(defaultParams);
-                dispatch(GetUsersData() as any);
-                setAddUserModal(false);
+                dispatch(GetContractsData() as any);
+                setIsSaveLoading(false);
+                setShowModal(false);
             }
         } catch (error: any) {
             if (error.response && error.response.data) {
@@ -182,14 +146,16 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                 const errorMessage = errorMess.split('\n')[1];
                 console.error('Error:', errorMessage);
                 showMessage(`${errorMessage}`, 'error');
+                setIsSaveLoading(false);
             }
         } finally {
-            // setParams(defaultParams);
+            setIsSaveLoading(false);
         }
     };
+
     return (
-        <Transition appear show={AddUserModal} as={Fragment}>
-            <Dialog as="div" open={AddUserModal} onClose={() => setAddUserModal(false)} className="relative z-[51]">
+        <Transition appear show={showModal} as={Fragment}>
+            <Dialog as="div" open={showModal} onClose={() => setShowModal(false)} className="relative z-[51]">
                 <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
                     <div className="fixed inset-0 bg-[black]/60" />
                 </Transition.Child>
@@ -207,7 +173,7 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                             <Dialog.Panel className="panel border-0 p-0 rounded-lg overflow-y-scroll w-full max-w-lg text-black dark:text-white-dark">
                                 <button
                                     type="button"
-                                    onClick={() => setAddUserModal(false)}
+                                    onClick={() => setShowModal(false)}
                                     className="absolute top-4 ltr:right-4 rtl:left-4 text-gray-400 hover:text-gray-800 dark:hover:text-gray-600 outline-none"
                                 >
                                     <IconX />
@@ -217,6 +183,17 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                                 </div>
                                 <div className="p-5">
                                     <form>
+                                    <div className="mb-5">
+                                            <label htmlFor="name">Name</label>
+                                            <input
+                                                id="name"
+                                                type="text"
+                                                placeholder="ie. contract for alumni group 2"
+                                                className="form-input"
+                                                value={params.name}
+                                                onChange={(e) => changeValue(e)}
+                                            />
+                                        </div>
                                         <div className="mb-5">
                                             <label htmlFor="group_id">
                                                 Alumni Group <span className="text-red-600">*</span>
@@ -227,6 +204,7 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                                                 options={groups}
                                                 isSearchable={true}
                                                 onChange={(e) => setParams({ ...params, group_id: e?.value })}
+                                                isClearable={true}
                                                 required
                                             />
                                         </div>
@@ -250,26 +228,26 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                                         </div>
                                         <div className="mb-5">
                                             <label htmlFor="signed_date">Signed Date</label>
+                                            <input id="signed_date" type="date" placeholder="Enter Signed Date" className="form-input" value={params.signed_date} onChange={(e) => changeValue(e)} />
+                                        </div>
+                                        <div className="mb-5">
+                                            <label htmlFor="policy_number">Policy Number</label>
                                             <input
-                                                id="signed_date"
-                                                type="datetime-local"
-                                                placeholder="Enter Signed Date"
+                                                id="policy_number"
+                                                type="text"
+                                                placeholder="Enter policy number"
                                                 className="form-input"
-                                                value={params.signed_date}
+                                                value={params.policy_number}
                                                 onChange={(e) => changeValue(e)}
                                             />
                                         </div>
                                         <div className="mb-5">
-                                            <label htmlFor="signed_date">Policy Number</label>
-                                            <input id="signed_date" type="text" placeholder="Enter policy number" className="form-input" value={params.signed_date} onChange={(e) => changeValue(e)} />
-                                        </div>
-                                        <div className="mb-5">
-                                            <label htmlFor="signed_date">Contract Description</label>
+                                            <label htmlFor="description">Contract Description</label>
                                             <textarea
-                                                id="signed_date"
+                                                id="description"
                                                 placeholder="Enter Enter Contract Description"
                                                 className="form-input"
-                                                value={params.signed_date}
+                                                value={params.description}
                                                 onChange={(e) => changeValue(e)}
                                             />
                                         </div>
@@ -313,11 +291,11 @@ const CreateNewContract = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                                             />
                                         </div>
                                         <div className="flex justify-end items-center mt-8">
-                                            <button type="button" className="btn btn-outline-danger" onClick={() => setAddUserModal(false)}>
+                                            <button type="button" className="btn btn-outline-danger" onClick={() => setShowModal(false)}>
                                                 Cancel
                                             </button>
-                                            <button type="button" className="btn btn-primary ltr:ml-4 rtl:mr-4">
-                                                {params.id ? 'Update' : 'Add'}
+                                            <button type="button" onClick={SaveNewContract} className="btn btn-success ltr:ml-4 rtl:mr-4">
+                                                {!isSaveLoading ? 'Add' : <IconLoader className="animate-[spin_2s_linear_infinite] inline-block align-middle ltr:mr-2 rtl:ml-2 shrink-0" />}
                                             </button>
                                         </div>
                                     </form>

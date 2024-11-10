@@ -1,23 +1,19 @@
 import { AnyAction, Dispatch } from '@reduxjs/toolkit';
-import { GetUsersData } from '../../../store/usersSlice';
 import axiosInstance from '../../../helper/axiosInstance';
+import { GetAlumniData } from '../../../store/alumnigroupSlice';
 
-const handleMultiUserDeActivation = async (
-    selectedUsers: { username: string }[],
-    dispatch: Dispatch<AnyAction>
-): Promise<boolean> => {
-    const promises = selectedUsers.map((user) =>
-        axiosInstance.put('/users', {
-            is_active: false,
-            username: user.username,
+const handleMultiGroupDeActivation = async (selectedGroups: { id: string }[], dispatch: Dispatch<AnyAction>): Promise<boolean> => {
+    const promises = selectedGroups.map((group) =>
+        axiosInstance.put(`/alumni_groups/${group.id}`, {
+            status: 'INACTIVE',
         })
     );
 
     await Promise.all(promises);
 
-    dispatch(GetUsersData() as any);
+    dispatch(GetAlumniData() as any);
 
     return true;
 };
 
-export default handleMultiUserDeActivation;
+export default handleMultiGroupDeActivation;
