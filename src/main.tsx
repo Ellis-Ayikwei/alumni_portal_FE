@@ -36,9 +36,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                 <ContextMenuProvider zIndex={5000} shadow="md" borderRadius="md">
                 <DatesProvider settings={{ locale: 'en' }}>
                     <Provider store={store}>
-                        <PersistGate loading={null} persistor={persistor}>
+                        {/* <PersistGate loading={null} persistor={persistor}> */}
                             <RouterProvider router={router} />
-                        </PersistGate>
+                        {/* </PersistGate> */}
                     </Provider>
                 </DatesProvider>
                 </ContextMenuProvider>

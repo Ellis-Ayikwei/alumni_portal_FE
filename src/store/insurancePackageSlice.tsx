@@ -18,7 +18,6 @@ const initialState: InsurancePackageState = {
 // Create an async thunk for Login functionality
 export const GetInsurancePackages = createAsyncThunk('insurance/getinsurancepackages', async () => {
     const response = await axiosInstance.get('/insurance_packages');
-    console.log('response......data......', response.data);
     return response.data;
 });
 

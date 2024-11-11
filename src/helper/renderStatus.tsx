@@ -1,4 +1,4 @@
-import { faCheckCircle, faLock, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarTimes, faCheckCircle, faLock, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import IconX from '../components/Icon/IconX';
 
@@ -16,6 +16,13 @@ export const renderStatus = (status: string) => {
                 <span className="flex items-center text-xs bg-green-100 px-2 py-1 rounded-full">
                     <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 h-4 w-4" />
                     <span className="ml-1 text-green-500">Active</span>
+                </span>
+            );
+        case 'EXPIRED':
+            return (
+                <span className="flex items-center text-xs bg-red-100 px-2 py-1 rounded-full">
+                    <FontAwesomeIcon icon={faCalendarTimes} className="text-red-500 h-4 w-4" />
+                    <span className="ml-1 text-red-500">Expired</span>
                 </span>
             );
         case 'LOCKED':

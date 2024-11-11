@@ -15,6 +15,8 @@ import { RowContextMenuExample } from '../pages/UserManagement/UserManagement co
 import GroupPreview from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupPreview';
 import GroupEdit from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupEdit';
 import ContractPreview from '../pages/ContractsManagement/contractManagementUtils/contractPreviewandEdit/ContractPreview';
+import ContractEdit from '../pages/ContractsManagement/contractManagementUtils/contractPreviewandEdit/contractEdit';
+import Amendments from '../pages/Amendments/Amendments';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -56,8 +58,16 @@ const routes = [
         element: <ContractManagementpage />,
     },
     {
+        path: '/amendments',
+        element: <Amendments />,
+    },
+    {
         path: '/contracts/preview/:contract_id',
         element: <ContractPreview />,
+    },
+    {
+        path: '/contracts/edit/:contract_id',
+        element: <ContractEdit />,
     },
     {
         path: '/insurancepackages',

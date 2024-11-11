@@ -40,7 +40,6 @@ const MakePresident = ({ showModal, setShowModal, groupId, currentPresident }: M
             label: `${member.user_info.first_name} ${member.user_info.last_name}`,
         }));
 
-    console.log('the president', data);
 
     const OptionStyles: StylesConfig<any, true> = {
         menuList: (provided, state) => ({

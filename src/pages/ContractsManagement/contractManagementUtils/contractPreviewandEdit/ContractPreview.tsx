@@ -4,21 +4,19 @@ import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import useSwr from 'swr';
 import Dropdown from '../../../../components/Dropdown';
 import IconArrowBackward from '../../../../components/Icon/IconArrowBackward';
 import IconArrowLeft from '../../../../components/Icon/IconArrowLeft';
 import IconEdit from '../../../../components/Icon/IconEdit';
 import IconHorizontalDots from '../../../../components/Icon/IconHorizontalDots';
 import IconLock from '../../../../components/Icon/IconLock';
-import fetcher from '../../../../helper/fetcher';
 import { renderStatus } from '../../../../helper/renderStatus';
 import { IRootState } from '../../../../store';
 import { setPageTitle } from '../../../../store/themeConfigSlice';
-import ShowBeneficiaries from './showBeneficiaries';
-import ViewAmendment from './viewAmendment';
-import handleMultiContractLocking from '../multiContractLocking';
+import ChangeLog from '../../../Amendments/AmendmentUtils/changeLogModal';
 import handleMultiContractActivation from '../multiContractActivation';
+import handleMultiContractLocking from '../multiContractLocking';
+import ShowBeneficiaries from './showBeneficiaries';
 
 const ContractPreview = () => {
     const dispatch = useDispatch();
@@ -27,12 +25,10 @@ const ContractPreview = () => {
     const { contract_id } = useParams();
     const { allContracts, error, loading } = useSelector((state: IRootState) => state.allContacts);
 
-    const { data: all_members, error: all_members_error, isLoading: all_members_loadng } = useSwr(`/group_members`, fetcher);
-    const group_members = all_members?.filter((group_member: any) => group_member.contract_id == contract_id);
     const [showBeneficiariesModal, setShowBeneficiariesModal] = useState<boolean>(false);
     const [benefactorIds, setBenefactorIds] = useState<{ userId: string; memberId: string }>({ userId: '', memberId: '' });
     const contract = Object.values(allContracts).find((contract: any) => contract?.id == contract_id);
-
+    const [changeLog, setChangeLog] = useState<{ newValues: {}; oldValues: {} }>({});
     const [showAmendmentModal, setShowAmendmentModal] = useState<boolean>(false);
 
     useEffect(() => {
@@ -57,16 +53,18 @@ const ContractPreview = () => {
                     Back
                 </button>
                 <div className="flex items-center gap-2">
-                   {contract?.status === "ACTIVE"  ? <button onClick={() => handleMultiContractLocking([{ id: contract?.id }], dispatch)} className="btn btn-outline-warning gap-2">
-                        <IconLock />
-                        Lock{' '}
-                    </button>
-                    :
-                    <button onClick={() => handleMultiContractActivation([{ id: contract?.id }], dispatch)} className="btn btn-outline-warning gap-2">
-                        <FontAwesomeIcon icon={faUnlockAlt} />
-                        Make Active {' '}
-                    </button>}
-                    <Link to={`/member/groups/edit/${contract?.id}`} className="btn btn-success gap-2">
+                    {contract?.status === 'ACTIVE' ? (
+                        <button onClick={() => handleMultiContractLocking([{ id: contract?.id }], dispatch)} className="btn btn-outline-warning gap-2">
+                            <IconLock />
+                            Lock{' '}
+                        </button>
+                    ) : (
+                        <button onClick={() => handleMultiContractActivation([{ id: contract?.id }], dispatch)} className="btn btn-outline-warning gap-2">
+                            <FontAwesomeIcon icon={faUnlockAlt} />
+                            Make Active{' '}
+                        </button>
+                    )}
+                    <Link to={`/contracts/edit/${contract?.id}`} className="btn btn-success gap-2">
                         <IconEdit />
                         Amend
                     </Link>
@@ -207,28 +205,42 @@ const ContractPreview = () => {
                             </Dropdown>
                         </div>
                     </div>
-                    <div>
-                        <div className="space-y-6 panel">
-                            <div className="flex" onClick={() => setShowAmendmentModal(true)}>
-                                <span className="shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-success-light dark:bg-success text-success dark:text-success-light">
-                                    {' '}
-                                    <IconEdit />
-                                </span>
-                                <div className="px-3 flex-1">
-                                    <div>Shaun Park</div>
-                                    <div className="text-xs text-white-dark dark:text-gray-500">10 Jan 1:00PM</div>
-                                    <div className="text-xs text-white-dark dark:text-gray-500">shaun peeks</div>
+                    <div className="flex flex-col gap-2">
+                        {contract?.amendments?.map((amendment: any) => {
+                            let sts = amendment?.status;
+                            return (
+                                <div key={amendment?.id} className={`space-y-6 panel bg-${sts === 'APPROVED' ? 'green-50' : sts === 'PENDING' ? 'yellow-50' : 'red-50'}`}>
+                                    <div className="flex">
+                                        <span className="shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-success-light dark:bg-success text-success dark:text-success-light">
+                                            {' '}
+                                            <IconEdit />
+                                        </span>
+                                        <div className="px-3 flex-1">
+                                            <div>{amendment?.name}</div>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">{dayjs(amendment.change_date).format('ddd, DD MMM YYYY')}</div>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">{amendment.amended_by.full_name}</div>
+                                        </div>
+                                        <div className="text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre flex flex-col">
+                                            <span>{renderStatus(sts)}</span>
+                                            {sts !== 'PENDING' && <span className="text-xs text-white-dark italic">by {amendment?.approved_by?.username}</span>}{' '}
+                                            <button
+                                                onClick={() => {
+                                                    setChangeLog({ newValues: amendment?.new_values, oldValues: amendment?.old_values });
+                                                    setShowAmendmentModal(true);
+                                                }}
+                                                className="text-xs text-white-dark dark:text-gray-500 mt-auto ml-auto hover:underline"
+                                            >
+                                                view more
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">
-                                    <span>{renderStatus('APPROVED')}</span>
-                                    <span className="text-xs text-white-dark italic">by soso and so</span>
-                                </div>
-                            </div>
-                        </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
-            <ViewAmendment showModal={showAmendmentModal} setShowModal={setShowAmendmentModal} />
+            {showAmendmentModal && <ChangeLog showModal={showAmendmentModal} setShowModal={setShowAmendmentModal} changeLog={changeLog} />}
             {benefactorIds && <ShowBeneficiaries showBeneficiariesModal={showBeneficiariesModal} setShowBeneficiariesModal={setShowBeneficiariesModal} benefactorIds={benefactorIds} edit={false} />}
         </div>
     );

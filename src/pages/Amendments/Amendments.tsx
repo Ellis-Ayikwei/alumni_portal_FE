@@ -10,13 +10,11 @@ import { useNavigate } from 'react-router-dom';
 import 'tippy.js/dist/tippy.css';
 import Dropdown from '../../components/Dropdown';
 import IconBell from '../../components/Icon/IconBell';
-import IconBolt from '../../components/Icon/IconBolt';
 import IconCaretDown from '../../components/Icon/IconCaretDown';
+import IconChecks from '../../components/Icon/IconChecks';
 import IconEye from '../../components/Icon/IconEye';
 import IconFile from '../../components/Icon/IconFile';
-import IconLock from '../../components/Icon/IconLock';
 import IconPencil from '../../components/Icon/IconPencil';
-import IconPlusCircle from '../../components/Icon/IconPlusCircle';
 import IconPrinter from '../../components/Icon/IconPrinter';
 import IconRefresh from '../../components/Icon/IconRefresh';
 import IconTrash from '../../components/Icon/IconTrash';
@@ -24,48 +22,44 @@ import IconX from '../../components/Icon/IconX';
 import { renderStatus } from '../../helper/renderStatus';
 import showMessage from '../../helper/showMessage';
 import { IRootState } from '../../store';
-import { GetAlumniData } from '../../store/alumnigroupSlice';
-import { GetContractsData } from '../../store/contractsSlice';
+import { GetAmendments } from '../../store/amendmentsSlice';
 import { setPageTitle } from '../../store/themeConfigSlice';
-import CreateNewContract from './contractManagementUtils/CreateNewContract';
-import handleMultiContractActivation from './contractManagementUtils/multiContractActivation';
-import handleMultiContractDeActivation from './contractManagementUtils/multiContractDeActivation';
-import handleMultiContractDelete from './contractManagementUtils/multiContractDelete';
-import handleMultiContractLocking from './contractManagementUtils/multiContractLocking';
+import ChangeLog from './AmendmentUtils/changeLogModal';
+import handleMultiAmendmentApproval from './AmendmentUtils/multiAmendmentApproval';
+import handleMultiAmendmentDelete from './AmendmentUtils/multiAmendmentDelete';
+import handleMultiAmendmnetDisable from './AmendmentUtils/multiAmendmentsDisable';
 
 const col = ['name', 'start_date', 'end_date', 'insurance_package', 'is_locked', 'id', 'create_at', 'updated_at'];
 
-const AlumniGroupManagementpage = () => {
+const Amendments = () => {
     const dispatch = useDispatch();
     const [alumnidata, setUsersData] = useState<any>([]);
-    const { allContracts, error, loading } = useSelector((state: IRootState) => state.allContacts);
     const userDataIsLoading = useSelector((state: IRootState) => state.alumnidata.loading);
     const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const { showContextMenu } = useContextMenu();
-
-    useEffect(() => {
-        dispatch(GetContractsData() as any);
-        console.log('all contracts', allContracts);
-    }, [dispatch]);
+    const { amendments, amendmentsloading, amendmentserror } = useSelector((state: IRootState) => state.amendments) || { amendments: [] };
+    const [showChangeLogModal, setShowChangeLogModal] = useState<boolean>(false);
+    const [changelog, setChangeLog] = useState<{ newValues: any; oldValues: any }>({});
 
     useEffect(() => {
         dispatch(setPageTitle('Multiple Tables'));
-        dispatch(GetAlumniData() as any);
+        dispatch(GetAmendments() as any);
+        console.log('get all amendments', amendments);
     }, [dispatch]);
 
     useEffect(() => {
-        if (allContracts) {
-            setInitialRecords(sortBy(allContracts, 'name'));
+        if (amendments) {
+            setInitialRecords(sortBy(amendments, 'name'));
         }
-    }, [allContracts]);
+    }, [amendments]);
 
     const PAGE_SIZES = [10, 20, 30, 50, 100];
     const navigate = useNavigate();
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
-    const [initialRecords, setInitialRecords] = useState(sortBy(allContracts, 'name'));
+    const [initialRecords, setInitialRecords] = useState(sortBy(amendments, 'name'));
     const [recordsData, setRecordsData] = useState<any[]>(initialRecords);
     const rowData = initialRecords;
     const [search, setSearch] = useState('');
@@ -86,33 +80,34 @@ const AlumniGroupManagementpage = () => {
         setRecordsData([...initialRecords.slice(from, to)]);
     }, [page, pageSize, initialRecords]);
 
-    useEffect(() => {
-        const filterRecords = (item: any) => {
-            const accessors = Object.keys(item) as (keyof typeof item)[];
-            return accessors.some((accessor) => {
-                const value = item[accessor];
-                if (typeof value === 'string') {
-                    return value.toLowerCase().includes(search.toLowerCase());
-                }
-                if (typeof value === 'number') {
-                    return value.toString().includes(search.toLowerCase());
-                }
-                if (value instanceof Date) {
-                    return dayjs(value).format('DD MMM YYYY').includes(search.toLowerCase());
-                }
-                if (accessor === 'insurance_package') {
-                    return value.name.toLowerCase().includes(search.toLowerCase());
-                }
-                return false;
-            });
-        };
+    // useEffect(() => {
+    //     const filterRecords = (item: any) => {
+    //         const accessors = Object.keys(item) as (keyof typeof item)[];
+    //         console.log('using this accessors', accessors);
+    //         return accessors?.some((accessor) => {
+    //             const value = item[accessor];
+    //             if (typeof value === 'string') {
+    //                 return value.toLowerCase().includes(search.toLowerCase());
+    //             }
+    //             if (typeof value === 'number') {
+    //                 return value.toString().includes(search.toLowerCase());
+    //             }
+    //             if (value instanceof Date) {
+    //                 return dayjs(value).format('DD MMM YYYY').includes(search.toLowerCase());
+    //             }
+    //             if (accessor === 'insurance_package') {
+    //                 return value.name.toLowerCase().includes(search.toLowerCase());
+    //             }
+    //             return false;
+    //         });
+    //     };
 
-        setRecordsData(() => {
-            return Object.values(allContracts)?.filter(filterRecords);
-        });
+    //     setRecordsData(() => {
+    //         return Object.values(amendments)?.filter(filterRecords);
+    //     });
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search]);
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [search]);
 
     useEffect(() => {
         const data2 = sortBy(initialRecords, sortStatus.columnAccessor);
@@ -330,7 +325,7 @@ const AlumniGroupManagementpage = () => {
 
             <div className="panel mt-6">
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
-                    <h5 className="font-semibold text-lg dark:text-white-light">Contracts Management</h5>
+                    <h5 className="font-semibold text-lg dark:text-white-light">Amendments</h5>
                 </div>
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
                     <div className="flex items-center flex-nowrap">
@@ -392,7 +387,7 @@ const AlumniGroupManagementpage = () => {
 
                     <div>
                         <Tippy content="refresh">
-                            <button type="button" className="btn btn-dark w-8 h-8 p-0 rounded-full" onClick={() => dispatch(GetContractsData() as any)}>
+                            <button type="button" className="btn btn-dark w-8 h-8 p-0 rounded-full" onClick={() => dispatch(GetAmendments() as any)}>
                                 <IconRefresh className="w-5 h-5" />
                             </button>
                         </Tippy>
@@ -403,7 +398,7 @@ const AlumniGroupManagementpage = () => {
                                 <button
                                     type="button"
                                     className="btn bg-red-500 hover:bg-red-600 w-8 h-8 p-0 rounded-xl shadow-md"
-                                    onClick={() => handleMultiContractDelete(selectedRecords, dispatch, setSelectedRecords)}
+                                    onClick={() => handleMultiAmendmentDelete(selectedRecords, dispatch, setSelectedRecords)}
                                 >
                                     <IconTrash className="w-5 h-5 text-white" />
                                 </button>
@@ -413,39 +408,21 @@ const AlumniGroupManagementpage = () => {
                             <Tippy content="Activate">
                                 <button
                                     type="button"
-                                    onClick={() => handleMultiContractActivation(selectedRecords, dispatch)}
+                                    onClick={() => handleMultiAmendmentApproval(selectedRecords, dispatch)}
                                     className="btn bg-green-500 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
-                                    <IconBolt className="w-5 h-5 text-white" />
+                                    <IconChecks className="w-5 h-5 text-white" />
                                 </button>
                             </Tippy>
                         </div>
                         <div>
-                            <Tippy content="Deactivate">
+                            <Tippy content="Disapprove">
                                 <button
                                     type="button"
-                                    onClick={() => handleMultiContractDeActivation(selectedRecords, dispatch)}
+                                    onClick={() => handleMultiAmendmnetDisable(selectedRecords, dispatch)}
                                     className="btn bg-red-900 hover:bg-green-600 h-8 w-8 px-1 rounded-xl shadow-md"
                                 >
                                     <IconX className="w-5 h-5 text-white" />
-                                </button>
-                            </Tippy>
-                        </div>
-                        <div>
-                            <Tippy content="Lock">
-                                <button
-                                    type="button"
-                                    onClick={() => handleMultiContractLocking(selectedRecords, dispatch)}
-                                    className="btn bg-yellow-500 hover:bg-yellow-800 h-8 w-8 px-1 rounded-xl shadow-md"
-                                >
-                                    <IconLock className="w-5 h-5 text-white" />
-                                </button>
-                            </Tippy>
-                        </div>
-                        <div>
-                            <Tippy content="Add To Alumni Group">
-                                <button type="button" className="btn bg-blue-500 hover:bg-blue-600 w-8 h-8 p-0 rounded-xl shadow-md" onClick={() => setShowModal(true)}>
-                                    <IconPlusCircle className="w-5 h-5 text-white" />
                                 </button>
                             </Tippy>
                         </div>
@@ -458,17 +435,6 @@ const AlumniGroupManagementpage = () => {
                                 <IconX className="w-5 h-5 text-gray-500 hover:text-gray-900" />
                             </button>
                         </div>
-                        <Tippy content="Add A New Contract">
-                            <button
-                                type="button"
-                                className="btn btn-success w-8  p-0 "
-                                onClick={() => {
-                                    setShowModal(true);
-                                }}
-                            >
-                                <IconPlusCircle className="text-white" />
-                            </button>
-                        </Tippy>
                     </div>
                 </div>
                 <div className="datatables">
@@ -481,76 +447,8 @@ const AlumniGroupManagementpage = () => {
                                 title: 'Name',
                                 sortable: true,
                                 hidden: hideCols.includes('name'),
-                                render: ({ name, id }) => {
-                                    const { name: _name, id: _id } = { name, id } as { name: string; id: string };
-                                    return (
-                                        <button
-                                            className="underline underline-offset-2"
-                                            onClick={() => {
-                                                navigate(`/contracts/preview/${_id}`);
-                                            }}
-                                        >
-                                            {_name}
-                                        </button>
-                                    );
-                                },
                             },
 
-                            {
-                                accessor: 'created_at',
-                                title: 'Date Created',
-                                sortable: true,
-                                hidden: hideCols.includes('created_at'),
-                                render: ({ start_date }) => {
-                                    const _date = start_date as string | number | Date;
-
-                                    return dayjs(_date).format('DD MMM YYYY');
-                                },
-                            },
-                            {
-                                accessor: 'signed_date',
-                                title: 'Date Signed',
-                                sortable: true,
-                                hidden: hideCols.includes('expiry_date'),
-                                render: ({ signed_date }) => {
-                                    const _date = signed_date as string | number | Date;
-
-                                    return dayjs(_date).format('DD MMM YYYY');
-                                },
-                            },
-                            {
-                                accessor: 'expiry_date',
-                                title: 'Expiry Date',
-                                sortable: true,
-                                hidden: hideCols.includes('expiry_date'),
-                                render: ({ expiry_date }) => {
-                                    const _date = expiry_date as string | number | Date;
-
-                                    return dayjs(_date).format('DD MMM YYYY');
-                                },
-                            },
-                            { accessor: 'insurance_package.name', title: 'Insurance Package', sortable: true, hidden: hideCols.includes('insurance_package') },
-
-                            {
-                                accessor: 'amendments',
-                                title: 'Amendments',
-                                sortable: true,
-                                hidden: hideCols.includes('amendments'),
-                                render: ({ amendments, id }) => {
-                                    const _amends = amendments as any;
-                                    const _id = id as string;
-                                    return (
-                                        <button
-                                            className="underline underline-offset-2"
-                                            onClick={() => {
-                                                navigate(`/contracts/preview/${_id}`);
-                                            }}
-                                        >
-                                            {_amends?.length}
-                                        </button>
-                                    );
-                                },
-                            },
                             {
                                 accessor: 'status',
                                 title: 'Status',
@@ -561,31 +459,60 @@ const AlumniGroupManagementpage = () => {
                                     return renderStatus(grpStatus);
                                 },
                             },
-
-                            // {
-                            //     accessor: 'status',
-                            //     title: 'Status',
-                            //     sortable: true,
-                            //     hidden: hideCols.includes('Active'),
-                            //     render: ({ is_locked }) => <span className={`badge bg-${getActivityColor(is_locked)}`}>{is_locked ? 'Active' : 'Locked'}</span>,
-                            // },
-                            { accessor: 'underwriter.full_name', title: 'UnderWriter', sortable: true, hidden: hideCols.includes('underwriter') },
                             {
-                                accessor: 'group.name',
-                                title: 'Alumni Group',
+                                accessor: 'amended_by.full_name',
+                                title: 'Amender',
                                 sortable: true,
-                                hidden: hideCols.includes('group_id'),
-                                render: ({ group }) => {
-                                    const _group = group as { name: string; id: string };
+                                hidden: hideCols.includes('amender_user_id'),
+                            },
+                            {
+                                accessor: 'approved_by.full_name',
+                                title: 'Approved By',
+                                sortable: true,
+                                hidden: hideCols.includes('approved_by'),
+                            },
+                            { accessor: 'approval_date', title: 'Date Approved', sortable: true, hidden: hideCols.includes('updated_at') },
+
+                            {
+                                accessor: '',
+                                title: 'Change Log',
+                                sortable: true,
+                                hidden: hideCols.includes('approved_by'),
+                                render: ({ new_values, old_values }) => {
                                     return (
-                                        <button className="underline underline-offset-2" onClick={() => navigate(`/member/groups/preview/${_group.id}`)}>
-                                            {_group.name}
+                                        <button
+                                            className="underline underline-offset-2"
+                                            onClick={() => {
+                                                setChangeLog({ newValues: new_values, oldValues: old_values });
+                                                setShowChangeLogModal(true);
+                                            }}
+                                        >
+                                            View
                                         </button>
                                     );
                                 },
                             },
                             { accessor: 'id', title: 'Contract Id', sortable: true, hidden: hideCols.includes('id') },
-                            { accessor: 'updated_at', title: 'Updated At', sortable: true, hidden: hideCols.includes('updated_at') },
+                            {
+                                accessor: 'created_at',
+                                title: 'Created At',
+                                sortable: true,
+                                hidden: hideCols.includes('created_at'),
+                                render: ({ created_at }) => {
+                                    const _date = created_at as string | number | Date;
+                                    return dayjs(_date).format('DD MMM YYYY');
+                                },
+                            },
+                            {
+                                accessor: 'updated_at',
+                                title: 'Updated At',
+                                sortable: true,
+                                hidden: hideCols.includes('updated_at'),
+                                render: ({ updated_at }) => {
+                                    const _date = updated_at as string | number | Date;
+                                    return dayjs(_date).format('DD MMM YYYY');
+                                },
+                            },
                         ]}
                         onRowContextMenu={({ record, event }) =>
                             showContextMenu([
@@ -625,10 +552,12 @@ const AlumniGroupManagementpage = () => {
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
+
+                {showChangeLogModal && <ChangeLog showModal={showChangeLogModal} setShowModal={setShowChangeLogModal} changeLog={changelog} />}
             </div>
-            <CreateNewContract showModal={showModal} setShowModal={setShowModal} />
+            {/* <CreateNewContract showModal={showModal} setShowModal={setShowModal} /> */}
         </div>
     );
 };
 
-export default AlumniGroupManagementpage;
+export default Amendments;

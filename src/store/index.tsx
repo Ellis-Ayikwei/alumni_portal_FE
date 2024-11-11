@@ -9,6 +9,7 @@ import { FLUSH, PAUSE, PERSIST, persistReducer, persistStore, PURGE, REGISTER, R
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import alumniGroupSlice from './alumnigroupSlice';
 import contractsSlice from './contractsSlice';
+import amendmentsSlice from './amendmentsSlice';
 
 // Persist configuration
 const persistConfig = {
@@ -25,6 +26,7 @@ const rootReducer = combineReducers({
     alumnidata: alumniGroupSlice,
     insurancePackages: insurancePackagesSlice,
     allContacts: contractsSlice,
+    amendments: amendmentsSlice,
 });
 
 // Persist the combined reducer

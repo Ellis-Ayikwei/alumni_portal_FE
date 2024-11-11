@@ -19,6 +19,7 @@ const initialState: LoginState = {
 export const GetUsersData = createAsyncThunk('users/getusers', async () => {
     console.log("Getting USers ..... ")
     const response = await axiosInstance.get('/users');
+    console.log('response......data......', response.data);
     return response.data;
 });
 

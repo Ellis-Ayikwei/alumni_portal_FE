@@ -60,11 +60,6 @@ const AddMembersToGroup = ({ AddMembersToGroupModal, setAddMembersToGroupModal, 
         return { value: user.id, label: user.first_name + user.last_name };
     });
 
-    useEffect(() => {
-        console.log(selectedUsers);
-        console.log('the group', groups);
-        console.log('the type of group', typeof groups);
-    }, [AddMembersToGroupModal]);
 
     const handleAddMembersToGroup = async () => {
         setIsSaveLoading(true);
