@@ -1,14 +1,16 @@
-import { faCrown, faGavel, faUnlockAlt } from '@fortawesome/free-solid-svg-icons';
+import { faUnlockAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Tippy from '@tippyjs/react';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import useSwr from 'swr';
 import Dropdown from '../../components/Dropdown';
 import IconArrowForward from '../../components/Icon/IconArrowForward';
 import IconArrowLeft from '../../components/Icon/IconArrowLeft';
 import IconBell from '../../components/Icon/IconBell';
-import IconBolt from '../../components/Icon/IconBolt';
 import IconCashBanknotes from '../../components/Icon/IconCashBanknotes';
 import IconChecks from '../../components/Icon/IconChecks';
 import IconCircleCheck from '../../components/Icon/IconCircleCheck';
@@ -16,11 +18,12 @@ import IconClock from '../../components/Icon/IconClock';
 import IconEye from '../../components/Icon/IconEye';
 import IconHorizontalDots from '../../components/Icon/IconHorizontalDots';
 import IconInfoCircle from '../../components/Icon/IconInfoCircle';
-import IconNetflix from '../../components/Icon/IconNetflix';
 import IconOpenBook from '../../components/Icon/IconOpenBook';
-import IconUser from '../../components/Icon/IconUser';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconMenuUsers from '../../components/Icon/Menu/IconMenuUsers';
+import Ghc from '../../helper/CurrencyFormatter';
+import fetcher from '../../helper/fetcher';
+import { renderStatus } from '../../helper/renderStatus';
 import { IRootState } from '../../store';
 import { setPageTitle } from '../../store/themeConfigSlice';
 
@@ -29,7 +32,7 @@ const MemberDashboard = () => {
     useEffect(() => {
         dispatch(setPageTitle('AdminDashboard'));
     });
-
+    const userId = useSelector((state: IRootState) =>state.auth.user.id)
     const isDark = useSelector((state: IRootState) => state.themeConfig.theme === 'dark' || state.themeConfig.isDarkMode);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const uniqueVisitorSeries: any = {
@@ -367,6 +370,33 @@ const MemberDashboard = () => {
         },
     };
 
+    useEffect(() => {
+        dispatch(setPageTitle('AdminDashboard'));
+    });
+
+    const { data: myGroups, error: myGroupsError } = useSwr(`/alumni_groups/my_groups/${userId}`, fetcher);
+    const { data: myContracts, error: myContractsError } = useSwr(`/contracts/my_contracts/${userId}`, fetcher);
+    const { data: myGroupMemberships, error: myGroupMembershipsError } = useSwr(`/group_members/my_groups_memberships/${userId}`, fetcher);
+    const { data: profileCompletion, error: profileCompletionError } = useSwr(`/users/user_profile_completion/${userId}`, fetcher);
+    const { data: myPayments, error: myPaymentsError } = useSwr(`/payments/users_payments/${userId}`, fetcher);
+    const pendingapprovals = myGroupMemberships?.filter((groupMembership: any) => groupMembership.status === 'PENDING');
+
+    useEffect(() => {
+        if (myGroups) {
+            console.log('the new data', myGroups[0]?.is_one_time_payment_paid);
+            console.log('the new data...', myGroupMemberships);
+            console.log('the new data...fdfdfdf', myPayments);
+        }
+    }, [myGroups, myGroupMemberships]);
+
+    useEffect(() => {
+        if (myContracts) {
+            console.log('the new data11232', myContracts);
+        }
+    }, [myGroups]);
+
+    const contractStatus = 'active';
+
     return (
         <div>
             <ul className="flex space-x-2 rtl:space-x-reverse">
@@ -393,8 +423,8 @@ const MemberDashboard = () => {
                         Pay Now
                     </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 text-white mt-3">
-                    <div className="panel bg-gradient-to-r from-cyan-500 to-cyan-400">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 text-white mt-3 overflow-hidden">
+                    <div className="panel bg-gradient-to-r from-cyan-500 to-cyan-400 overflow-hidden">
                         <div className="flex justify-between">
                             <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold"> My Groups</div>
                             <div className="dropdown">
@@ -418,18 +448,21 @@ const MemberDashboard = () => {
                         <div className="flex items-center mt-5">
                             <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
                                 {' '}
-                                <IconUsersGroup className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <IconUsersGroup className="hover:opacity-80 opacity-70" /> {myGroups?.length}{' '}
                             </div>
-                            <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
                         <div className="flex items-center font-semibold mt-5">
                             <IconEye className="ltr:mr-2 rtl:ml-2 shrink-0" />
-                            Last Month 44,700
+                        </div>
+                        <div className="relative">
+                            <div className="absolute -bottom-2 ltr:-right-12 rtl:-left-12 w-24 h-24">
+                                <IconUsersGroup className="text-white opacity-20 w-full h-full" />
+                            </div>
                         </div>
                     </div>
 
                     {/* Sessions */}
-                    <div className="panel bg-gradient-to-r from-violet-500 to-violet-400">
+                    <div className="panel bg-gradient-to-r from-violet-500 to-violet-400 overflow-hidden">
                         <div className="flex justify-between">
                             <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold">My Contracts</div>
                             <div className="dropdown">
@@ -453,18 +486,21 @@ const MemberDashboard = () => {
                         <div className="flex items-center mt-5">
                             <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
                                 {' '}
-                                <IconOpenBook className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <IconOpenBook className="hover:opacity-80 opacity-70" /> {myContracts?.length}{' '}
                             </div>
-                            <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
                         <div className="flex items-center font-semibold mt-5">
                             <IconEye className="ltr:mr-2 rtl:ml-2 shrink-0" />
-                            Last Week 84,709
+                        </div>
+                        <div className="relative">
+                            <div className="absolute -bottom-2 ltr:-right-12 rtl:-left-12 w-24 h-24">
+                                <IconOpenBook className="text-white opacity-20 w-full h-full" />
+                            </div>
                         </div>
                     </div>
 
                     {/*  Time On-Site */}
-                    <div className="panel bg-gradient-to-r from-blue-500 to-blue-400">
+                    <div className="panel bg-gradient-to-r from-blue-500 to-blue-400 overflow-hidden">
                         <div className="flex justify-between">
                             <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold">Pending Onboarding</div>
                             <div className="dropdown">
@@ -486,15 +522,18 @@ const MemberDashboard = () => {
                             </div>
                         </div>
                         <div className="flex items-center mt-5">
-                            <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
+                            <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2 overflow-hidden">
                                 {' '}
-                                <IconMenuUsers className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <IconMenuUsers className="hover:opacity-80 opacity-70" /> {pendingapprovals?.length}{' '}
                             </div>
-                            <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
                         <div className="flex items-center font-semibold mt-5">
                             <IconEye className="ltr:mr-2 rtl:ml-2 shrink-0" />
-                            Last Week 37,894
+                        </div>
+                        <div className="relative">
+                            <div className="absolute -bottom-2 ltr:-right-12 rtl:-left-12 w-24 h-24">
+                                <IconMenuUsers className="text-white opacity-20 w-full h-full" />
+                            </div>
                         </div>
                     </div>
 
@@ -523,13 +562,16 @@ const MemberDashboard = () => {
                         <div className="flex items-center mt-5">
                             <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
                                 {' '}
-                                <IconCashBanknotes className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <FontAwesomeIcon icon={faUser} className="hover:opacity-80 opacity-70" /> {profileCompletion?.completion_percentage}%{' '}
                             </div>
-                            <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
                         <div className="flex items-center font-semibold mt-5">
                             <IconEye className="ltr:mr-2 rtl:ml-2 shrink-0" />
-                            Last Week 50.01%
+                        </div>
+                        <div className="relative">
+                            <div className="absolute -bottom-2 ltr:-right-12 rtl:-left-12 w-24 h-24">
+                                <FontAwesomeIcon icon={faUser} className="text-white opacity-20 w-full h-full" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -547,114 +589,105 @@ const MemberDashboard = () => {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-2 gap-5">
-                            <div className="border border-[#ebedf2] rounded dark:bg-[#1b2e4b] dark:border-0">
-                                <div className="items-center justify-between p-4 py-2">
-                                    <div className="group">
-                                        <ul className="list-inside list-disc text-white-dark font-semibold mb-7 space-y-2">
-                                            <li>10,000 Monthly Visitors</li>
-                                            <li>Unlimited Reports</li>
-                                            <li>signed On 20th march</li>
-                                            <li>
-                                                Under writer: <b>John D</b>
-                                            </li>
-                                        </ul>
-                                        <div className="flex items-center justify-between mb-4 font-semibold">
-                                            <p className="flex items-center rounded-full bg-dark px-2 py-1 text-xs text-white-light font-semibold">
-                                                <IconClock className="w-3 h-3 ltr:mr-1 rtl:ml-1" />5 Days Left To Renew
-                                            </p>
-                                            <p className="ltr:ml-auto rtl:mr-auto text-secondary">
-                                                <button type="button" className="text-primary font-semibold hover:underline group">
-                                                    View Contract{' '}
-                                                    <IconArrowLeft className="ltr:ml-1 rtl:mr-1 inline-block relative transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2 rtl:rotate-180" />
-                                                </button>
-                                            </p>
-                                        </div>
-                                        <div className="rounded-full h-2.5 p-0.5 bg-dark-light overflow-hidden mb-5 dark:bg-dark-light/10">
-                                            <div className="bg-gradient-to-r from-[#f67062] to-[#fc5296] w-full h-full rounded-full relative" style={{ width: '65%' }}></div>
+                            {myContracts?.map((mycontract: any) => (
+                                <div key={mycontract?.id} className="panel h-full w-full">
+                                    <div className="items-center justify-between p-4 py-2">
+                                        <div className="group">
+                                            <ul className="list-inside list-disc text-white-dark font-semibold mb-7 space-y-2">
+                                                <li>
+                                                    Contract Name: <b>{mycontract?.name}</b>
+                                                </li>
+                                                <li>
+                                                    Group: <b>{mycontract?.group}</b>
+                                                </li>
+                                                <li>
+                                                    signed On <b>{mycontract?.signed_date}</b>
+                                                </li>
+                                                <li>
+                                                    Under Writer: <b>{mycontract?.underwriter}</b>
+                                                </li>
+                                            </ul>
+                                            <div className="flex items-center justify-between mb-4 font-semibold">
+                                                {contractStatus === 'active' ? (
+                                                    <Tippy content="Expires on 25th March">
+                                                        <p className="flex items-center rounded-full bg-dark px-2 py-1 text-xs text-white-light font-semibold">
+                                                            <IconClock className="w-3 h-3 ltr:mr-1 rtl:ml-1" />5 Days Left To Renew
+                                                        </p>
+                                                    </Tippy>
+                                                ) : contractStatus === 'expired' ? (
+                                                    <Tippy content="Expired on 25th March">
+                                                        <p className="flex items-center rounded-full bg-red-500 px-2 py-1 text-xs text-white-light font-semibold">
+                                                            <IconInfoCircle className="w-3 h-3 ltr:mr-1 rtl:ml-1" />
+                                                            Expired
+                                                        </p>
+                                                    </Tippy>
+                                                ) : contractStatus === 'terminated' ? (
+                                                    <Tippy content="Terminated on 25th March">
+                                                        <p className="flex items-center rounded-full bg-red-500 px-2 py-1 text-xs text-white-light font-semibold">
+                                                            <IconInfoCircle className="w-3 h-3 ltr:mr-1 rtl:ml-1" />
+                                                            Terminated
+                                                        </p>
+                                                    </Tippy>
+                                                ) : null}
+                                                <div>
+                                                    <p className="ltr:ml-auto rtl:mr-auto text-secondary">
+                                                        <button type="button" className="text-primary font-semibold hover:underline group" onClick={() => setPdfModal(true)}>
+                                                            My Contract{' '}
+                                                            <IconArrowLeft className="ltr:ml-1 rtl:mr-1 inline-block relative transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2 rtl:rotate-180" />
+                                                        </button>
+                                                    </p>
+                                                    <p className="ltr:ml-auto rtl:mr-auto text-secondary">
+                                                        <button type="button" className="text-primary font-semibold hover:underline group" onClick={() => setPdfModal(true)}>
+                                                            Goup's Contract{' '}
+                                                            <IconArrowLeft className="ltr:ml-1 rtl:mr-1 inline-block relative transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2 rtl:rotate-180" />
+                                                        </button>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="rounded-full h-2.5 p-0.5 bg-dark-light overflow-hidden mb-5 dark:bg-dark-light/10">
+                                                <div className="bg-gradient-to-r from-[#f67062] to-[#fc5296] w-full h-full rounded-full relative" style={{ width: '65%' }}></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                     <div className="panel h-full  sm:col-span-3 xl:col-span-1">
                         <div className="flex items-center justify-between dark:text-white-light mb-5">
-                            <h5 className="font-semibold text-lg">Transactions</h5>
-                            <div className="dropdown">
-                                <Dropdown placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`} button={<IconHorizontalDots className="text-black/70 dark:text-white/70 hover:!text-primary" />}>
-                                    <ul>
-                                        <li>
-                                            <button type="button">View Report</button>
-                                        </li>
-                                        <li>
-                                            <button type="button">Edit Report</button>
-                                        </li>
-                                        <li>
-                                            <button type="button">Mark as Done</button>
-                                        </li>
-                                    </ul>
-                                </Dropdown>
-                            </div>
+                            <h5 className="font-semibold text-lg">Payments</h5>
                         </div>
-                        <div>
-                            <div className="space-y-6">
-                                <div className="flex">
-                                    <span className="shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-success-light dark:bg-success text-success dark:text-success-light">SP</span>
-                                    <div className="px-3 flex-1">
-                                        <div>Shaun Park</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">10 Jan 1:00PM</div>
+                        <div className="space-y-3">
+                            {myPayments?.map((payment: any, index: number) => (
+                                <div key={index} className="space-y-6">
+                                    <div className="flex panel">
+                                        <span
+                                            className={`shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-${
+                                                payment?.status === 'COMPLETED' ? 'green-50' : payment?.status === 'PENDING' ? 'yellow-50' : 'red-50'
+                                            } text-${payment?.status === 'COMPLETED' ? 'success' : payment?.status === 'PENDING' ? 'info' : 'danger'} dark:text-success-light`}
+                                        >
+                                            {<IconCashBanknotes />}
+                                        </span>
+                                        <div className="px-3 flex-1">
+                                            <span
+                                                className={`text-${
+                                                    payment?.status === 'COMPLETED' ? 'success' : payment?.status === 'PENDING' ? 'info' : 'danger'
+                                                } text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre`}
+                                            >
+                                                {Ghc(payment?.amount)}
+                                            </span>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">{dayjs(payment.payment_date).format(' hh:mm a,  DD MM, YYYY.')}</div>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">
+                                                <em>for</em> {payment?.group.name}
+                                            </div>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">
+                                                <em>with</em> {payment?.payment_method?.name}
+                                            </div>
+                                        </div>
+                                        <span className=" text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">{renderStatus(payment?.status)}</span>
                                     </div>
-                                    <span className="text-success text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">+$36.11</span>
                                 </div>
-                                <div className="flex">
-                                    <span className="shrink-0 grid place-content-center w-9 h-9 rounded-md bg-warning-light dark:bg-warning text-warning dark:text-warning-light">
-                                        <IconCashBanknotes />
-                                    </span>
-                                    <div className="px-3 flex-1">
-                                        <div>Cash withdrawal</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">04 Jan 1:00PM</div>
-                                    </div>
-                                    <span className="text-danger text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">-$16.44</span>
-                                </div>
-                                <div className="flex">
-                                    <span className="shrink-0 grid place-content-center w-9 h-9 rounded-md bg-danger-light dark:bg-danger text-danger dark:text-danger-light">
-                                        <IconUser className="w-6 h-6" />
-                                    </span>
-                                    <div className="px-3 flex-1">
-                                        <div>Amy Diaz</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">10 Jan 1:00PM</div>
-                                    </div>
-                                    <span className="text-success text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">+$66.44</span>
-                                </div>
-                                <div className="flex">
-                                    <span className="shrink-0 grid place-content-center w-9 h-9 rounded-md bg-secondary-light dark:bg-secondary text-secondary dark:text-secondary-light">
-                                        <IconNetflix />
-                                    </span>
-                                    <div className="px-3 flex-1">
-                                        <div>Netflix</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">04 Jan 1:00PM</div>
-                                    </div>
-                                    <span className="text-danger text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">-$32.00</span>
-                                </div>
-                                <div className="flex">
-                                    <span className="shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-info-light dark:bg-info text-info dark:text-info-light">DA</span>
-                                    <div className="px-3 flex-1">
-                                        <div>Daisy Anderson</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">10 Jan 1:00PM</div>
-                                    </div>
-                                    <span className="text-success text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">+$10.08</span>
-                                </div>
-                                <div className="flex">
-                                    <span className="shrink-0 grid place-content-center w-9 h-9 rounded-md bg-primary-light dark:bg-primary text-primary dark:text-primary-light">
-                                        <IconBolt />
-                                    </span>
-                                    <div className="px-3 flex-1">
-                                        <div>Electricity Bill</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">04 Jan 1:00PM</div>
-                                    </div>
-                                    <span className="text-danger text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">-$22.00</span>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -668,198 +701,82 @@ const MemberDashboard = () => {
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-2 xl:grid-cols-3 gap-6">
-                            {/*  Previous Statement  */}
-                            <div className="panel overflow-hidden">
-                                <div className="items-center justify-between">
-                                    <div>
-                                        <div className="flex  w-full justify-between">
-                                            <div className="text-lg font-bold">Alumi Group 1 </div>
-                                            <div className="dropdown">
-                                                <Dropdown
-                                                    offset={[0, 5]}
-                                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                                    btnClassName="hover:opacity-80"
-                                                    button={<IconHorizontalDots className="hover:opacity-80 opacity-70" />}
-                                                >
-                                                    <ul>
-                                                        <li>
-                                                            <button type="button">View Report</button>
-                                                        </li>
-                                                        <li>
-                                                            <button type="button">Edit Report</button>
-                                                        </li>
-                                                    </ul>
-                                                </Dropdown>
+                        <div className="pt-5">
+                            <div className="grid  sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+                                <div className=" h-full sm:col-span-3 xl:col-span-3">
+                                    <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                        {/*  Previous Statement  */}
+                                        {myGroups?.map((group: any) => (
+                                            <div key={group?.id} className="panel overflow-hidden">
+                                                <div className="items-center justify-between">
+                                                    <div>
+                                                        <div className="flex w-full justify-between">
+                                                            <div className="text-lg font-bold">{group?.name}</div>
+                                                            <div className="dropdown">
+                                                                <Dropdown
+                                                                    offset={[0, 5]}
+                                                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
+                                                                    btnClassName="hover:opacity-80"
+                                                                    button={<IconHorizontalDots className="hover:opacity-80 opacity-70" />}
+                                                                >
+                                                                    <ul>
+                                                                        <li>
+                                                                            <Link to={`/member/groups/preview/${group?.id}`}>View</Link>
+                                                                        </li>
+                                                                        <li>
+                                                                            <Link to={`/member/groups/edit/${group?.id}`}>Edit</Link>
+                                                                        </li>
+                                                                    </ul>
+                                                                </Dropdown>
+                                                            </div>
+                                                        </div>
+                                                        {group?.is_one_time_payment_paid ? (
+                                                            <div className="text-success flex">
+                                                                <IconChecks className="text-success text-xs opacity-40 w-6 h-6" />
+                                                                Paid on June 27, 2022
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-danger flex gap-1">
+                                                                <IconInfoCircle className="opacity-40 w-4 h-4" />
+                                                                Must Be Paid Before June 27, 2022
+                                                            </div>
+                                                        )}
+                                                        <div className="text-grey-400 flex items-center gap-2 mt-5">
+                                                            <b>Starts:</b> {dayjs(group?.start_date).format('ddd, DD MMM, YYYY')}
+                                                        </div>
+                                                        <div className="text-grey-400 flex items-center gap-2">
+                                                            <IconArrowForward className="text-danger opacity-40 w-6 h-6" /> <b>Ends:</b> {dayjs(group?.end_date).format('ddd, DD MMM, YYYY')}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-gray-200 h-1 rounded-full m-4"></div>
+                                                <div className="relative">
+                                                    {group?.is_one_time_payment_paid ? (
+                                                        <div className="absolute -bottom-12 ltr:-right-12 rtl:-left-12 w-24 h-24">
+                                                            <IconCircleCheck className="text-success opacity-20 w-full h-full" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="absolute -bottom-12 ltr:-right-12 rtl:-left-12 w-24 h-24">
+                                                            <IconInfoCircle className="text-danger opacity-20 w-full h-full" />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div className="text-sm text-gray-600 flex items-center gap-1 w-full">
+                                                            President : <b>{group?.president?.full_name}</b>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-3 text-white-dark">
+                                                        <div className="flex items-center">
+                                                            <IconMenuUsers className="" />
+                                                            <div className="font-semibold text-sm ml-2">{group?.members?.length}</div>
+                                                        </div>
+                                                        <div className="flex items-center">
+                                                            <div className="font-semibold text-sm ml-2">Active</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="text-success flex">
-                                            {' '}
-                                            <IconChecks className="text-success opacity-40 w-6 h-6" />
-                                            Paid on June 27, 2022{' '}
-                                        </div>
-                                        <div className="text-grey-400 flex items-center gap-2">
-                                            <b>Starts:</b> June 27, 2022
-                                        </div>
-                                        <div className="text-grey-400 flex items-center gap-2">
-                                            <IconArrowForward className="text-success opacity-40 w-6 h-6" /> <b>Ends:</b> June 27, 2022
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-200 h-1 rounded-full m-4"></div>
-                                <div className="relative ">
-                                    <div className="absolute -bottom-12 ltr:-right-12 rtl:-left-12 w-24 h-24">
-                                        <IconCircleCheck className="text-success opacity-20 w-full h-full" />
-                                    </div>
-                                    <div className="">
-                                        <div className="text-sm text-gray-600 flex items-center gap-1 w-full">
-                                            <FontAwesomeIcon icon={faCrown} className="text-success w-4 h-6" /> <b>John hscbdlshlskvhlbnvlsdfns</b>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <IconMenuUsers className="text-success w-6 h-6" />
-                                            <div className="font-semibold text-xl text-black ml-2">11</div>
-                                        </div>
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <FontAwesomeIcon icon={faGavel} className="text-success w-5 h-5" style={{ fill: 'none' }} />
-                                            <div className="font-semibold text-sm text-black ml-2">Not Signed</div>
-                                        </div>
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <FontAwesomeIcon icon={faUnlockAlt} className="text-success w-5 h-5" />
-                                            <div className="font-semibold text-sm text-black ml-2">Active</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="panel overflow-hidden">
-                                <div className="items-center justify-between">
-                                    <div>
-                                        <div className="flex  w-full justify-between">
-                                            <div className="text-lg font-bold">Alumi Group 1 </div>
-                                            <div className="dropdown">
-                                                <Dropdown
-                                                    offset={[0, 5]}
-                                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                                    btnClassName="hover:opacity-80"
-                                                    button={<IconHorizontalDots className="hover:opacity-80 opacity-70" />}
-                                                >
-                                                    <ul>
-                                                        <li>
-                                                            <button type="button">View Report</button>
-                                                        </li>
-                                                        <li>
-                                                            <button type="button">Edit Report</button>
-                                                        </li>
-                                                    </ul>
-                                                </Dropdown>
-                                            </div>
-                                        </div>
-                                        <div className="text-danger flex gap-1">
-                                            <IconInfoCircle className="opacity-40 w-4 h-4" />
-                                            Must Be Paid Before June 27, 2022{' '}
-                                        </div>
-                                        <div className="text-grey-400 flex items-center gap-1">
-                                            <b>Starts:</b> June 27, 2022
-                                        </div>
-                                        <div className="text-grey-400 flex items-center gap-2">
-                                            <IconArrowForward className="text-success opacity-40 w-6 h-6" /> <b>Ends:</b> June 27, 2022
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-200 h-1 rounded-full m-4"></div>
-                                <div className="relative ">
-                                    <div className="absolute -bottom-12 ltr:-right-12 rtl:-left-12 w-24 h-24">
-                                        <IconInfoCircle className="text-danger opacity-20 w-full h-full" />
-                                    </div>
-                                    <div className="">
-                                        <div className="text-sm text-gray-600 flex items-center gap-1 w-full">
-                                            <FontAwesomeIcon icon={faCrown} className="text-success w-4 h-6" /> <b>John hscbdlshlskvhlbnvlsdfns</b>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <IconMenuUsers className="text-success w-6 h-6" />
-                                            <div className="font-semibold text-xl text-black ml-2">11</div>
-                                        </div>
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <FontAwesomeIcon icon={faGavel} className="text-success w-5 h-5" style={{ fill: 'none' }} />
-                                            <div className="font-semibold text-sm text-black ml-2">Not Signed</div>
-                                        </div>
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <FontAwesomeIcon icon={faUnlockAlt} className="text-success w-5 h-5" />
-                                            <div className="font-semibold text-sm text-black ml-2">Active</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="panel overflow-hidden">
-                                <div className="items-center justify-between">
-                                    <div>
-                                        <div className="flex  w-full justify-between">
-                                            <div className="text-lg font-bold">Alumi Group 1 </div>
-                                            <div className="dropdown">
-                                                <Dropdown
-                                                    offset={[0, 5]}
-                                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                                    btnClassName="hover:opacity-80"
-                                                    button={<IconHorizontalDots className="hover:opacity-80 opacity-70" />}
-                                                >
-                                                    <ul>
-                                                        <li>
-                                                            <button type="button">View Report</button>
-                                                        </li>
-                                                        <li>
-                                                            <button type="button">Edit Report</button>
-                                                        </li>
-                                                    </ul>
-                                                </Dropdown>
-                                            </div>
-                                        </div>
-                                        <div className="text-danger flex gap-1">
-                                            <IconInfoCircle className="opacity-40 w-4 h-4" />
-                                            Must Be Paid Before June 27, 2022{' '}
-                                        </div>
-                                        <div className="text-grey-400 flex items-center gap-1">
-                                            <b>Starts:</b> June 27, 2022
-                                        </div>
-                                        <div className="text-grey-400 flex items-center gap-2">
-                                            <IconArrowForward className="text-success opacity-40 w-6 h-6" /> <b>Ends:</b> June 27, 2022
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-200 h-1 rounded-full m-4"></div>
-                                <div className="relative ">
-                                    <div className="absolute -bottom-12 ltr:-right-12 rtl:-left-12 w-24 h-24">
-                                        <IconCircleCheck className="text-success opacity-20 w-full h-full" />
-                                    </div>
-                                    <div className="">
-                                        <div className="text-sm text-gray-600 flex items-center gap-1 w-full">
-                                            <FontAwesomeIcon icon={faCrown} className="text-success w-4 h-6" /> <b>John hscbdlshlskvhlbnvlsdfns</b>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <IconMenuUsers className="text-success w-6 h-6" />
-                                            <div className="font-semibold text-xl text-black ml-2">11</div>
-                                        </div>
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <FontAwesomeIcon icon={faGavel} className="text-success w-5 h-5" style={{ fill: 'none' }} />
-                                            <div className="font-semibold text-sm text-black ml-2">Not Signed</div>
-                                        </div>
-                                        <div className="text-primary flex items-center">
-                                            {' '}
-                                            <FontAwesomeIcon icon={faUnlockAlt} className="text-success w-5 h-5" />
-                                            <div className="font-semibold text-sm text-black ml-2">Active</div>
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>

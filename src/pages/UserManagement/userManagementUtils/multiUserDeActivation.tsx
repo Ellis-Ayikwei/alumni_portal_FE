@@ -3,13 +3,12 @@ import { GetUsersData } from '../../../store/usersSlice';
 import axiosInstance from '../../../helper/axiosInstance';
 
 const handleMultiUserDeActivation = async (
-    selectedUsers: { username: string }[],
+    selectedUsers: { id: string }[],
     dispatch: Dispatch<AnyAction>
 ): Promise<boolean> => {
     const promises = selectedUsers.map((user) =>
-        axiosInstance.put('/users', {
+        axiosInstance.put(`/users/${user.id}`, {
             is_active: false,
-            username: user.username,
         })
     );
 

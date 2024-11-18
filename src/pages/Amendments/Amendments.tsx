@@ -35,12 +35,11 @@ const Amendments = () => {
     const dispatch = useDispatch();
     const [alumnidata, setUsersData] = useState<any>([]);
     const userDataIsLoading = useSelector((state: IRootState) => state.alumnidata.loading);
-    const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const { showContextMenu } = useContextMenu();
     const { amendments, amendmentsloading, amendmentserror } = useSelector((state: IRootState) => state.amendments) || { amendments: [] };
     const [showChangeLogModal, setShowChangeLogModal] = useState<boolean>(false);
-    const [changelog, setChangeLog] = useState<{ newValues: any; oldValues: any }>({});
+    const [changelog, setChangeLog] = useState<{ newValues: any; oldValues: any }>({ newValues: null, oldValues: null });
 
     useEffect(() => {
         dispatch(setPageTitle('Multiple Tables'));
@@ -500,7 +499,7 @@ const Amendments = () => {
                                 hidden: hideCols.includes('created_at'),
                                 render: ({ created_at }) => {
                                     const _date = created_at as string | number | Date;
-                                    return dayjs(_date).format('DD MMM YYYY');
+                                    return dayjs(_date).format('DD MMM, YYYY | hh:mm:ss');
                                 },
                             },
                             {
@@ -522,19 +521,19 @@ const Amendments = () => {
                                     icon: <IconEye />,
                                     onClick: () => navigate(`/contracts/preview/${record.id}`),
                                 },
-                                {
-                                    key: 'edit',
-                                    title: `Edit`,
-                                    icon: <IconPencil />,
-                                    onClick: () => editGroup(record),
-                                },
-                                {
-                                    hidden: record?.status === 'DEACTIVATED',
-                                    key: 'deactivate',
-                                    title: `Deactivate`,
-                                    icon: <IconX />,
-                                    onClick: () => handleMultiGroupDeActivation([{ id: record.id as string }], dispatch),
-                                },
+                                // {
+                                //     key: 'edit',
+                                //     title: `Edit`,
+                                //     icon: <IconPencil />,
+                                //     onClick: () => editGroup(record),
+                                // },
+                                // {
+                                //     hidden: record?.status === 'DEACTIVATED',
+                                //     key: 'deactivate',
+                                //     title: `Deactivate`,
+                                //     icon: <IconX />,
+                                //     onClick: () => handleMultiGroupDeActivation([{ id: record.id as string }], dispatch),
+                                // },
                             ])(event)
                         }
                         totalRecords={initialRecords.length}

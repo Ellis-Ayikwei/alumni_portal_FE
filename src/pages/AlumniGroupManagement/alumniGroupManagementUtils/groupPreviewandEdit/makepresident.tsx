@@ -34,10 +34,10 @@ const MakePresident = ({ showModal, setShowModal, groupId, currentPresident }: M
     const [isSaveLoading, setIsSaveLoading] = useState(false);
 
     const groupMembers = data
-        ?.filter((member: any) => member.group_id === groupId && member.user_id !== currentPresident && member.status === 'APPROVED')
+        ?.filter((member: any) => member?.group_id === groupId && member?.user_id !== currentPresident && member?.status === 'APPROVED')
         .map((member: any) => ({
             value: member,
-            label: `${member.user_info.first_name} ${member.user_info.last_name}`,
+            label: `${member?.user_info?.first_name} ${member?.user_info?.last_name}`,
         }));
 
     console.log('the president', data);

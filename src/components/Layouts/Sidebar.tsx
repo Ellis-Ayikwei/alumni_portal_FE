@@ -1,3 +1,5 @@
+import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PerfectScrollbar from 'react-perfect-scrollbar';
@@ -8,7 +10,6 @@ import { toggleSidebar } from '../../store/themeConfigSlice';
 import IconBox from '../Icon/IconBox';
 import IconCaretsDown from '../Icon/IconCaretsDown';
 import IconCashBanknotes from '../Icon/IconCashBanknotes';
-import IconHeart from '../Icon/IconHeart';
 import IconHelpCircle from '../Icon/IconHelpCircle';
 import IconHome from '../Icon/IconHome';
 import IconMinus from '../Icon/IconMinus';
@@ -17,7 +18,6 @@ import IconUsersGroup from '../Icon/IconUsersGroup';
 import IconMenuCharts from '../Icon/Menu/IconMenuCharts';
 import IconMenuDashboard from '../Icon/Menu/IconMenuDashboard';
 import IconMenuDocumentation from '../Icon/Menu/IconMenuDocumentation';
-import IconMenuInvoice from '../Icon/Menu/IconMenuInvoice';
 import IconMenuUsers from '../Icon/Menu/IconMenuUsers';
 
 const Sidebar = () => {
@@ -28,6 +28,10 @@ const Sidebar = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const { t } = useTranslation();
+
+    const userRole = localStorage.getItem('userRole') || '';
+    const adminUsers = ['SUPER_ADMIN', 'ADMIN', 'UNDERWRITER', 'PREMIUM_ADMIN', 'SALES'];
+    const personalUsers = ['MEMBER', 'REGULAR'];
     const toggleMenu = (value: string) => {
         setCurrentMenu((oldValue) => {
             return oldValue === value ? '' : value;
@@ -80,12 +84,9 @@ const Sidebar = () => {
                     </div>
                     <PerfectScrollbar className="h-[calc(100vh-80px)] relative">
                         <ul className="relative font-semibold space-y-0.5 p-4 py-0">
-                            <h2 className="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
-                                <IconMinus className="w-4 h-5 flex-none hidden" />
-                                <span>{t('apps')}</span>
-                            </h2>
+                            
 
-                            <li className="nav-item">
+                            {adminUsers.includes(userRole) && <li className="nav-item">
                                 <ul>
                                     <li className="nav-item">
                                         <NavLink to="/admindashboard" className="group">
@@ -136,9 +137,10 @@ const Sidebar = () => {
                                         </NavLink>
                                     </li>
                                     <li className="nav-item">
-                                        <NavLink to="/apps/scrumboard" className="group">
+                                        <NavLink to="/payments" className="group">
                                             <div className="flex items-center">
-                                                <IconMenuInvoice className="group-hover:!text-primary shrink-0" />
+                                                <FontAwesomeIcon icon={faMoneyBillWave} className="w-5 h-5 text-white group-hover:!text-primary shrink-0" />
+
                                                 <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Payments</span>
                                             </div>
                                         </NavLink>
@@ -160,7 +162,8 @@ const Sidebar = () => {
                                         </NavLink>
                                     </li>
                                 </ul>
-                            </li>
+                            </li>}
+
                             <h2 className="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
                                 <IconMinus className="w-4 h-5 flex-none hidden" />
                                 <span>{t('Personal')}</span>
@@ -174,35 +177,12 @@ const Sidebar = () => {
                                     </div>
                                 </NavLink>
                             </li>
-                            <li className="menu nav-item">
-                                <NavLink to="/member/groups" className="nav-link group">
-                                    <div className="flex items-center">
-                                        <IconUsersGroup className="group-hover:!text-primary shrink-0" />
-                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Groups</span>
-                                    </div>
-                                </NavLink>
-                            </li>
+
                             <li className="menu nav-item">
                                 <NavLink to="/member/mypayments" className="nav-link group">
                                     <div className="flex items-center">
                                         <IconCashBanknotes className="group-hover:!text-primary shrink-0" />
                                         <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">Payments</span>
-                                    </div>
-                                </NavLink>
-                            </li>
-                            <li className="menu nav-item">
-                                <NavLink to="/member/contracts" className="nav-link group">
-                                    <div className="flex items-center">
-                                        <IconOpenBook className="group-hover:!text-primary shrink-0" />
-                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Contracts</span>
-                                    </div>
-                                </NavLink>
-                            </li>
-                            <li className="menu nav-item">
-                                <NavLink to="/member/beneficiaries" className="nav-link group">
-                                    <div className="flex items-center">
-                                        <IconHeart className="group-hover:!text-primary shrink-0" />
-                                        <span className="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">My Beneficiaries</span>
                                     </div>
                                 </NavLink>
                             </li>

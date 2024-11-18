@@ -40,7 +40,7 @@ import handleMultiUserDelete from './userManagementUtils/multiUserDelete';
 import handleUserActivation from './userManagementUtils/userActivation';
 
 const col = ['username', 'email', 'phone', 'address', 'created_at', 'dob', 'role', 'azure_id', 'id'];
-const activityOption = [
+const activityOption: { value: string; label: string }[] = [
     { value: 'true', label: 'Active' },
     { value: 'false', label: 'Inactive' },
 ];
@@ -49,7 +49,6 @@ const UserManagement = () => {
     // const [usersdata, setUsersData] = useState<any>([]);
     const usersData = useSelector((state: IRootState) => state.usersdata.usersData);
     const userDataIsLoadingStatus = useSelector((state: IRootState) => state.usersdata.loading);
-    const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
 
     const { showContextMenu } = useContextMenu();
@@ -83,7 +82,7 @@ const UserManagement = () => {
     };
     useEffect(() => {
         setRecordsData(
-            initialRecords.filter(({ first_name, last_name, dob, is_active }:{first_name: any, last_name: any, dob: any, is_active: any }) => {
+            initialRecords.filter(({ first_name, last_name, dob, is_active }: { first_name: any; last_name: any; dob: any; is_active: any }) => {
                 if (debouncedQuery !== '' && !`${first_name} ${last_name}`.toLowerCase().includes(debouncedQuery.trim().toLowerCase())) return false;
 
                 if (
@@ -360,7 +359,6 @@ const UserManagement = () => {
                     https://www.npmjs.com/package/mantine-datatable
                 </a>
             </div>
-
             <div className="panel mt-6  rounded-lg shadow-lg">
                 <div className="flex md:items-center md:flex-row flex-col mb-5 gap-5">
                     <h5 className="font-semibold text-lg ">User Management</h5>
@@ -529,7 +527,8 @@ const UserManagement = () => {
                                 hidden: hideCols.includes('dob'),
                                 render: ({ dob }) => {
                                     const usrDob = dob as string | number | Date | undefined;
-                                    return dayjs(usrDob).format('DD MMM YYYY')},
+                                    return dayjs(usrDob).format('DD MMM YYYY');
+                                },
                                 filter: ({ close }) => (
                                     <Stack>
                                         <DatePicker className="max-w-sm" maxDate={new Date()} type="range" value={birthdaySearchRange} onChange={setBirthdaySearchRange} />
@@ -565,11 +564,11 @@ const UserManagement = () => {
                                             className="max-w-sm"
                                             value={activeFilter}
                                             onChange={(selectedOption) => {
-                                                const value = selectedOption ? selectedOption.value : undefined;
+                                                const value = selectedOption ? (selectedOption as unknown as { value: string }).value : undefined;
                                                 console.log('value', activeFilter, value);
                                                 setActiveFilter(value);
                                             }}
-                                            options={activityOption}
+                                            options={activityOption.map(option => option.value)}
                                         />
                                         <Button
                                             disabled={!activeFilter}
@@ -650,15 +649,14 @@ const UserManagement = () => {
                                 },
                             ])(event)
                         }
-                       
                         textSelectionDisabled={isTouch}
                         minHeight={200}
                         paginationText={({ from, to, totalRecords }) => `Showing  ${from} to ${to} of ${totalRecords} entries`}
                     />
                 </div>
             </div>
-            <AddNewUser AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
-            <AddUserToGroup AddUserToGroupModal={AddUserToGroupModal} setAddUserToGroupModal={setAddUserToGroupModal} usersToAddToALumniGroup={usersToAddToALumniGroup} />
+            {AddUserModal && <AddNewUser AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />}
+            {AddUserToGroupModal && <AddUserToGroup AddUserToGroupModal={AddUserToGroupModal} setAddUserToGroupModal={setAddUserToGroupModal} usersToAddToALumniGroup={usersToAddToALumniGroup} />}{' '}
         </div>
     );
 };

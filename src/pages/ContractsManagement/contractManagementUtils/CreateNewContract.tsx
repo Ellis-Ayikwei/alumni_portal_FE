@@ -3,14 +3,14 @@ import { Fragment, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Select from 'react-select';
 import 'tippy.js/dist/tippy.css';
+import IconLoader from '../../../components/Icon/IconLoader';
 import IconX from '../../../components/Icon/IconX';
 import axiosInstance from '../../../helper/axiosInstance';
 import { IRootState } from '../../../store';
 import { GetAlumniData } from '../../../store/alumnigroupSlice';
+import { GetContractsData } from '../../../store/contractsSlice';
 import { GetInsurancePackages } from '../../../store/insurancePackageSlice';
 import showMessage from './showMessage';
-import { GetContractsData } from '../../../store/contractsSlice';
-import IconLoader from '../../../components/Icon/IconLoader';
 
 export const dParams = {
     id: null,
@@ -78,18 +78,16 @@ const CreateNewContract = ({ showModal, setShowModal }: SaveNewUserProps) => {
     const [defaultParams, setDefaultParams] = useState({ ...dParams });
     const [params, setParams] = useState<any>(JSON.parse(JSON.stringify(defaultParams)));
     const [isSaveLoading, setIsSaveLoading] = useState(false);
-
-
-
+    const userId = useSelector((state: IRootState) =>state.auth.user.id)
 
     useEffect(() => {
         dispatch(GetAlumniData as any);
     }, [dispatch, alumniGroups]);
 
     useEffect(() => {
-        dispatch(GetInsurancePackages as any);
+        dispatch(GetInsurancePackages() as any);
         console.log(' the goten insurance packages', insurancePackages);
-    }, []);
+    }, [dispatch]);
 
     const groups = Object.values(alumniGroups)?.map((group: any) => ({ value: group.id, label: group.name }));
 
@@ -126,7 +124,7 @@ const CreateNewContract = ({ showModal, setShowModal }: SaveNewUserProps) => {
             }
         }
 
-        const payload = JSON.stringify({ ...params });
+        const payload = JSON.stringify({ ...params, underwriter_id: userId });
 
         try {
             const response = await axiosInstance.post('/contracts', payload);
@@ -183,16 +181,9 @@ const CreateNewContract = ({ showModal, setShowModal }: SaveNewUserProps) => {
                                 </div>
                                 <div className="p-5">
                                     <form>
-                                    <div className="mb-5">
+                                        <div className="mb-5">
                                             <label htmlFor="name">Name</label>
-                                            <input
-                                                id="name"
-                                                type="text"
-                                                placeholder="ie. contract for alumni group 2"
-                                                className="form-input"
-                                                value={params.name}
-                                                onChange={(e) => changeValue(e)}
-                                            />
+                                            <input id="name" type="text" placeholder="ie. contract for alumni group 2" className="form-input" value={params.name} onChange={(e) => changeValue(e)} />
                                         </div>
                                         <div className="mb-5">
                                             <label htmlFor="group_id">
@@ -223,8 +214,15 @@ const CreateNewContract = ({ showModal, setShowModal }: SaveNewUserProps) => {
                                             />
                                         </div>
                                         <div className="mb-5">
-                                            <label htmlFor="expiry_date">Date Effective</label>
-                                            <input id="expiry_date" type="date" placeholder="Enter Expiry Date" className="form-input" value={params.effctive_date} onChange={(e) => changeValue(e)} />
+                                            <label htmlFor="effective_date">Date Effective</label>
+                                            <input
+                                                id="effective_date"
+                                                type="date"
+                                                placeholder="Enter Expiry Date"
+                                                className="form-input"
+                                                value={params.effctive_date}
+                                                onChange={(e) => changeValue(e)}
+                                            />
                                         </div>
                                         <div className="mb-5">
                                             <label htmlFor="signed_date">Signed Date</label>

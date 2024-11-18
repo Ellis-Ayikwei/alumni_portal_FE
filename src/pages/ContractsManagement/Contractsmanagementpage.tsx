@@ -40,7 +40,6 @@ const AlumniGroupManagementpage = () => {
     const [alumnidata, setUsersData] = useState<any>([]);
     const { allContracts, error, loading } = useSelector((state: IRootState) => state.allContacts);
     const userDataIsLoading = useSelector((state: IRootState) => state.alumnidata.loading);
-    const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const { showContextMenu } = useContextMenu();
 

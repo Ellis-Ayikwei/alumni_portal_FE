@@ -501,7 +501,7 @@ const GroupEdit = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(other_members.length !== 0 &&
+                                    {(other_members?.length !== 0 &&
                                         other_members?.map((member: any) => (
                                             <tr key={member?.id} className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
                                                 <td className="min-w-[150px] text-black dark:text-white">

@@ -1,14 +1,16 @@
-import i18next from 'i18next';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import Dropdown from '../../components/Dropdown';
-import IconCaretDown from '../../components/Icon/IconCaretDown';
 import IconLockDots from '../../components/Icon/IconLockDots';
-import IconMail from '../../components/Icon/IconMail';
+import IconUser from '../../components/Icon/IconUser';
 import { IRootState } from '../../store';
-import { LoginUser } from '../../store/logInSlice';
+import { LoginUser } from '../../store/authSlice';
 import { setPageTitle, toggleRTL } from '../../store/themeConfigSlice';
+
+import { Icon } from 'react-icons-kit';
+import { eye } from 'react-icons-kit/feather/eye';
+import { eyeOff } from 'react-icons-kit/feather/eyeOff';
+import IconX from '../../components/Icon/IconX';
 
 const LoginBoxed = () => {
     const dispatch = useDispatch();
@@ -34,6 +36,19 @@ const LoginBoxed = () => {
     const [userNameOrEmail, setUserNameOrEmail] = useState('');
     const [error, setError] = useState('');
 
+    const [type, setType] = useState('password');
+    const [icon, setIcon] = useState(eyeOff);
+
+    const handleToggle = () => {
+        if (type === 'password') {
+            setIcon(eye);
+            setType('text');
+        } else {
+            setIcon(eyeOff);
+            setType('password');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         console.log('submit');
         e.preventDefault();
@@ -44,32 +59,38 @@ const LoginBoxed = () => {
         const isUsername = /^[a-zA-Z0-9_.-]{3,}$/;
         let userOrEmail: { email?: string; username?: string } = {};
 
-        // Determine if input is email or username
         if (isEmail.test(input)) {
-            userOrEmail.email = input; // Set email property
+            userOrEmail.email = input;
         } else if (isUsername.test(input)) {
-            userOrEmail.username = input; // Set username property
+            userOrEmail.username = input;
         } else {
             setError('Invalid input. Please enter a valid username or email.');
-            return; // Exit if input is invalid
+            return;
         }
 
-        // Check for empty password or input
         if (!password) {
             setError('Please fill in all fields');
-            return; // Exit if password is empty
+            return;
         }
 
         try {
-            const loginResponse = await dispatch(LoginUser({ userOrEmail, password }) as any);
-            if (loginResponse.meta.requestStatus === 'fulfilled') {
+            const response = await dispatch(LoginUser({ userOrEmail, password }) as any);
+            const loginResponse = response;
+            console.log('loginResponse', loginResponse);
+
+            if (response.meta.requestStatus === 'fulfilled') {
+                console.log('logged in');
                 navigate('/');
             } else {
                 setError('Login failed. Please check your credentials.');
             }
         } catch (error: any) {
-            setError(error.message); // Set error message from caught error
+            setError(error.message);
         }
+    };
+
+    const handleForgotPassword = () => {
+        navigate('/auth/recorver_password');
     };
 
     return (
@@ -85,52 +106,18 @@ const LoginBoxed = () => {
                 <img src="/assets/images/auth/polygon-object.svg" alt="image" className="absolute bottom-0 end-[28%]" />
                 <div className="relative w-full max-w-[570px] rounded-md bg-[linear-gradient(45deg,#fff9f9_0%,rgba(255,255,255,0)_25%,rgba(255,255,255,0)_75%,_#fff9f9_100%)] p-1 dark:bg-[linear-gradient(52.22deg,#0E1726_0%,rgba(14,23,38,0)_18.66%,rgba(14,23,38,0)_51.04%,rgba(14,23,38,0)_80.07%,#0E1726_100%)]">
                     <div className="relative flex flex-col justify-center rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 px-6  py-10">
-                        <div className="absolute top-6 end-6">
-                            <div className="dropdown">
-                                <Dropdown
-                                    offset={[0, 8]}
-                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                    btnClassName="flex items-center gap-2.5 rounded-lg border border-white-dark/30 bg-white px-1.5 py-1.0 text-white-dark hover:border-primary hover:text-primary dark:bg-black"
-                                    button={
-                                        <>
-                                            <div>
-                                                <img src={`/assets/images/flags/${flag.toUpperCase()}.svg`} alt="image" className="h-3 w-3 rounded-full object-cover" />
-                                            </div>
-                                            <div className="text-base font-bold uppercase">{flag}</div>
-                                            <span className="shrink-0">
-                                                <IconCaretDown />
-                                            </span>
-                                        </>
-                                    }
-                                >
-                                    <ul className="!px-2 text-dark dark:text-white-dark grid grid-cols-2 gap-2 font-semibold dark:text-white-light/90 w-[280px]">
-                                        {themeConfig.languageList.map((item: any) => {
-                                            return (
-                                                <li key={item.code}>
-                                                    <button
-                                                        type="button"
-                                                        className={`flex w-full hover:text-primary rounded-lg ${flag === item.code ? 'bg-primary/10 text-primary' : ''}`}
-                                                        onClick={() => {
-                                                            i18next.changeLanguage(item.code);
-                                                            // setFlag(item.code);
-                                                            setLocale(item.code);
-                                                        }}
-                                                    >
-                                                        <img src={`/assets/images/flags/${item.code.toUpperCase()}.svg`} alt="flag" className="w-5 h-5 object-cover rounded-full" />
-                                                        <span className="ltr:ml-3 rtl:mr-3">{item.name}</span>
-                                                    </button>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </Dropdown>
-                            </div>
-                        </div>
                         <div className="mx-auto w-full max-w-[440px]">
                             <div className="mb-5">
-                                <h1 className="text-2xl font-extrabold uppercase !leading-snug text-primary md:text-2xl">Sign in</h1>
+                                <h1 className="text-2xl font-extrabold uppercase !leading-snug text-success md:text-2xl">Sign in</h1>
                                 <p className="text-base font-bold leading-normal text-white-dark">Enter your email and password to login</p>
                             </div>
+                            {error && (
+                                <div className="text-red-500 text-lg font-semibold mb-5 bg-red-100 flex items-center gap-3 rounded-md">
+                                    {' '}
+                                    <IconX />
+                                    {error}
+                                </div>
+                            )}
                             <form className="space-y-5 dark:text-white" onSubmit={handleSubmit}>
                                 <div>
                                     <label htmlFor="usernameOrEmail">Username or Email</label>
@@ -145,7 +132,7 @@ const LoginBoxed = () => {
                                             onChange={(e) => setUserNameOrEmail(e.target.value)}
                                         />
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconMail fill={true} />
+                                            <IconUser fill={true} />
                                         </span>
                                     </div>{' '}
                                 </div>
@@ -154,24 +141,27 @@ const LoginBoxed = () => {
                                     <div className="relative text-white-dark">
                                         <input
                                             id="Password"
-                                            type="password"
+                                            type={type}
                                             placeholder="Enter Password"
-                                            className="form-input ps-10 placeholder:text-white-dark"
+                                            className="form-input ps-10 pe-10 placeholder:text-white-dark"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                         />
+                                        <span className="absolute end-4 top-1/2 -translate-y-1/2">
+                                            <Icon className="cursor-pointer" icon={icon} size={16} onClick={handleToggle} />
+                                        </span>
                                         <span className="absolute start-4 top-1/2 -translate-y-1/2">
                                             <IconLockDots fill={true} />
                                         </span>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="flex cursor-pointer items-center">
-                                        <input type="checkbox" className="form-checkbox bg-white dark:bg-black" />
-                                        <span className="text-white-dark">Subscribe to weekly newsletter</span>
-                                    </label>
+                                <div className="ltr:mr-auto rtl:ml-auto">
+                                    <button type="button" className=" text-xs uppercase" onClick={handleForgotPassword}>
+                                        Forgot password?
+                                    </button>
                                 </div>
-                                <button type="submit" className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+
+                                <button type="submit" className="btn btn-success ml-auto mr-auto !mt-6 w-fit border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)] font-bold">
                                     Sign in
                                 </button>
                             </form>
@@ -180,7 +170,7 @@ const LoginBoxed = () => {
                                 <span className="relative bg-white px-2 font-bold uppercase text-white-dark dark:bg-dark dark:text-white-light">or</span>
                             </div>
                             <div className="mb-4">
-                                <button type="submit" className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+                                <button type="submit" className="btn !mt-6 w-fit ml-auto mr-auto bg-black text-white border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
                                     Sign In With Azure
                                 </button>
                             </div>

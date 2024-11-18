@@ -1,28 +1,29 @@
-import { faCalendarTimes, faCheckCircle, faLock, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faLock, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import IconX from '../components/Icon/IconX';
 
 export const renderStatus = (status: string) => {
     switch (status) {
         case 'ACTIVATED':
-            return (
-                <span className="flex items-center text-xs bg-green-100 px-2 py-1 rounded-full">
-                    <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 h-4 w-4" />
-                    <span className="ml-1 text-green-500">Active</span>
-                </span>
-            );
         case 'ACTIVE':
+        case 'APPROVED':
+        case 'COMPLETED':
             return (
                 <span className="flex items-center text-xs bg-green-100 px-2 py-1 rounded-full">
                     <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 h-4 w-4" />
-                    <span className="ml-1 text-green-500">Active</span>
+                    <span className="ml-1 text-green-500">{status.charAt(0) + status.slice(1).toLowerCase()}</span>
                 </span>
             );
         case 'EXPIRED':
+        case 'DEACTIVATED':
+        case 'INACTIVE':
+        case 'REJECTED':
+        case 'FAILED':
+        case 'TERMINATED':
             return (
                 <span className="flex items-center text-xs bg-red-100 px-2 py-1 rounded-full">
-                    <FontAwesomeIcon icon={faCalendarTimes} className="text-red-500 h-4 w-4" />
-                    <span className="ml-1 text-red-500">Expired</span>
+                    <IconX className={`text-red-${status === 'TERMINATED' ? '800' : '500'} h-4 w-4`} />
+                    <span className={`ml-1 text-red-${status === 'TERMINATED' ? '800' : '500'}`}>{status.charAt(0) + status.slice(1).toLowerCase()}</span>
                 </span>
             );
         case 'LOCKED':
@@ -32,20 +33,6 @@ export const renderStatus = (status: string) => {
                     <span className="ml-1 text-yellow-500">Locked</span>
                 </span>
             );
-        case 'DEACTIVATED':
-            return (
-                <span className="flex items-center text-xs bg-red-100 px-2 py-1 rounded-full">
-                    <IconX className="text-red-500 h-4 w-4" />
-                    <span className="ml-1 text-red-500">Deactivated</span>
-                </span>
-            );
-        case 'INACTIVE':
-            return (
-                <span className="flex items-center text-xs bg-red-100 px-2 py-1 rounded-full">
-                    <IconX className="text-red-500 h-4 w-4" />
-                    <span className="ml-1 text-red-500">Inactive</span>
-                </span>
-            );
         case 'PENDING':
             return (
                 <span className="flex items-center text-xs bg-blue-100 px-2 py-1 rounded-full">
@@ -53,18 +40,17 @@ export const renderStatus = (status: string) => {
                     <span className="ml-1 text-blue-500">Pending</span>
                 </span>
             );
-        case 'APPROVED':
+        case 'SUPER_ADMIN':
+        case 'ADMIN':
+        case 'REGULAR':
+        case 'UNDERWRITER':
+        case 'PREMIUM_ADMIN':
+        case 'SALES':
+        case 'MEMBER':
             return (
-                <span className="flex items-center text-xs bg-green-100 px-2 py-1 rounded-full">
-                    <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 h-4 w-4" />
-                    <span className="ml-1 text-green-500">Approved</span>
-                </span>
-            );
-        case 'REJECTED':
-            return (
-                <span className="flex items-center text-xs bg-red-100 px-2 py-1 rounded-full">
-                    <IconX className="text-red-500 h-4 w-4" />
-                    <span className="ml-1 text-red-500">Rejected</span>
+                <span className="flex items-center text-xs bg-purple-100 px-2 py-1 rounded-full">
+                    <FontAwesomeIcon icon={faCheckCircle} className="text-purple-500 h-4 w-4" />
+                    <span className="ml-1 text-purple-500">{status.replace('_', ' ').toLowerCase()}</span>
                 </span>
             );
         default:
@@ -76,4 +62,3 @@ export const renderStatus = (status: string) => {
             );
     }
 };
-

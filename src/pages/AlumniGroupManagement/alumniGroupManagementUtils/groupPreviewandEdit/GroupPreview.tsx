@@ -57,7 +57,7 @@ const GroupPreview = () => {
                 <div className="flex justify-between flex-wrap gap-4 px-4">
                     <div>
                         <div className="text-2xl font-semibold uppercase">{group?.name}</div>
-                        <p className="text-white-dark">{group.id}</p>
+                        <p className="text-white-dark">{group?.id}</p>
                     </div>
                     <div className="shrink-0">
                         <img src="/assets/images/logo.svg" alt="img" className="w-14 ltr:ml-auto rtl:mr-auto" />
@@ -133,7 +133,7 @@ const GroupPreview = () => {
                                 </thead>
                                 <tbody>
                                     {group_members?.map((member: any) => (
-                                        <tr key={member.id} className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
+                                        <tr key={member?.id} className="text-white-dark hover:text-black dark:hover:text-white-light/90 group">
                                             <td className="min-w-[150px] text-black dark:text-white">
                                                 <div className="flex items-center">
                                                     <img className="w-8 h-8 rounded-md ltr:mr-3 rtl:ml-3 object-cover" src="/assets/images/profile-6.jpeg" alt="avatar" />
@@ -149,7 +149,7 @@ const GroupPreview = () => {
                                                     <button
                                                         type="button"
                                                         className="text-primary font-semibold hover:underline group"
-                                                        onClick={() => handleVewBeneficiaries(member.user_id, member.id)}
+                                                        onClick={() => handleVewBeneficiaries(member?.user_id, member?.id)}
                                                     >
                                                         View beneficiaries{' '}
                                                         <IconArrowLeft className="ltr:ml-1 rtl:mr-1 inline-block relative transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2 rtl:rotate-180" />

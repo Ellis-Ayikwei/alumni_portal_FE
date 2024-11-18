@@ -1,34 +1,63 @@
-import { lazy } from 'react';
+import { lazy, useState, useEffect } from 'react';
 import AlumniGroupManagementpage from '../pages/AlumniGroupManagement/AlumniGroupManagemnetPage';
+import GroupEdit from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupEdit';
+import GroupPreview from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupPreview';
+import Amendments from '../pages/Amendments/Amendments';
+import ResetPassword from '../pages/Authentication/ResetPasssword';
+import PaymentsMangement from '../pages/ContractsManagement copy/Payments';
 import ContractManagementpage from '../pages/ContractsManagement/Contractsmanagementpage';
+import ContractPreview from '../pages/ContractsManagement/contractManagementUtils/contractPreviewandEdit/ContractPreview';
+import ContractEdit from '../pages/ContractsManagement/contractManagementUtils/contractPreviewandEdit/contractEdit';
 import AdminDashboard from '../pages/Dasboard/AdminDashboard';
 import InsurancePacakes from '../pages/InsurancePackageManagement/InsurancePackageManagement';
+import AccountSetting from '../pages/MemberOnly/AccountSetting';
 import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
 import MyGroups from '../pages/MemberOnly/MyAlumniGroups';
 import MyBeneficiaries from '../pages/MemberOnly/MyBeneficiaries';
 import MyContracts from '../pages/MemberOnly/MyContracts';
 import MyPayments from '../pages/MemberOnly/MyPayments';
-import AccountSetting from '../pages/UserManagement/AccountSetting';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
 import { RowContextMenuExample } from '../pages/UserManagement/UserManagement copy';
-import GroupPreview from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupPreview';
-import GroupEdit from '../pages/AlumniGroupManagement/alumniGroupManagementUtils/groupPreviewandEdit/GroupEdit';
-import ContractPreview from '../pages/ContractsManagement/contractManagementUtils/contractPreviewandEdit/ContractPreview';
-import ContractEdit from '../pages/ContractsManagement/contractManagementUtils/contractPreviewandEdit/contractEdit';
-import Amendments from '../pages/Amendments/Amendments';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
 const RegisterBoxed = lazy(() => import('../pages/Authentication/RegisterBoxed'));
+const RecoverIdBoxed = lazy(() => import('../pages/Authentication/RecoverIdBox'));
+const userRole = localStorage.getItem('userRole') || '';
+const adminUsers = ['SUPER_ADMIN', 'ADMIN', 'UNDERWRITER', 'PREMIUM_ADMIN', 'SALES'];
+const personalUsers = ['MEMBER', 'REGULAR'];
+
+
+
+const ConditionalDashboard = () => {
+    const [userRole, setUserRole] = useState('');
+  
+    useEffect(() => {
+      const storedUserRole = localStorage.getItem('userRole');
+      setUserRole(storedUserRole   
+   || '');
+    }, []);
+  
+    if (!userRole) {
+      return <div>Loading...</div>;
+    }
+  
+    if (adminUsers.includes(userRole)) {
+      return <AdminDashboard />;
+    }
+  
+    if (personalUsers.includes(userRole)) {
+      return <MemberDashboard />;
+    }
+  
+    return <div>Unauthorized Access</div>;
+  };
 
 const routes = [
     // dashboard
-    {
-        path: '/',
-        element: <Index />,
-        layout: 'default',
-    },
+    {path: "/", element: <ConditionalDashboard />, layout: "default" },
+
 
     //Authentication
     {
@@ -46,7 +75,7 @@ const routes = [
         element: <UserManagement />,
     },
     {
-        path: '/userAccountSetting',
+        path: '/userAccountSetting/:id',
         element: <AccountSetting />,
     },
     {
@@ -60,6 +89,10 @@ const routes = [
     {
         path: '/amendments',
         element: <Amendments />,
+    },
+    {
+        path: '/payments',
+        element: <PaymentsMangement />,
     },
     {
         path: '/contracts/preview/:contract_id',
@@ -122,11 +155,16 @@ const routes = [
     //     element: <UnlockBoxed />,
     //     layout: 'blank',
     // },
-    // {
-    //     path: '/auth/boxed-password-reset',
-    //     element: <RecoverIdBoxed />,
-    //     layout: 'blank',
-    // },
+    {
+        path: '/auth/recorver_password',
+        element: <RecoverIdBoxed />,
+        layout: 'blank',
+    },
+    {
+        path: '/auth/reset_password',
+        element: <ResetPassword />,
+        layout: 'blank',
+    },
 ];
 
 export { routes };

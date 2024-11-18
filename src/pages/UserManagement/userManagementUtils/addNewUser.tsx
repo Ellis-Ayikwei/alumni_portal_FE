@@ -260,6 +260,16 @@ const AddNewUser = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) => {
                                             <div className="text-danger mt-2" id="startDateErr"></div>
                                         </div>
 
+                                        <div className="mb-5">
+                                            <label htmlFor="gender">
+                                                Gender <span className="text-red-600">*</span>
+                                            </label>
+                                            <Select id="gender" options={
+                                                [{value:"Male",label:"Male"},{value:"Female",label:"Female"}]
+                                            } isSearchable={false} onChange={(e) => setParams({ ...params, gender: e?.value })} required />
+                                        </div>
+
+
                                         {/* <div className="mb-5">
                                         <label htmlFor="password1">Email</label>
                                         <input id="password1" type="password" placeholder="Enter Email" className="form-input" value={params.email} onChange={(e) => changeValue(e)} />

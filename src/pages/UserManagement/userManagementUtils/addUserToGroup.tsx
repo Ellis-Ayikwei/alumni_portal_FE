@@ -1,8 +1,10 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import Select, { StylesConfig } from 'react-select';
+import useSwr from 'swr';
 import 'tippy.js/dist/tippy.css';
 import IconX from '../../../components/Icon/IconX';
+import fetcher from '../../../helper/fetcher';
 
 interface AddUserToGroupProps {
     AddUserToGroupModal: boolean;
@@ -30,6 +32,9 @@ const roles = [
 
 const AddUserToGroup = ({ AddUserToGroupModal, setAddUserToGroupModal, usersToAddToALumniGroup }: AddUserToGroupProps) => {
     console.log(usersToAddToALumniGroup);
+    const { data: allGroups, error: GroupsError } = useSwr(`/alumni_groups`, fetcher);
+
+    const groups = allGroups?.map((item: any) => {return{ value: item.id, label: item.name }});
 
     const colourStyles: StylesConfig<any, true> = {
         menuList: (provided, state) => ({
@@ -77,7 +82,7 @@ const AddUserToGroup = ({ AddUserToGroupModal, setAddUserToGroupModal, usersToAd
                                     </div>
                                     <div className="mb-5">
                                         <label htmlFor="role">To Group(s)</label>
-                                        <Select defaultValue={roles[1]} id="role" options={roles} isSearchable={true} required styles={colourStyles} hideSelectedOptions={true} isMulti />
+                                        <Select id="role" options={groups} isSearchable={true} required styles={colourStyles} hideSelectedOptions={true} isMulti />
                                     </div>
                                 </div>
                             </Dialog.Panel>

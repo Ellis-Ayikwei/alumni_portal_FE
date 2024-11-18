@@ -15,7 +15,6 @@ const initialState: ContractState = {
 
 export const GetContractsData = createAsyncThunk('contracts/allcontacts', async () => {
     const response = await axiosInstance.get('/contracts');
-    console.log("all contracts", response);
     return response.data;
 });
 

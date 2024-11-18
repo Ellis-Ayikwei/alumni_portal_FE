@@ -23,6 +23,9 @@ import AddMembersToGroup from '../../../AlumniGroupManagement/alumniGroupManagem
 import ChangePackage from './changePackage';
 import ShowBeneficiaries from './showBeneficiaries';
 
+import isEqual from 'lodash/isEqual';
+import { useMemo, useRef } from 'react';
+
 const ContractEdit = () => {
     const dispatch = useDispatch();
     const { contract_id } = useParams();
@@ -59,9 +62,10 @@ const ContractEdit = () => {
 
     const [AddUserModal, setAddUserModal] = useState(false);
     const [AddNewBeneficiaryModal, setAddNewBeneficiaryModal] = useState(false);
-    const [activateSave, setActivateSave] = useState(false);
+    const [deactivateSave, setDeactivateSave] = useState(true);
     const [oldValues, setOldValues] = useState<any>();
     const [refreshData, setRefreshData] = useState(false);
+    const userId = useSelector((state: IRootState) =>state.auth.user.id);
 
     const navigate = useNavigate();
 
@@ -75,22 +79,55 @@ const ContractEdit = () => {
 
     useEffect(() => {
         setParams({ ...contractData });
-        setOldValues({ ...contractData });
+        setOldValues({
+            description: contractData?.description,
+            name: contractData?.name,
+            expiry_date: contractData?.expiry_date,
+            is_signed: contractData?.is_signed,
+            signed_date: contractData?.signed_date,
+            date_effective: contractData?.date_effective,
+            status: contractData?.status,
+            insurance_package_id: contractData?.insurance_package_id,
+            insurance_package: contractData?.insurance_package,
+            policy_number: contractData?.policy_number,
+        });
     }, [contractData]);
 
     useEffect(() => {
         console.log('triggered1', params);
+        console.log('triggered2', contractData);
     }, [params]);
 
     const handleSaveAmendments = async () => {
         try {
-            const payload = { ...params, new_values: { ...params }, old_values: oldValues, name: 'update contract', amender_user_id: '0d9c5857-6a82-4687-af61-a6c7cfe95570' };
+            const payload = {
+                ...params,
+                new_values: {
+                    description: params.description,
+                    name: params.name,
+                    expiry_date: params.expiry_date,
+                    is_signed: params.is_signed,
+                    signed_date: params.signed_date,
+                    date_effective: params.date_effective,
+                    status: params.status,
+                    insurance_package_id: params.insurance_package_id,
+                    insurance_package: params.insurance_package,
+                    policy_number: params.policy_number,
+                },
+                old_values: oldValues,
+                name: 'update contract',
+                amender_user_id: userId,
+            };
 
             const response = await axiosInstance.post(`/amendments`, JSON.stringify(payload));
-            if (response.status === 200) {
-                Swal.fire('Group Info Updated', '', 'success');
+            if (response.status === 201) {
+                Swal.fire({
+                    title: 'Amendment Saved Successfully',
+                    html: 'waiting for approval to update contract. <a href="/amendments" className="underline"><u>Go to Amendments</u> </a>',
+                    icon: 'success',
+                });
                 mutate('/alumni_groups');
-                setActivateSave(false);
+                setDeactivateSave(true);
                 setRefreshData(!refreshData);
             }
         } catch (error: any) {
@@ -111,8 +148,27 @@ const ContractEdit = () => {
     const handleDiscardChanges = () => {
         setDiscard(!discard);
         setParams({ ...contractData });
-        setActivateSave(false);
+        setDeactivateSave(false);
     };
+
+    // detecting change in the object
+    const prevObjectRef = useRef({ ...contractData });
+    const memoizedObject = useMemo(() => {
+        if (!isEqual(prevObjectRef.current, params)) {
+            prevObjectRef.current = params;
+        }
+        return prevObjectRef.current;
+    }, [params]);
+
+    useEffect(() => {
+        if (isEqual(memoizedObject, contractData)) {
+            setDeactivateSave(true);
+        } else {
+            setDeactivateSave(false);
+        }
+        console.log('Object deeply changed');
+        console.log('is the value the same?', isEqual(memoizedObject, contractData));
+    }, [memoizedObject]);
 
     return (
         <div className="flex xl:flex-col flex-col gap-2.5">
@@ -121,12 +177,12 @@ const ContractEdit = () => {
                     <IconArrowBackward />
                     Back
                 </button>
-                <div className="flex !gap-2">
-                    <button onClick={handleDiscardChanges} className="btn btn-outline-danger gap-2">
+                <div className="flex !gap-2 ">
+                    <button onClick={handleDiscardChanges} className="btn btn-outline-danger gap-2" disabled={deactivateSave}>
                         <IconX />
                         Discard Changes
                     </button>
-                    <button onClick={handleSaveAmendments} className="btn btn-primary gap-2 bg-blue-500 text-white">
+                    <button onClick={handleSaveAmendments} className="btn btn-primary gap-2 bg-blue-500 text-white" disabled={deactivateSave}>
                         <IconSave />
                         Save Amendments
                     </button>
@@ -165,7 +221,13 @@ const ContractEdit = () => {
                                         type="date"
                                         id="expiry_date"
                                         value={params?.expiry_date ? dayjs(params?.expiry_date).format('YYYY-MM-DD') : ''}
-                                        onChange={(e) => setParams((prev) => ({ ...prev, expiry_date: dayjs(e.target.value).format('YYYY-MM-DD') }))}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value;
+                                            setParams((prev) => ({
+                                                ...prev,
+                                                expiry_date: newValue ? new Date(newValue).toUTCString() : null,
+                                            }));
+                                        }}
                                         className="block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-800 dark:text-gray-300 focus:outline-none focus:border-primary"
                                     />
                                 </div>
@@ -180,7 +242,13 @@ const ContractEdit = () => {
                                         id="date_effective"
                                         className="form-input"
                                         value={params?.date_effective ? dayjs(params?.date_effective).format('YYYY-MM-DD') : ''}
-                                        onChange={(e) => setParams((prev) => ({ ...prev, date_effective: dayjs(e.target.value).format('YYYY-MM-DD') }))}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value;
+                                            setParams((prev) => ({
+                                                ...prev,
+                                                date_effective: newValue ? new Date(newValue).toUTCString() : null,
+                                            }));
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -211,7 +279,13 @@ const ContractEdit = () => {
                                         type="date"
                                         id="signed_date"
                                         value={params?.signed_date ? dayjs(params?.signed_date).format('YYYY-MM-DD') : ''}
-                                        onChange={(e) => setParams((prev) => ({ ...prev, signed_date: dayjs(e.target.value).format('YYYY-MM-DD') }))}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value;
+                                            setParams((prev) => ({
+                                                ...prev,
+                                                signed_date: newValue ? new Date(newValue).toUTCString() : null,
+                                            }));
+                                        }}
                                         className="block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-800 dark:text-gray-300 focus:outline-none focus:border-primary"
                                     />
                                 </div>

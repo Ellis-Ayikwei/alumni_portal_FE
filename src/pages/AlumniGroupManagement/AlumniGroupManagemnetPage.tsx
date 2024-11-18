@@ -44,7 +44,6 @@ const AlumniGroupManagementpage = () => {
     const dispatch = useDispatch();
     const [alumnidata, setUsersData] = useState<any>([]);
     const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniGroups);
-    const myRole = useSelector((state: IRootState) => state.login.role);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const [addMembersToGroupModal, setAddMembersToGroupModal] = useState(false);
     const { showContextMenu } = useContextMenu();

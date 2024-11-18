@@ -28,7 +28,7 @@ const ContractPreview = () => {
     const [showBeneficiariesModal, setShowBeneficiariesModal] = useState<boolean>(false);
     const [benefactorIds, setBenefactorIds] = useState<{ userId: string; memberId: string }>({ userId: '', memberId: '' });
     const contract = Object.values(allContracts).find((contract: any) => contract?.id == contract_id);
-    const [changeLog, setChangeLog] = useState<{ newValues: {}; oldValues: {} }>({});
+    const [changeLog, setChangeLog] = useState<{ newValues: any; oldValues: any }>({newValues: null, oldValues: null});
     const [showAmendmentModal, setShowAmendmentModal] = useState<boolean>(false);
 
     useEffect(() => {
@@ -218,7 +218,7 @@ const ContractPreview = () => {
                                         <div className="px-3 flex-1">
                                             <div>{amendment?.name}</div>
                                             <div className="text-xs text-white-dark dark:text-gray-500">{dayjs(amendment.change_date).format('ddd, DD MMM YYYY')}</div>
-                                            <div className="text-xs text-white-dark dark:text-gray-500">{amendment.amended_by.full_name}</div>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">{amendment?.amended_by?.full_name}</div>
                                         </div>
                                         <div className="text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre flex flex-col">
                                             <span>{renderStatus(sts)}</span>

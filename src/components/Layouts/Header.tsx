@@ -4,20 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AppDispatch, IRootState } from '../../store';
-import { logoutUser } from '../../store/logOutSlice';
+import { LogoutUser } from '../../store/authSlice';
 import { toggleRTL, toggleSidebar, toggleTheme } from '../../store/themeConfigSlice';
 import Dropdown from '../Dropdown';
 import IconArrowLeft from '../Icon/IconArrowLeft';
 import IconBellBing from '../Icon/IconBellBing';
-import IconCalendar from '../Icon/IconCalendar';
 import IconCaretDown from '../Icon/IconCaretDown';
-import IconChatNotification from '../Icon/IconChatNotification';
-import IconEdit from '../Icon/IconEdit';
 import IconInfoCircle from '../Icon/IconInfoCircle';
 import IconLaptop from '../Icon/IconLaptop';
-import IconLockDots from '../Icon/IconLockDots';
 import IconLogout from '../Icon/IconLogout';
-import IconMail from '../Icon/IconMail';
 import IconMailDot from '../Icon/IconMailDot';
 import IconMenu from '../Icon/IconMenu';
 import IconMoon from '../Icon/IconMoon';
@@ -35,7 +30,10 @@ import IconMenuMore from '../Icon/Menu/IconMenuMore';
 import IconMenuPages from '../Icon/Menu/IconMenuPages';
 
 const Header = () => {
-    const location = useLocation();
+    const dispatch: AppDispatch = useDispatch();
+    const location = useLocation()
+    const user = useSelector((state: IRootState) => state.auth.user);
+    const userId = useSelector((state: IRootState) =>state.auth.user.id)
     useEffect(() => {
         const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
         if (selector) {
@@ -60,10 +58,6 @@ const Header = () => {
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
 
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
-    const error = useSelector((state: IRootState) => state.logout.error);
-    const isLoggedOut = useSelector((state: IRootState) => state.logout.isLoggedOut);
-
-    const dispatch: AppDispatch = useDispatch();
 
     function createMarkup(messages: any) {
         return { __html: messages };
@@ -146,10 +140,14 @@ const Header = () => {
 
     const handleLogoutClick = async () => {
         try {
-            const logoutResponse = await dispatch(logoutUser() as any);
-            if (logoutResponse.meta.requestStatus === 'fulfilled') {
+            // const logoutResponse = await dispatch(logoutUser() as any);
+            // if (logoutResponse.meta.requestStatus === 'fulfilled') {
+            // }
+            dispatch(LogoutUser() as any).then(() => {
                 navigate('/login');
-            }
+                localStorage.clear()
+                window.location.reload()
+            });
         } catch (error) {
             console.error('Logout failed:', error);
         }
@@ -175,45 +173,8 @@ const Header = () => {
                         </button>
                     </div>
 
-                    <div className="ltr:mr-2 rtl:ml-2 hidden sm:block">
-                        <ul className="flex items-center space-x-2 rtl:space-x-reverse dark:text-[#d0d2d6]">
-                            <li>
-                                <Link to="/apps/calendar" className="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60">
-                                    <IconCalendar />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/apps/todolist" className="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60">
-                                    <IconEdit />
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/apps/chat" className="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60">
-                                    <IconChatNotification />
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
                     <div className="sm:flex-1 ltr:sm:ml-0 ltr:ml-auto sm:rtl:mr-0 rtl:mr-auto flex items-center space-x-1.5 lg:space-x-2 rtl:space-x-reverse dark:text-[#d0d2d6]">
                         <div className="sm:ltr:mr-auto sm:rtl:ml-auto">
-                            <form
-                                className={`${search && '!block'} sm:relative absolute inset-x-0 sm:top-0 top-1/2 sm:translate-y-0 -translate-y-1/2 sm:mx-0 mx-4 z-10 sm:block hidden`}
-                                onSubmit={() => setSearch(false)}
-                            >
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        className="form-input ltr:pl-9 rtl:pr-9 ltr:sm:pr-4 rtl:sm:pl-4 ltr:pr-9 rtl:pl-9 peer sm:bg-transparent bg-gray-100 placeholder:tracking-widest"
-                                        placeholder="Search..."
-                                    />
-                                    <button type="button" className="absolute w-9 h-9 inset-0 ltr:right-auto rtl:left-auto appearance-none peer-focus:text-primary">
-                                        <IconSearch className="mx-auto" />
-                                    </button>
-                                    <button type="button" className="hover:opacity-80 sm:hidden block absolute top-1/2 -translate-y-1/2 ltr:right-2 rtl:left-2" onClick={() => setSearch(false)}>
-                                        <IconXCircle />
-                                    </button>
-                                </div>
-                            </form>
                             <button
                                 type="button"
                                 onClick={() => setSearch(!search)}
@@ -307,7 +268,7 @@ const Header = () => {
                                             <div
                                                 className="absolute h-full w-full bg-no-repeat bg-center bg-cover inset-0 bg-"
                                                 style={{
-                                                    backgroundImage: `url('/assets/images/menu-heade.jpg')`,
+                                                    backgroundImage: `url('/assets/images/menu-header.jpg')`,
                                                     backgroundRepeat: 'no-repeat',
                                                     width: '100%',
                                                     height: '100%',
@@ -436,41 +397,35 @@ const Header = () => {
                                 offset={[0, 8]}
                                 placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
                                 btnClassName="relative group block"
-                                button={<img className="w-9 h-9 rounded-full object-cover saturate-50 group-hover:saturate-100" src="/assets/images/user-profile.jpeg" alt="userProfile" />}
+                                button={
+                                    <IconUser className="w-7 h-7 block p-1 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60" />
+
+                                    // <img className="w-9 h-9 rounded-full object-cover saturate-50 group-hover:saturate-100" src="/assets/images/user-profile.jpeg" alt="userProfile" />
+                                }
                             >
                                 <ul className="text-dark dark:text-white-dark !py-0 w-[230px] font-semibold dark:text-white-light/90">
                                     <li>
                                         <div className="flex items-center px-4 py-4">
-                                            <img className="rounded-md w-10 h-10 object-cover" src="/assets/images/user-profile.jpeg" alt="userProfile" />
+                                            {/* <img className="rounded-md w-10 h-10 object-cover" src="/assets/images/user-profile.jpeg" alt="userProfile" /> */}
+                                            <IconUser className="w-4.5 h-4.5 ltr:ml-2 rtl:mr-2 shrink-0" />
                                             <div className="ltr:pl-4 rtl:pr-4 truncate">
                                                 <h4 className="text-base">
-                                                    John Doe
-                                                    <span className="text-xs bg-success-light rounded text-success px-1 ltr:ml-2 rtl:ml-2">Pro</span>
+                                                    {user?.full_name}
+                                                    <span className="text-xs bg-success-light rounded text-success px-1 ltr:ml-2 rtl:ml-2">{user?.role}</span>
                                                 </h4>
                                                 <button type="button" className="text-black/60 hover:text-primary dark:text-dark-light/60 dark:hover:text-white">
-                                                    johndoe@gmail.com
+                                                    {user?.email}
                                                 </button>
                                             </div>
                                         </div>
                                     </li>
                                     <li>
-                                        <Link to="/users/profile" className="dark:hover:text-white">
+                                        <Link to={`/userAccountSetting/${userId}`} className="dark:hover:text-white">
                                             <IconUser className="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 shrink-0" />
                                             Profile
                                         </Link>
                                     </li>
-                                    <li>
-                                        <Link to="/apps/mailbox" className="dark:hover:text-white">
-                                            <IconMail className="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 shrink-0" />
-                                            Inbox
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/auth/boxed-lockscreen" className="dark:hover:text-white">
-                                            <IconLockDots className="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 shrink-0" />
-                                            Lock Screen
-                                        </Link>
-                                    </li>
+
                                     <li className="border-t border-white-light dark:border-white-light/10">
                                         <Link to="" className="text-danger !py-3" onClick={handleLogoutClick}>
                                             <IconLogout className="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 rotate-90 shrink-0" />

@@ -14,6 +14,7 @@ import { GetInsurancePackages } from '../../store/insurancePackageSlice';
 import { setPageTitle } from '../../store/themeConfigSlice';
 import AddInsurancePackage from './InsurancePackageManagementUtils/addInsuranceModal';
 import EditInsurancePackage, { Insurance } from './InsurancePackageManagementUtils/editInsuranceModal';
+import Ghc from '../../helper/CurrencyFormatter';
 
 const InsurancePacakes = () => {
     const dispatch = useDispatch();
@@ -51,10 +52,7 @@ const InsurancePacakes = () => {
         setDatatoEdit(data);
     };
 
-    let GHCedis = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'GHC',
-    });
+   
 
     return (
         <div>
@@ -123,7 +121,7 @@ const InsurancePacakes = () => {
                                         {sortBy(item.benefits, ['name']).map(({ id, name, premium_payable }: { id: string; name: string; premium_payable: string }) => (
                                             <div className="flex justify-between" key={id}>
                                                 <span className="text-gray-600">{name}:</span>
-                                                <span className="font-semibold">{GHCedis.format(parseInt(premium_payable))}</span>
+                                                <span className="font-semibold">{Ghc(premium_payable)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -132,18 +130,18 @@ const InsurancePacakes = () => {
                                         <p className="text-white-dark">Payments terms</p>
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Monthly Premium GH:</span>
-                                            <span className="font-semibold">{GHCedis.format(parseInt(item.monthly_premium_ghs))}</span>
+                                            <span className="font-semibold">{Ghc(item.monthly_premium_ghs)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Annual Premium:</span>
-                                            <span className="font-semibold">{GHCedis.format(parseInt(item.annual_premium_ghs))}</span>
+                                            <span className="font-semibold">{Ghc(item.annual_premium_ghs)}</span>
                                         </div>
                                     </div>
 
                                     <div className="mt-6 pt-4 before:w-[250px] before:h-[1px] before:bg-white-light before:inset-x-0 before:top-0 before:absolute before:mx-auto dark:before:bg-[#1b2e4b]">
                                         <div className="flex justify-between">
                                             <span className="text-gray-600 text-lg">Sum Assured:</span>
-                                            <span className="font-bold text-xl">{GHCedis.format(parseInt(item.sum_assured))}</span>
+                                            <span className="font-bold text-xl">{Ghc(item.sum_assured)}</span>
                                         </div>
                                     </div>
                                     <div className="relative flex justify-between mt-6 pt-4 before:w-[250px] before:h-[1px] before:bg-white-light before:inset-x-0 before:top-0 before:absolute before:mx-auto dark:before:bg-[#1b2e4b]">
@@ -155,7 +153,7 @@ const InsurancePacakes = () => {
                                                 className="flex items-center font-semibold gap-2 border-2 border-[#515365] dark:border-white-dark px-2 py-1 rounded"
                                             >
                                                 <IconUsersGroup className="w-5 h-5" />
-                                                <div className="text-[#515365] dark:text-white-dark">56 Groups </div>
+                                                <div className="text-[#515365] dark:text-white-dark">{item.groups.length}</div>
                                             </div>
                                         </Tippy>
                                         <div className="flex font-semibold">

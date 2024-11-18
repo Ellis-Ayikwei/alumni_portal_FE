@@ -1,14 +1,20 @@
 import { faUnlockAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Tippy from '@tippyjs/react';
+import sortBy from 'lodash/sortBy';
 import { useEffect, useState } from 'react';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import useSwr from 'swr';
 import IconArrowBackward from '../../components/Icon/IconArrowBackward';
 import IconCashBanknotes from '../../components/Icon/IconCashBanknotes';
 import IconEye from '../../components/Icon/IconEye';
 
+import dayjs from 'dayjs';
+import Ghc from '../../helper/CurrencyFormatter';
+import fetcher from '../../helper/fetcher';
+import { renderStatus } from '../../helper/renderStatus';
 import { IRootState } from '../../store';
 import { setPageTitle } from '../../store/themeConfigSlice';
 import MakePaymentModal from './MyPaymentUtils/MakePaymentModal';
@@ -27,6 +33,8 @@ const MyPayments = () => {
     });
     const isDark = useSelector((state: IRootState) => state.themeConfig.theme === 'dark' || state.themeConfig.isDarkMode);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
+    const userId = useSelector((state: IRootState) =>state.auth.user.id)
+
 
     const [loading] = useState(false);
 
@@ -422,6 +430,15 @@ const MyPayments = () => {
         setIsPaymentModalOpened(true);
     };
 
+    const { data: myPayments, error: myPaymentsError } = useSwr(`/payments/users_payments/${userId}`, fetcher);
+
+    const sortedPaymentsByDate = sortBy(myPayments, 'created_at').reverse();
+    console.log('sortedPaymentsByDate', sortedPaymentsByDate);
+    const lastPaymentMade = myPayments && myPayments.length > 0 ? myPayments[myPayments.length - 1] : null;
+    const allSuccefullPayments = myPayments && myPayments.length > 0 ? myPayments.filter((payment: any) => payment.status === 'COMPLETED') : [];
+    const allPaid = allSuccefullPayments?.reduce((total: number, payment: any) => {
+        return total + payment.amount;
+    }, 0);
     return (
         <div>
             <ul className="flex space-x-2 rtl:space-x-reverse">
@@ -457,7 +474,7 @@ const MyPayments = () => {
                                 </span>
                             </div>
                             <div className="flex items-center mt-5">
-                                <div className="text-xl sm:text-sm md:text-xl lg:text-2xl xl:text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2"> GHC 170.00 </div>
+                                <div className="text-xl sm:text-sm md:text-xl lg:text-2xl xl:text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2"> {Ghc(allPaid)} </div>
                             </div>
                             <div className="flex items-center font-semibold mt-5">for 5 groups</div>
                         </div>
@@ -481,18 +498,33 @@ const MyPayments = () => {
                                         Last Payment Made
                                     </span>
                                 </div>
-                                <div className="flex mt-8 items-center">
-                                    <span className="shrink-0 grid place-content-center w-9 h-9 rounded-md bg-warning-light dark:bg-warning text-warning dark:text-warning-light">
-                                        <IconCashBanknotes />
-                                    </span>
-                                    <div className="px-3 flex-1">
-                                        <div>Alumni group 5</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">04 Jan 1:00PM</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">Insurance package</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">cash</div>
-                                        <div className="text-xs text-white-dark dark:text-gray-500">#shhsfdguiyguhiphujnjbns36867492876</div>
-                                    </div>
-                                    <span className="text-success font-semibold text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">GHc 16.44</span>
+                                <div className="space-y-6">
+                                    {lastPaymentMade && <div className="flex panel">
+                                        <span
+                                            className={`shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-${
+                                                lastPaymentMade?.status === 'COMPLETED' ? 'green-50' : lastPaymentMade?.status === 'PENDING' ? 'yellow-50' : 'red-50'
+                                            } text-${lastPaymentMade?.status === 'COMPLETED' ? 'success' : lastPaymentMade?.status === 'PENDING' ? 'info' : 'danger'} dark:text-success-light`}
+                                        >
+                                            {<IconCashBanknotes />}
+                                        </span>
+                                        <div className="px-3 flex-1">
+                                            <span
+                                                className={`text-${
+                                                    lastPaymentMade?.status === 'COMPLETED' ? 'success' : lastPaymentMade?.status === 'PENDING' ? 'info' : 'danger'
+                                                } text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre`}
+                                            >
+                                                {Ghc(lastPaymentMade?.amount)}
+                                            </span>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">{dayjs(lastPaymentMade?.payment_date).format(' hh:mm a,  DD MM, YYYY.')}</div>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">
+                                                <em>for</em> {lastPaymentMade?.group.name}
+                                            </div>
+                                            <div className="text-xs text-white-dark dark:text-gray-500">
+                                                <em>with</em> {lastPaymentMade?.payment_method?.name}
+                                            </div>
+                                        </div>
+                                        <span className=" text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">{renderStatus(lastPaymentMade?.status)}</span>
+                                    </div>}
                                 </div>
                             </div>
                         </div>
@@ -581,24 +613,41 @@ const MyPayments = () => {
                     </div>
                 </div>
 
-                <div className="panel h-full w-full mt-5">
+                <div className="panel h-full  sm:col-span-3 xl:col-span-1">
                     <div className="flex items-center justify-between dark:text-white-light mb-5">
-                        <h5 className="font-semibold text-lg">Payment History</h5>
+                        <h5 className="font-semibold text-lg">Payments</h5>
                     </div>
-                    <div>
-                        <div className="space-y-6">
-                            <div className="flex items-center">
-                                <span className="shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-success-light dark:bg-success text-success dark:text-success-light">SP</span>
-                                <div className="px-3 flex-1 ">
-                                    <div>Alumni Group D</div>
-                                    <div className="text-xs text-white-dark dark:text-gray-500">04 Jan 1:00PM</div>
-                                    <div className="text-xs text-white-dark dark:text-gray-500">Insurance package</div>
-                                    <div className="text-xs text-white-dark dark:text-gray-500">cash</div>
-                                    <div className="text-xs text-white-dark dark:text-gray-500">#shhsfdguiyguhiphuj</div>
+                    <div className="space-y-3">
+                        {sortedPaymentsByDate?.map((payment: any, index: number) => (
+                            <div key={index} className="space-y-6">
+                                <div className="flex panel">
+                                    <span
+                                        className={`shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-${
+                                            payment?.status === 'COMPLETED' ? 'green-50' : payment?.status === 'PENDING' ? 'yellow-50' : 'red-50'
+                                        } text-${payment?.status === 'COMPLETED' ? 'success' : payment?.status === 'PENDING' ? 'info' : 'danger'} dark:text-success-light`}
+                                    >
+                                        {<IconCashBanknotes />}
+                                    </span>
+                                    <div className="px-3 flex-1">
+                                        <span
+                                            className={`text-${
+                                                payment?.status === 'COMPLETED' ? 'success' : payment?.status === 'PENDING' ? 'info' : 'danger'
+                                            } text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre`}
+                                        >
+                                            {Ghc(payment?.amount)}
+                                        </span>
+                                        <div className="text-xs text-white-dark dark:text-gray-500">{dayjs(payment?.payment_date).format(' hh:mm a,  DD MM, YYYY.')}</div>
+                                        <div className="text-xs text-white-dark dark:text-gray-500">
+                                            <em>for</em> {payment?.group.name}
+                                        </div>
+                                        <div className="text-xs text-white-dark dark:text-gray-500">
+                                            <em>with</em> {payment?.payment_method?.name}
+                                        </div>
+                                    </div>
+                                    <span className=" text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">{renderStatus(payment?.status)}</span>
                                 </div>
-                                <span className="text-success text-base px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">+$36.11</span>
                             </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>

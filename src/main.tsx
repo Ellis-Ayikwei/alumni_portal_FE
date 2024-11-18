@@ -37,7 +37,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                 <DatesProvider settings={{ locale: 'en' }}>
                     <Provider store={store}>
                         {/* <PersistGate loading={null} persistor={persistor}> */}
-                            <RouterProvider router={router} />
+                            <RouterProvider router={router}  />
                         {/* </PersistGate> */}
                     </Provider>
                 </DatesProvider>

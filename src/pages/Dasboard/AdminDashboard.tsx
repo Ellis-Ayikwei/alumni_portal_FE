@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import useSwr from 'swr';
 import Dropdown from '../../components/Dropdown';
 import IconCashBanknotes from '../../components/Icon/IconCashBanknotes';
 import IconEye from '../../components/Icon/IconEye';
@@ -9,6 +10,7 @@ import IconHorizontalDots from '../../components/Icon/IconHorizontalDots';
 import IconOpenBook from '../../components/Icon/IconOpenBook';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconMenuUsers from '../../components/Icon/Menu/IconMenuUsers';
+import fetcher from '../../helper/fetcher';
 import { IRootState } from '../../store';
 import { setPageTitle } from '../../store/themeConfigSlice';
 
@@ -20,6 +22,8 @@ const AdminDashboard = () => {
 
     const isDark = useSelector((state: IRootState) => state.themeConfig.theme === 'dark' || state.themeConfig.isDarkMode);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
+    const userId = useSelector((state: IRootState) =>state.auth.user.id)
+    
     const uniqueVisitorSeries: any = {
         series: [
             {
@@ -121,8 +125,25 @@ const AdminDashboard = () => {
         },
     };
 
-    const salesByCategory: any = {
-        series: [985, 737, 270],
+    const { data: allGroups, error: GroupsError } = useSwr(`/alumni_groups`, fetcher);
+    const { data: allContracts, error: ContractsError } = useSwr(`/contracts`, fetcher);
+    const { data: allUsers, error: usersError } = useSwr(`/users`, fetcher);
+    const { data: myPayments, error: myPaymentsError } = useSwr(`/payments/users_payments/${userId}`, fetcher);
+
+    const activeUsers: any = allUsers?.filter((user: any) => user.is_active)?.length;
+    const activeContracts: any = allContracts?.filter((contract: any) => contract?.status == 'ACTIVE')?.length;
+    const lockedContracts: any = allContracts?.filter((contract: any) => contract?.status === 'LOCKED')?.length;
+    const terminatedContracts: any = allContracts?.filter((contract: any) => contract?.status === 'TERMINATED')?.length;
+    const inactiveContracts: any = allContracts?.filter((contract: any) => contract?.status === 'INACTIVE')?.length;
+    const expiredContracts: any = allContracts?.filter((contract: any) => contract?.status === 'EXPIRED')?.length;
+
+   
+
+    console.log(activeContracts, lockedContracts, terminatedContracts, inactiveContracts, expiredContracts);
+
+    const contracts: any = {
+        series: [activeContracts, lockedContracts, inactiveContracts, expiredContracts],
+        loaded: true,
         options: {
             chart: {
                 type: 'donut',
@@ -130,25 +151,25 @@ const AdminDashboard = () => {
                 fontFamily: 'Nunito, sans-serif',
             },
             dataLabels: {
-                enabled: false,
+                enabled: true,
             },
             stroke: {
                 show: true,
                 width: 25,
                 colors: isDark ? '#0e1726' : '#fff',
             },
-            colors: isDark ? ['#5c1ac3', '#e2a03f', '#e7515a', '#e2a03f'] : ['#e2a03f', '#5c1ac3', '#e7515a'],
+            colors: ['#e2a03f', '#5c1ac3', '#e7515a', '#B31B6EFF', '#1BB355FF'],
             legend: {
                 position: 'bottom',
                 horizontalAlign: 'center',
-                fontSize: '14px',
+                fontSize: '12px',
                 markers: {
                     width: 10,
                     height: 10,
                     offsetX: -2,
                 },
-                height: 50,
-                offsetY: 20,
+                height: 100,
+                offsetY: 10,
             },
             plotOptions: {
                 pie: {
@@ -186,7 +207,8 @@ const AdminDashboard = () => {
                     },
                 },
             },
-            labels: ['Apparel', 'Sports', 'Others'],
+
+            labels: ['Active', 'Locked', 'Inactive', 'Expired'],
             states: {
                 hover: {
                     filter: {
@@ -393,7 +415,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center mt-5">
                             <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
                                 {' '}
-                                <IconUsersGroup className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <IconUsersGroup className="hover:opacity-80 opacity-70" /> {allGroups?.length}{' '}
                             </div>
                             <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
@@ -428,7 +450,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center mt-5">
                             <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
                                 {' '}
-                                <IconOpenBook className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <IconOpenBook className="hover:opacity-80 opacity-70" /> {allContracts?.length}{' '}
                             </div>
                             <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
@@ -463,7 +485,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center mt-5">
                             <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
                                 {' '}
-                                <IconMenuUsers className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <IconMenuUsers className="hover:opacity-80 opacity-70" /> {activeUsers}{' '}
                             </div>
                             <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
@@ -518,11 +540,11 @@ const AdminDashboard = () => {
                         <div>
                             <div className="bg-white dark:bg-black rounded-lg overflow-hidden">
                                 {loading ? (
-                                    <div className="min-h-[325px] grid place-content-center bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] ">
+                                    <div className="min-h-[350px] grid place-content-center bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] ">
                                         <span className="animate-spin border-2 border-black dark:border-white !border-l-transparent  rounded-full w-5 h-5 inline-flex"></span>
                                     </div>
                                 ) : (
-                                    <ReactApexChart series={salesByCategory.series} options={salesByCategory.options} type="donut" height={460} />
+                                    <ReactApexChart series={contracts.series} options={contracts.options} type="donut" height={700} />
                                 )}
                             </div>
                         </div>

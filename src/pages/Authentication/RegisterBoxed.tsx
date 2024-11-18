@@ -1,14 +1,16 @@
-import i18next from 'i18next';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import PasswordChecklist from 'react-password-checklist';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import Dropdown from '../../components/Dropdown';
-import IconCaretDown from '../../components/Icon/IconCaretDown';
-import IconLockDots from '../../components/Icon/IconLockDots';
-import IconMail from '../../components/Icon/IconMail';
-import IconUser from '../../components/Icon/IconUser';
+
+import { eye } from 'react-icons-kit/feather/eye';
+import { eyeOff } from 'react-icons-kit/feather/eyeOff';
+import Select from 'react-select';
+import axiosInstance from '../../helper/axiosInstance';
+import showMessage from '../../helper/showMessage';
 import { IRootState } from '../../store';
 import { setPageTitle, toggleRTL } from '../../store/themeConfigSlice';
+import sanitizeHtml from 'sanitize-html';
 
 const RegisterBoxed = () => {
     const dispatch = useDispatch();
@@ -19,6 +21,20 @@ const RegisterBoxed = () => {
     const isDark = useSelector((state: IRootState) => state.themeConfig.theme === 'dark' || state.themeConfig.isDarkMode);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
+    const [params, setParams] = useState<any>({});
+    const [type, setType] = useState('password');
+    const [icon, setIcon] = useState(eyeOff);
+
+    const handleToggle = () => {
+        if (type === 'password') {
+            setIcon(eye);
+            setType('text');
+        } else {
+            setIcon(eyeOff);
+            setType('password');
+        }
+    };
+
     const setLocale = (flag: string) => {
         setFlag(flag);
         if (flag.toLowerCase() === 'ae') {
@@ -33,6 +49,63 @@ const RegisterBoxed = () => {
         navigate('/');
     };
 
+    function changeValue(e: ChangeEvent<HTMLInputElement>): void {
+        const { id, value } = e.target;
+        setParams((prevParams: any) => ({
+            ...prevParams,
+            [id]: value,
+        }));
+    }
+
+    const saveNewUser = async () => {
+        console.log('params', params);
+
+        const requiredFields = [
+            { field: 'first_name', message: 'First Name is required.' },
+            { field: 'last_name', message: 'Last Name is required.' },
+            { field: 'email', message: 'Email is required.' },
+            { field: 'phone', message: 'Phone is required.' },
+            { field: 'username', message: 'Username is required.' },
+            { field: 'password', message: 'Password is required.' },
+            { field: 'dob', message: 'Date of Birth is required.' },
+            { field: 'occupation', message: 'Occupation is required.' },
+        ];
+
+        for (let { field, message } of requiredFields) {
+            if (!params[field]) {
+                showMessage(message, 'error');
+                return true;
+            }
+        }
+
+        if (params.password !== params.password1) {
+            showMessage('Passwords do not match.', 'error');
+            return true;
+        }
+        const payload = JSON.stringify({ ...params });
+
+        try {
+            const response = await axiosInstance.post('/users', payload);
+            if (response.status === 201) {
+                showMessage(`registered successfully.`, 'success');
+                setParams({});
+                navigate('/login');
+            }
+        } catch (error: any) {
+            if (error.response && error.response.data) {
+                const parser = new DOMParser();
+                const errorData = error.response.data;
+                const doc = parser.parseFromString(errorData, 'text/html');
+                const errorMess = doc.querySelector('body')?.innerText || 'An error occurred';
+                const errorMessage = errorMess.split('\n')[1];
+                console.error('Error:', errorMessage);
+                showMessage(`${errorMessage}`, 'error');
+            }
+        } finally {
+            // setParams(defaultParams);
+        }
+    };
+
     return (
         <div>
             <div className="absolute inset-0">
@@ -44,102 +117,178 @@ const RegisterBoxed = () => {
                 <img src="/assets/images/auth/coming-soon-object2.png" alt="image" className="absolute left-24 top-0 h-40 md:left-[30%]" />
                 <img src="/assets/images/auth/coming-soon-object3.png" alt="image" className="absolute right-0 top-0 h-[300px]" />
                 <img src="/assets/images/auth/polygon-object.svg" alt="image" className="absolute bottom-0 end-[28%]" />
-                <div className="relative w-full max-w-[870px] rounded-md bg-[linear-gradient(45deg,#fff9f9_0%,rgba(255,255,255,0)_25%,rgba(255,255,255,0)_75%,_#fff9f9_100%)] p-2 dark:bg-[linear-gradient(52.22deg,#0E1726_0%,rgba(14,23,38,0)_18.66%,rgba(14,23,38,0)_51.04%,rgba(14,23,38,0)_80.07%,#0E1726_100%)]">
+
+                <div className="relative w-full rounded-md max-w-[940px] bg-[linear-gradient(45deg,#fff9f9_0%,rgba(255,255,255,0)_25%,rgba(255,255,255,0)_75%,_#fff9f9_100%)] p-2 dark:bg-[linear-gradient(52.22deg,#0E1726_0%,rgba(14,23,38,0)_18.66%,rgba(14,23,38,0)_51.04%,rgba(14,23,38,0)_80.07%,#0E1726_100%)]">
                     <div className="relative flex flex-col justify-center rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 px-6 lg:min-h-[758px] py-20">
-                        <div className="absolute top-6 end-6">
-                            <div className="dropdown">
-                                <Dropdown
-                                    offset={[0, 8]}
-                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                    btnClassName="flex items-center gap-2.5 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark hover:border-primary hover:text-primary dark:bg-black"
-                                    button={
-                                        <>
-                                            <div>
-                                                <img src={`/assets/images/flags/${flag.toUpperCase()}.svg`} alt="image" className="h-5 w-5 rounded-full object-cover" />
-                                            </div>
-                                            <div className="text-base font-bold uppercase">{flag}</div>
-                                            <span className="shrink-0">
-                                                <IconCaretDown />
-                                            </span>
-                                        </>
-                                    }
-                                >
-                                    <ul className="!px-2 text-dark dark:text-white-dark grid grid-cols-2 gap-2 font-semibold dark:text-white-light/90 w-[280px]">
-                                        {themeConfig.languageList.map((item: any) => {
-                                            return (
-                                                <li key={item.code}>
-                                                    <button
-                                                        type="button"
-                                                        className={`flex w-full hover:text-primary rounded-lg ${flag === item.code ? 'bg-primary/10 text-primary' : ''}`}
-                                                        onClick={() => {
-                                                            i18next.changeLanguage(item.code);
-                                                            // setFlag(item.code);
-                                                            setLocale(item.code);
-                                                        }}
-                                                    >
-                                                        <img src={`/assets/images/flags/${item.code.toUpperCase()}.svg`} alt="flag" className="w-5 h-5 object-cover rounded-full" />
-                                                        <span className="ltr:ml-3 rtl:mr-3">{item.name}</span>
-                                                    </button>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </Dropdown>
-                            </div>
-                        </div>
-                        <div className="mx-auto w-full max-w-[440px]">
+                        <div className="mx-auto w-full max-w-[740px]">
                             <div className="mb-10">
-                                <h1 className="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Sign Up</h1>
+                                <h1 className="text-3xl font-extrabold uppercase !leading-snug text-success md:text-4xl">Register</h1>
                                 <p className="text-base font-bold leading-normal text-white-dark">Enter your email and password to register</p>
                             </div>
-                            <form className="space-y-5 dark:text-white" onSubmit={submitForm}>
-                                <div>
-                                    <label htmlFor="Name">Name</label>
-                                    <div className="relative text-white-dark">
-                                        <input id="Name" type="text" placeholder="Enter Name" className="form-input ps-10 placeholder:text-white-dark" />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconUser fill={true} />
-                                        </span>
+                            <form className="space-y-5 dark:text-white flex flex-wrap gap-5 items-start justify-start" onSubmit={submitForm}>
+                                <div className="w-full flex flex-wrap md:flex-nowrap gap-5">
+                                    <div className="mb-5 w-full">
+                                        <label htmlFor="first_name">
+                                            First Name <span className="text-red-600">*</span>
+                                        </label>
+                                        <input id="first_name" type="text" placeholder="Enter First Name" className="form-input" value={params?.first_name} onChange={(e) => changeValue(e)} required />
+                                    </div>
+                                    <div className="mb-5 w-full">
+                                        <label htmlFor="last_name">
+                                            Last Name <span className="text-red-600">*</span>
+                                        </label>
+                                        <input id="last_name" type="text" placeholder="Enter Last Name" className="form-input" value={params?.last_name} onChange={(e) => changeValue(e)} required />
+                                    </div>
+                                    <div className="mb-5 w-full">
+                                        <label htmlFor="other_names">Other Names</label>
+                                        <input id="other_names" type="text" placeholder="Enter Other Names" className="form-input" value={params?.other_names} onChange={(e) => changeValue(e)} />
                                     </div>
                                 </div>
-                                <div>
-                                    <label htmlFor="Email">Email</label>
-                                    <div className="relative text-white-dark">
-                                        <input id="Email" type="email" placeholder="Enter Email" className="form-input ps-10 placeholder:text-white-dark" />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconMail fill={true} />
-                                        </span>
+                                <div className="w-full flex flex-wrap md:flex-nowrap gap-5">
+                                    <div className="mb-5 w-full">
+                                        <label htmlFor="username">
+                                            Username <span className="text-red-600">*</span>
+                                        </label>
+                                        <input id="username" type="text" placeholder="Enter Username" className="form-input" value={params?.username} onChange={(e) => changeValue(e)} required />
+                                    </div>
+                                    <div className="mb-5 w-full">
+                                        <label htmlFor="email">
+                                            Email <span className="text-red-600">*</span>
+                                        </label>
+                                        <input id="email" type="email" placeholder="Enter Email" className="form-input" value={params?.email} onChange={(e) => changeValue(e)} required />
                                     </div>
                                 </div>
-                                <div>
-                                    <label htmlFor="Password">Password</label>
-                                    <div className="relative text-white-dark">
-                                        <input id="Password" type="password" placeholder="Enter Password" className="form-input ps-10 placeholder:text-white-dark" />
-                                        <span className="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <IconLockDots fill={true} />
-                                        </span>
+                                <div className="flex flex-wrap md:flex-nowrap gap-5">
+                                    <div>
+                                        <label htmlFor="dateOfBirth">
+                                            Date Of Birth: <span className="text-red-600">*</span>
+                                        </label>
+                                        <input
+                                            id="dob"
+                                            type="date"
+                                            name="dob"
+                                            className="form-input"
+                                            placeholder="Date Of Birth"
+                                            value={params?.dob || ''}
+                                            onChange={(event: any) => changeValue(event)}
+                                            required
+                                        />
+                                        <div className="text-danger mt-2" id="startDateErr"></div>
+                                    </div>
+                                    <div className="mb-5">
+                                        <label htmlFor="gender">
+                                            Gender <span className="text-red-600">*</span>
+                                        </label>
+                                        <Select
+                                            id="gender"
+                                            options={[
+                                                { value: 'Male', label: 'Male' },
+                                                { value: 'Female', label: 'Female' },
+                                            ]}
+                                            isSearchable={false}
+                                            onChange={(e) => setParams({ ...params, gender: e?.value })}
+                                            required
+                                        />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="flex cursor-pointer items-center">
-                                        <input type="checkbox" className="form-checkbox bg-white dark:bg-black" />
-                                        <span className="text-white-dark">Subscribe to weekly newsletter</span>
+                                <div className="w-full flex flex-wrap gap-5 md:flex-nowrap">
+                                    <div className="mb-4 w-full">
+                                        <label htmlFor="password1">
+                                            Password <span className="text-red-600">*</span>
+                                        </label>
+                                        <div className="flex">
+                                            <input
+                                                type={type}
+                                                name="password1"
+                                                id="password1"
+                                                placeholder="Password"
+                                                className="form-input"
+                                                value={params?.password1}
+                                                onChange={(e) => changeValue(e)}
+                                                autoComplete="current-password"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mb-7 w-full">
+                                        <label htmlFor="password2">
+                                            Confirm password <span className="text-red-600">*</span>
+                                        </label>
+                                        <div className="">
+                                            <input
+                                                type={type}
+                                                name="password2"
+                                                id="password2"
+                                                placeholder="Re-Type Password"
+                                                className="form-input w-full"
+                                                value={params?.password2}
+                                                onChange={(e) => changeValue(e)}
+                                                autoComplete="current-password"
+                                                required
+                                            />
+                                            <div className="text-right mt-2">
+                                                {' '}
+                                                <span className="cursor-pointer text-gray-500 flex items-center justify-end" onClick={handleToggle}>
+                                                    show
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {params?.password1 && (
+                                            <PasswordChecklist
+                                                rules={['minLength', 'specialChar', 'number', 'capital', 'match']}
+                                                minLength={8}
+                                                value={params?.password1}
+                                                valueAgain={params?.password2}
+                                                onChange={() => setParams({ ...params, password: params?.password1 })}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="w-full flex flex-wrap md:flex-nowrap gap-5">
+                                    <div className="mb-5">
+                                        <label htmlFor="phone">
+                                            Phone Number <span className="text-red-600">*</span>
+                                        </label>
+                                        <input id="phone" type="text" placeholder="Enter Phone Number" className="form-input" value={params?.phone} onChange={(e) => changeValue(e)} required />
+                                    </div>
+                                    <div className="mb-5">
+                                        <label htmlFor="role">
+                                            Occupation <span className="text-red-600">*</span>
+                                        </label>
+                                        <input id="occupation" type="text" placeholder="Enter Occupation" className="form-input" value={params?.occupation} onChange={(e) => changeValue(e)} required />
+                                    </div>
+                                </div>
+                                <div className="mb-5 w-full">
+                                    <label htmlFor="location">
+                                        Address <span className="text-red-600">*</span>
                                     </label>
+                                    <textarea
+                                        id="address"
+                                        rows={3}
+                                        placeholder="Enter Address"
+                                        className="form-textarea resize-none min-h-[130px]"
+                                        value={params?.address}
+                                        onChange={(e) => changeValue(e)}
+                                        required
+                                    ></textarea>
                                 </div>
-                                <button type="submit" className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                                    Sign Up
-                                </button>
+                                <div className="flex  items-center mt-8">
+                                    <button type="button" className="btn btn-success ltr:ml-4 rtl:mr-4" onClick={saveNewUser}>
+                                        Register
+                                    </button>
+                                </div>
                             </form>
                             <div className="relative my-7 text-center md:mb-9">
                                 <span className="absolute inset-x-0 top-1/2 h-px w-full -translate-y-1/2 bg-white-light dark:bg-white-dark"></span>
                                 <span className="relative bg-white px-2 font-bold uppercase text-white-dark dark:bg-dark dark:text-white-light">or</span>
                             </div>
                             <div className="mb-4">
-                                <button type="submit" className="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                                    Sign Up With Azure
+                                <button type="submit" className="btn !mt-6 w-fit bg-black text-white border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
+                                    Sign In With Azure
                                 </button>
                             </div>
-                            <div className="text-center dark:text-white">
+                            <div className="dark:text-white">
                                 Already have an account ?&nbsp;
                                 <Link to="/login" className="uppercase text-primary underline transition hover:text-black dark:hover:text-white">
                                     SIGN IN
@@ -154,3 +303,4 @@ const RegisterBoxed = () => {
 };
 
 export default RegisterBoxed;
+
