@@ -44,29 +44,21 @@ export const LoginUser = createAsyncThunk('auth/LoginUser', async ({ userOrEmail
     }
 });
 
-
-export const LogoutUser = createAsyncThunk(
-    'auth/LogoutUser',
-    async (_, { dispatch }) => {
-      try {
+export const LogoutUser = createAsyncThunk('auth/LogoutUser', async (_, { dispatch }) => {
+    try {
         const response = await authAxiosInstance.post('/logout');
-  
 
-        if(response.status === 204){
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-  
-        await persistor.purge();
-        
-        dispatch(resetAuth());
-        await localStorage.clear();
+        if (response.status === 202) {
+            await persistor.purge();
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            dispatch(resetAuth());
         }
-      } catch (error: any) {
+    } catch (error: any) {
         console.error('Logout error:', error);
         throw new Error(error.response?.data?.message || ERROR_MESSAGES.DEFAULT);
-      }
     }
-  );
+});
 
 export const RegisterUser = createAsyncThunk(
     'auth/RegisterUser',
@@ -120,7 +112,7 @@ const authSlice = createSlice({
                 state.user = action.payload;
                 console.log('the state user', state.user);
                 state.isLoggedIn = true;
-                localStorage.setItem("userRole", state.user.role)
+                localStorage.setItem('userRole', state.user.role);
                 state.loading = false;
                 state.message = 'Login successful';
             })

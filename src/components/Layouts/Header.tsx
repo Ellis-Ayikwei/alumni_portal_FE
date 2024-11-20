@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { AppDispatch, IRootState } from '../../store';
-import { LogoutUser } from '../../store/authSlice';
+import { AppDispatch, IRootState, persistor } from '../../store';
 import { toggleRTL, toggleSidebar, toggleTheme } from '../../store/themeConfigSlice';
 import Dropdown from '../Dropdown';
 import IconArrowLeft from '../Icon/IconArrowLeft';
@@ -28,12 +27,14 @@ import IconMenuElements from '../Icon/Menu/IconMenuElements';
 import IconMenuForms from '../Icon/Menu/IconMenuForms';
 import IconMenuMore from '../Icon/Menu/IconMenuMore';
 import IconMenuPages from '../Icon/Menu/IconMenuPages';
+import { LogoutUser } from '../../store/authSlice';
 
 const Header = () => {
     const dispatch: AppDispatch = useDispatch();
     const location = useLocation();
     const user = useSelector((state: IRootState) => state.auth.user);
     const userId = useSelector((state: IRootState) => state.auth.user?.id);
+    const isLoggedIn = useSelector((state: IRootState) => state.auth.isLoggedIn);
     useEffect(() => {
         const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
         if (selector) {
@@ -138,22 +139,57 @@ const Header = () => {
 
     const navigate = useNavigate();
 
+    // const handleLogoutClick = async () => {
+    //     try {
+    //         dispatch(LogoutUser() as any).then((res: { statusCode: number }) => {
+    //             if (res.statusCode === 202) {
+    //                 localStorage.clear();
+    //                 localStorage.removeItem('accessToken');
+    //                 navigate('/login');
+    //             }
+    //         });
+    //     } catch (error) {
+    //         console.error('Logout failed:', error);
+    //     }
+    // };
+
+    // const handleLogoutClick = async () => {
+    //     try {
+    //         await dispatch(LogoutUser() as any);
+    //         navigate('/login');
+    //     } catch (error) {
+    //         console.error('Logout failed:', error);
+    //     }
+    // };
+
     const handleLogoutClick = async () => {
         try {
-            // const logoutResponse = await dispatch(logoutUser() as any);
-            // if (logoutResponse.meta.requestStatus === 'fulfilled') {
-            // }
-            dispatch(LogoutUser() as any).then((res) => {
-                if (res.statusCode === 202) {
-                    navigate('/login');
-                    localStorage.clear();
-                    window.location.reload();
-                }
-            });
+            const logoutResponse = await dispatch(LogoutUser() as any);
+            if (logoutResponse.meta.requestStatus === 'fulfilled') {
+                // Clear local storage after successful logout
+                localStorage.clear();
+                localStorage.removeItem('accessToken');
+                navigate('/login');
+            } else {
+                // Handle unsuccessful logout, e.g., show an error message
+                console.error('Logout failed:');
+            }
         } catch (error) {
             console.error('Logout failed:', error);
         }
     };
+
+    useEffect(() => {
+        const handleLogout = async () => {
+            if (!isLoggedIn) {
+                await persistor.purge();
+                await localStorage.removeItem('accessToken');
+                await localStorage.removeItem('refreshToken');
+                await localStorage.clear();
+            }
+        };
+        handleLogout();
+    }, [isLoggedIn]);
 
     return (
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
