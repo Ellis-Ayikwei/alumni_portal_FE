@@ -478,7 +478,7 @@ const AlumniGroupManagementpage = () => {
                                     const grpName = name as string;
 
                                     return (
-                                        <button className="flex items-center w-max" onClick={() => navigate(`/member/groups/preview/${id}`)}>
+                                        <button className="flex items-center w-max" onClick={() => navigate(`/groups/preview/${id}`)}>
                                             <img className="w-9 h-9 rounded-full ltr:mr-2 rtl:ml-2 object-cover" src={`/assets/images/profile-${id}.jpeg`} alt="" />
                                             <div className="underline">{grpName}</div>
                                         </button>

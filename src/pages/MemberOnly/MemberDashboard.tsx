@@ -32,7 +32,7 @@ const MemberDashboard = () => {
     useEffect(() => {
         dispatch(setPageTitle('AdminDashboard'));
     });
-    const userId = useSelector((state: IRootState) =>state.auth.user.id)
+    const userId = useSelector((state: IRootState) =>state.auth?.user?.id)
     const isDark = useSelector((state: IRootState) => state.themeConfig.theme === 'dark' || state.themeConfig.isDarkMode);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
     const uniqueVisitorSeries: any = {
@@ -381,19 +381,9 @@ const MemberDashboard = () => {
     const { data: myPayments, error: myPaymentsError } = useSwr(`/payments/users_payments/${userId}`, fetcher);
     const pendingapprovals = myGroupMemberships?.filter((groupMembership: any) => groupMembership.status === 'PENDING');
 
-    useEffect(() => {
-        if (myGroups) {
-            console.log('the new data', myGroups[0]?.is_one_time_payment_paid);
-            console.log('the new data...', myGroupMemberships);
-            console.log('the new data...fdfdfdf', myPayments);
-        }
-    }, [myGroups, myGroupMemberships]);
+   
 
-    useEffect(() => {
-        if (myContracts) {
-            console.log('the new data11232', myContracts);
-        }
-    }, [myGroups]);
+
 
     const contractStatus = 'active';
 
@@ -723,9 +713,7 @@ const MemberDashboard = () => {
                                                                         <li>
                                                                             <Link to={`/member/groups/preview/${group?.id}`}>View</Link>
                                                                         </li>
-                                                                        <li>
-                                                                            <Link to={`/member/groups/edit/${group?.id}`}>Edit</Link>
-                                                                        </li>
+                                                                        
                                                                     </ul>
                                                                 </Dropdown>
                                                             </div>

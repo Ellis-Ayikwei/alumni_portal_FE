@@ -1,7 +1,7 @@
 import Tippy from '@tippyjs/react';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { RWebShare } from 'react-web-share';
 import Swal from 'sweetalert2';
@@ -22,7 +22,6 @@ import ConfirmDialog from '../../../../helper/confirmDialog';
 import fetcher from '../../../../helper/fetcher';
 import showMessage from '../../../../helper/showMessage';
 import { setPageTitle } from '../../../../store/themeConfigSlice';
-import AddNewBeneficiary from '../../../MemberOnly/MyAlumniGroupUtils/AddNewBeneficiary';
 import AddNewGroupMember from '../../../MemberOnly/MyAlumniGroupUtils/AddNewGroupMember';
 import AddMembersToGroup from '../addMembersToGroup';
 import ChangePackage from './changePackage';
@@ -35,11 +34,17 @@ const GroupEdit = () => {
     // const alumniData = useSelector((state: IRootState) => state.alumnidata.alumniGroups);
     const { data: alumniData, error: alumniData_error, isLoading: alumniData_loadng } = useSwr(`/alumni_groups/${group_id}`, fetcher);
     const { data: all_members, error: all_members_error, isLoading: all_members_loadng } = useSwr(`/group_members`, fetcher);
+    const userId = useSelector((state: IRootState) => state.auth.user?.id);
+
     const approved_members = all_members?.filter((group_member: any) => group_member.group_id == group_id && group_member.status === 'APPROVED');
     const other_members = all_members?.filter((group_member: any) => group_member.group_id == group_id && (group_member.status === 'DISAPPROVED' || group_member.status === 'PENDING'));
     const [showBeneficiariesModal, setShowBeneficiariesModal] = useState<boolean>(false);
     const [benefactorIds, setBenefactorIds] = useState<{ userId: string; memberId: string }>({ userId: '', memberId: '' });
     const [group, setGroup] = useState<any>({});
+
+    const group_members = all_members?.filter((group_member: any) => group_member.group_id == group_id);
+    const memberId = group_members?.find((grp_md: any) => grp_md.user_id == userId)?.id;
+    console.log('group_members', group_members);
 
     useEffect(() => {
         dispatch(setPageTitle('Edit Group'));
@@ -56,6 +61,7 @@ const GroupEdit = () => {
     const [AddNewBeneficiaryModal, setAddNewBeneficiaryModal] = useState(false);
     const [activateSave, setActivateSave] = useState(false);
     const [refreshData, setRefreshData] = useState(false);
+    const [inviteLink, setInviteLink] = useState('');
 
     const navigate = useNavigate();
 
@@ -215,6 +221,26 @@ const GroupEdit = () => {
         }
     };
 
+    console.log('the loation pathname', window.location.origin);
+    const handleInviteCode = async () => {
+        try {
+            let payload: any = JSON.stringify({
+                user_id: userId,
+            });
+
+            console.log('the payload', payload);
+            const response = await axiosInstance.post(`/alumni_groups/${group_id}/invite_code`, payload);
+            console.log('the response', response);
+            if (response.status === 200) {
+                const inviteLink = `${window.location.origin}/member/groups/${group_id}/joingroup?code=${response.data.code}&inv_id=${response.data.id}`;
+                setInviteLink(inviteLink);
+            }
+        } catch (error) {}
+    };
+
+    useEffect(() => {
+        handleInviteCode();
+    }, []);
     return (
         <div className="flex xl:flex-col flex-col gap-2.5">
             <div className="flex items-center lg:justify-between flex-wrap gap-4 mb-6">
@@ -237,12 +263,11 @@ const GroupEdit = () => {
                         <RWebShare
                             data={{
                                 text: 'Like humans, flamingos make friends for life',
-                                url: 'https://on.natgeo.com/2zHaNup',
+                                url: inviteLink,
                                 title: 'Flamingos',
                             }}
-                            onClick={() => console.log('invite button clicked')}
                         >
-                            <button className="btn btn-warning gap-2 bg-yellow-500 text-white">
+                            <button className="btn btn-warning gap-2 bg-yellow-500 text-white " disabled={inviteLink ? false : true}>
                                 <IconShare />
                                 Invite A member
                             </button>
@@ -573,7 +598,6 @@ const GroupEdit = () => {
             </div>
 
             <AddNewGroupMember AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
-            <AddNewBeneficiary AddUserModal={AddNewBeneficiaryModal} setAddUserModal={setAddNewBeneficiaryModal} />
             <MakePresident showModal={makePresidentModal} setShowModal={setMakePresidentModal} groupId={group?.id} />
             <ChangePackage showModal={changeInsurancePackageModal} setShowModal={setChangeInsurancePackageModal} groupId={group?.id} />
             {benefactorIds && <ShowBeneficiaries showBeneficiariesModal={showBeneficiariesModal} setShowBeneficiariesModal={setShowBeneficiariesModal} benefactorIds={benefactorIds} edit={true} />}

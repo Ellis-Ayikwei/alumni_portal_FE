@@ -8,7 +8,6 @@ import axiosInstance from '../../../../helper/axiosInstance';
 import fetcher from '../../../../helper/fetcher';
 import showMessage from '../../../../helper/showMessage';
 import { setPageTitle } from '../../../../store/themeConfigSlice';
-import AddNewBeneficiary from '../../../MemberOnly/MyAlumniGroupUtils/AddNewBeneficiary';
 import AddNewGroupMember from '../../../MemberOnly/MyAlumniGroupUtils/AddNewGroupMember';
 
 import { faFileContract } from '@fortawesome/free-solid-svg-icons';
@@ -21,7 +20,6 @@ import { IRootState } from '../../../../store';
 import { GetInsurancePackages } from '../../../../store/insurancePackageSlice';
 import AddMembersToGroup from '../../../AlumniGroupManagement/alumniGroupManagementUtils/addMembersToGroup';
 import ChangePackage from './changePackage';
-import ShowBeneficiaries from './showBeneficiaries';
 
 import isEqual from 'lodash/isEqual';
 import { useMemo, useRef } from 'react';
@@ -360,9 +358,7 @@ const ContractEdit = () => {
             </div>
 
             <AddNewGroupMember AddUserModal={AddUserModal} setAddUserModal={setAddUserModal} />
-            <AddNewBeneficiary AddUserModal={AddNewBeneficiaryModal} setAddUserModal={setAddNewBeneficiaryModal} />
             <ChangePackage showModal={changeInsurancePackageModal} setShowModal={setChangeInsurancePackageModal} groupId={contract?.id} />
-            {benefactorIds && <ShowBeneficiaries showBeneficiariesModal={showBeneficiariesModal} setShowBeneficiariesModal={setShowBeneficiariesModal} benefactorIds={benefactorIds} edit={true} />}
             <AddMembersToGroup AddMembersToGroupModal={addMembersToGroupModal} setAddMembersToGroupModal={setAddMembersToGroupModal} groups={[contract]} />
         </div>
     );

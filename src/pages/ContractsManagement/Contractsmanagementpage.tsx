@@ -311,7 +311,6 @@ const AlumniGroupManagementpage = () => {
         { accessor: 'updated_at', title: 'Updated At', sortable: true },
     ];
     const handleNavigation = (payload: any) => {
-        // You can pass any data here in the state object
         navigate('/profile', { state: payload });
     };
 

@@ -1,15 +1,20 @@
+import dayjs from 'dayjs';
+import sortBy from 'lodash/sortBy';
 import { useEffect, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
+import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import useSwr from 'swr';
 import Dropdown from '../../components/Dropdown';
+import IconArrowLeft from '../../components/Icon/IconArrowLeft';
 import IconCashBanknotes from '../../components/Icon/IconCashBanknotes';
 import IconEye from '../../components/Icon/IconEye';
 import IconHorizontalDots from '../../components/Icon/IconHorizontalDots';
 import IconOpenBook from '../../components/Icon/IconOpenBook';
 import IconUsersGroup from '../../components/Icon/IconUsersGroup';
 import IconMenuUsers from '../../components/Icon/Menu/IconMenuUsers';
+import Ghc from '../../helper/CurrencyFormatter';
 import fetcher from '../../helper/fetcher';
 import { IRootState } from '../../store';
 import { setPageTitle } from '../../store/themeConfigSlice';
@@ -22,8 +27,7 @@ const AdminDashboard = () => {
 
     const isDark = useSelector((state: IRootState) => state.themeConfig.theme === 'dark' || state.themeConfig.isDarkMode);
     const isRtl = useSelector((state: IRootState) => state.themeConfig.rtlClass) === 'rtl' ? true : false;
-    const userId = useSelector((state: IRootState) =>state.auth.user.id)
-    
+
     const uniqueVisitorSeries: any = {
         series: [
             {
@@ -128,23 +132,35 @@ const AdminDashboard = () => {
     const { data: allGroups, error: GroupsError } = useSwr(`/alumni_groups`, fetcher);
     const { data: allContracts, error: ContractsError } = useSwr(`/contracts`, fetcher);
     const { data: allUsers, error: usersError } = useSwr(`/users`, fetcher);
-    const { data: myPayments, error: myPaymentsError } = useSwr(`/payments/users_payments/${userId}`, fetcher);
+    const { data: payments, error: paymentsError } = useSwr(`/payments`, fetcher);
 
-    const activeUsers: any = allUsers?.filter((user: any) => user.is_active)?.length;
+    const totalCompletedPayments = Array.isArray(payments)
+        ? payments.reduce((acc, cur) => {
+              return cur.status === 'COMPLETED' ? acc + cur.amount : acc;
+          }, 0)
+        : 0;
+
+    const recentPayments = sortBy(
+        payments?.filter((payment: any) => payment?.status === 'COMPLETED'),
+        'payment_date'
+    );
+
+    console.log('all payments', payments);
+    console.log('the completedpayment payments', recentPayments);
+    console.log('the recent payments', recentPayments);
+
+    const activeUsers: any = allUsers?.filter((user: any) => user?.is_active)?.length;
     const activeContracts: any = allContracts?.filter((contract: any) => contract?.status == 'ACTIVE')?.length;
     const lockedContracts: any = allContracts?.filter((contract: any) => contract?.status === 'LOCKED')?.length;
     const terminatedContracts: any = allContracts?.filter((contract: any) => contract?.status === 'TERMINATED')?.length;
     const inactiveContracts: any = allContracts?.filter((contract: any) => contract?.status === 'INACTIVE')?.length;
     const expiredContracts: any = allContracts?.filter((contract: any) => contract?.status === 'EXPIRED')?.length;
 
-   
-
-    console.log(activeContracts, lockedContracts, terminatedContracts, inactiveContracts, expiredContracts);
-
     const contracts: any = {
-        series: [activeContracts, lockedContracts, inactiveContracts, expiredContracts],
-        loaded: true,
+        series: [activeContracts || 0, lockedContracts || 0, inactiveContracts || 0, expiredContracts || 0, terminatedContracts || 0],
+
         options: {
+            labels: ['Active', 'Locked', 'Inactive', 'Expired', 'Terminated'],
             chart: {
                 type: 'donut',
                 height: 460,
@@ -153,11 +169,7 @@ const AdminDashboard = () => {
             dataLabels: {
                 enabled: true,
             },
-            stroke: {
-                show: true,
-                width: 25,
-                colors: isDark ? '#0e1726' : '#fff',
-            },
+
             colors: ['#e2a03f', '#5c1ac3', '#e7515a', '#B31B6EFF', '#1BB355FF'],
             legend: {
                 position: 'bottom',
@@ -208,7 +220,6 @@ const AdminDashboard = () => {
                 },
             },
 
-            labels: ['Active', 'Locked', 'Inactive', 'Expired'],
             states: {
                 hover: {
                     filter: {
@@ -390,7 +401,7 @@ const AdminDashboard = () => {
                 </li>
             </ul>
             <div className="pt-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 text-white">
+                <div className="grid grid-cols-1  sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 text-white">
                     <div className="panel bg-gradient-to-r from-cyan-500 to-cyan-400">
                         <div className="flex justify-between">
                             <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold"> Alumni Groups</div>
@@ -495,7 +506,7 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
-                    {/* Bounce Rate */}
+                    {/* Total Payments */}
                     <div className="panel bg-gradient-to-r from-fuchsia-500 to-fuchsia-400">
                         <div className="flex justify-between">
                             <div className="ltr:mr-1 rtl:ml-1 text-md font-semibold">Total Payments</div>
@@ -518,9 +529,9 @@ const AdminDashboard = () => {
                             </div>
                         </div>
                         <div className="flex items-center mt-5">
-                            <div className="text-3xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
+                            <div className="text-xl font-bold ltr:mr-3 rtl:ml-3 flex items-center gap-2">
                                 {' '}
-                                <IconCashBanknotes className="hover:opacity-80 opacity-70" /> 170{' '}
+                                <IconCashBanknotes className="hover:opacity-80 opacity-70" /> {Ghc(totalCompletedPayments)}{' '}
                             </div>
                             <div className="badge bg-white/30">+ 2.35% </div>
                         </div>
@@ -532,163 +543,156 @@ const AdminDashboard = () => {
                 </div>
 
                 {/*  Recent Groups  */}
-                <div className="grid lg:grid-cols-3 gap-6 mb-6">
-                    <div className="panel h-full">
-                        <div className="flex items-center mb-5">
-                            <h5 className="font-semibold text-lg dark:text-white-light">Contracts</h5>
-                        </div>
-                        <div>
-                            <div className="bg-white dark:bg-black rounded-lg overflow-hidden">
-                                {loading ? (
-                                    <div className="min-h-[350px] grid place-content-center bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] ">
-                                        <span className="animate-spin border-2 border-black dark:border-white !border-l-transparent  rounded-full w-5 h-5 inline-flex"></span>
+                <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-2">
+                    <div className="md:col-span-2">
+                        <div className="grid  gap-6 mb-6">
+                            {contracts && (
+                                <div className="panel h-full ">
+                                    <div className="flex items-center mb-5">
+                                        <h5 className="font-semibold text-lg dark:text-white-light">Contracts</h5>
                                     </div>
-                                ) : (
-                                    <ReactApexChart series={contracts.series} options={contracts.options} type="donut" height={700} />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="panel h-full p-0 md:col-span-2">
-                        <div className="flex items-start justify-between dark:text-white-light mb-5 p-5 border-b  border-white-light dark:border-[#1b2e4b]">
-                            <h5 className="font-semibold text-lg ">Alumni Groups</h5>
-                            <div className="dropdown">
-                                <Dropdown
-                                    offset={[0, 5]}
-                                    placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                    btnClassName="hover:text-primary"
-                                    button={<IconHorizontalDots className="text-black/70 dark:text-white/70 hover:!text-primary" />}
-                                >
-                                    <ul>
-                                        <li>
-                                            <button type="button">View</button>
-                                        </li>
-                                        <li>
-                                            <button type="button">Update</button>
-                                        </li>
-                                        <li>
-                                            <button type="button">Delete</button>
-                                        </li>
-                                    </ul>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <ReactApexChart options={uniqueVisitorSeries.options} series={uniqueVisitorSeries.series} type="bar" height={360} className="overflow-hidden" />
-                    </div>
-                </div>
-                <div className="grid lg:grid-cols-2 gap-6 mb-6">
-                    {/*  Recent Transactions  */}
-                    <div className="panel  lg:col-span-1">
-                        <div className="mb-5 text-lg font-bold">Recent Transactions</div>
-                        <div className="table-responsive">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th className="ltr:rounded-l-md rtl:rounded-r-md">ID</th>
-                                        <th>DATE</th>
-                                        <th>NAME</th>
-                                        <th>AMOUNT</th>
-                                        <th className="text-center ltr:rounded-r-md rtl:rounded-l-md">STATUS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td className="font-semibold">#01</td>
-                                        <td className="whitespace-nowrap">Oct 08, 2021</td>
-                                        <td className="whitespace-nowrap">Eric Page</td>
-                                        <td>$1,358.75</td>
-                                        <td className="text-center">
-                                            <span className="badge bg-success/20 text-success rounded-full hover:top-0">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="font-semibold">#02</td>
-                                        <td className="whitespace-nowrap">Dec 18, 2021</td>
-                                        <td className="whitespace-nowrap">Nita Parr</td>
-                                        <td>-$1,042.82</td>
-                                        <td className="text-center">
-                                            <span className="badge bg-info/20 text-info rounded-full hover:top-0">In Process</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="font-semibold">#03</td>
-                                        <td className="whitespace-nowrap">Dec 25, 2021</td>
-                                        <td className="whitespace-nowrap">Carl Bell</td>
-                                        <td>$1,828.16</td>
-                                        <td className="text-center">
-                                            <span className="badge bg-danger/20 text-danger rounded-full hover:top-0">Pending</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="font-semibold">#04</td>
-                                        <td className="whitespace-nowrap">Nov 29, 2021</td>
-                                        <td className="whitespace-nowrap">Dan Hart</td>
-                                        <td>$1,647.55</td>
-                                        <td className="text-center">
-                                            <span className="badge bg-success/20 text-success rounded-full hover:top-0">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="font-semibold">#05</td>
-                                        <td className="whitespace-nowrap">Nov 24, 2021</td>
-                                        <td className="whitespace-nowrap">Jake Ross</td>
-                                        <td>$927.43</td>
-                                        <td className="text-center">
-                                            <span className="badge bg-success/20 text-success rounded-full hover:top-0">Completed</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="font-semibold">#06</td>
-                                        <td className="whitespace-nowrap">Jan 26, 2022</td>
-                                        <td className="whitespace-nowrap">Anna Bell</td>
-                                        <td>$250.00</td>
-                                        <td className="text-center">
-                                            <span className="badge bg-info/20 text-info rounded-full hover:top-0">In Process</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div className="panel h-full lg:col-span-1">
+                                    <div>
+                                        <div className="bg-white dark:bg-black rounded-lg overflow-hidden">
+                                            {loading ? (
+                                                <div className="min-h-[350px] grid place-content-center bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] ">
+                                                    <span className="animate-spin border-2 border-black dark:border-white !border-l-transparent  rounded-full w-5 h-5 inline-flex"></span>
+                                                </div>
+                                            ) : (
+                                                <ReactApexChart series={contracts?.series} options={contracts?.options} type="donut" height={460} />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {/* <div className="panel h-full">
                         <div className="flex items-center justify-between dark:text-white-light mb-5">
-                            <h5 className="font-semibold text-lg">User Creation</h5>
+                            <h5 className="font-semibold text-lg">Summary</h5>
                             <div className="dropdown">
                                 <Dropdown
-                                    offset={[0, 1]}
                                     placement={`${isRtl ? 'bottom-start' : 'bottom-end'}`}
-                                    button={<IconHorizontalDots className="text-black/70 dark:text-white/70 hover:!text-primary" />}
+                                    button={<IconHorizontalDots className="w-5 h-5 text-black/70 dark:text-white/70 hover:!text-primary" />}
                                 >
                                     <ul>
                                         <li>
-                                            <button type="button">Weekly</button>
+                                            <button type="button">View Report</button>
                                         </li>
                                         <li>
-                                            <button type="button">Monthly</button>
+                                            <button type="button">Edit Report</button>
                                         </li>
                                         <li>
-                                            <button type="button">Yearly</button>
+                                            <button type="button">Mark as Done</button>
                                         </li>
                                     </ul>
                                 </Dropdown>
                             </div>
                         </div>
-                        <p className="text-lg dark:text-white-light/90">
-                            Total Profit <span className="text-primary ml-2">$10,840</span>
-                        </p>
-                        <div className="relative">
-                            <div className="bg-white dark:bg-black rounded-lg overflow-hidden">
-                                {loading ? (
-                                    <div className="min-h-[325px] grid place-content-center bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] ">
-                                        <span className="animate-spin border-2 border-black dark:border-white !border-l-transparent  rounded-full w-5 h-5 inline-flex"></span>
+                        <div className="space-y-9">
+                            <div className="flex items-center">
+                                <div className="w-9 h-9 ltr:mr-3 rtl:ml-3">
+                                    <div className="bg-secondary-light dark:bg-secondary text-secondary dark:text-secondary-light  rounded-full w-9 h-9 grid place-content-center">
+                                        <IconUser />
                                     </div>
-                                ) : (
-                                    <ReactApexChart series={revenueChart.series} options={revenueChart.options} type="area" height={325} />
-                                )}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex font-semibold text-white-dark mb-2">
+                                        <h6>Sales</h6>
+                                        <p className="ltr:ml-auto rtl:mr-auto">$92,600</p>
+                                    </div>
+                                    <div className="rounded-full h-2 bg-dark-light dark:bg-[#1b2e4b] shadow">
+                                        <div className="bg-gradient-to-r from-[#7579ff] to-[#b224ef] w-11/12 h-full rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="w-9 h-9 ltr:mr-3 rtl:ml-3">
+                                    <div className="bg-success-light dark:bg-success text-success dark:text-success-light rounded-full w-9 h-9 grid place-content-center">
+                                        <IconUser />
+                                    </div>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex font-semibold text-white-dark mb-2">
+                                        <h6>Admin</h6>
+                                        <p className="ltr:ml-auto rtl:mr-auto">$37,515</p>
+                                    </div>
+                                    <div className="w-full rounded-full h-2 bg-dark-light dark:bg-[#1b2e4b] shadow">
+                                        <div className="bg-gradient-to-r from-[#3cba92] to-[#0ba360] w-full h-full rounded-full" style={{ width: '65%' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="w-9 h-9 ltr:mr-3 rtl:ml-3">
+                                    <div className="bg-warning-light dark:bg-warning text-warning dark:text-warning-light rounded-full w-9 h-9 grid place-content-center">
+                                        <IconUser />
+                                    </div>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex font-semibold text-white-dark mb-2">
+                                        <h6>Premium Admin</h6>
+                                        <p className="ltr:ml-auto rtl:mr-auto">$55,085</p>
+                                    </div>
+                                    <div className="w-full rounded-full h-2 bg-dark-light dark:bg-[#1b2e4b] shadow">
+                                        <div className="bg-gradient-to-r from-[#f09819] to-[#ff5858] w-full h-full rounded-full" style={{ width: '80%' }}></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div> */}
+                        </div>
+
+                        {/*  Recent Transactions  */}
+                        <div className="panel">
+                            <div className="mb-5 text-lg font-bold">Recent Transactions</div>
+                            <div className="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th className="ltr:rounded-l-md rtl:rounded-r-md">ID</th>
+                                            <th>DATE</th>
+                                            <th>Payed By</th>
+                                            <th>AMOUNT</th>
+                                            <th className="text-center ltr:rounded-r-md rtl:rounded-l-md">STATUS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {recentPayments?.map((recpmt) => (
+                                            <tr key={recpmt?.id}>
+                                                <td className="font-semibold">{recpmt?.id}</td>
+                                                <td className="whitespace-nowrap">{dayjs(recpmt?.payment_date).format('ddd, DD MMM, YYYY')}</td>
+                                                <td className="whitespace-nowrap">{recpmt?.payer?.full_name}</td>
+                                                <td>{recpmt?.amount}</td>
+                                                <td className="text-center">
+                                                    <span className="badge bg-success/20 text-success rounded-full hover:top-0">{recpmt?.status}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="panel h-full sm:col-span-2 xl:col-span-1 pb-0">
+                        <div className="flex items-center justify-between">
+                            <h5 className="font-semibold text-lg dark:text-white-light mb-5">Audit Trails</h5>
+                            <div>
+                                <Link to="/" className=" font-semibold group hover:text-primary p-4 flex items-center justify-center group">
+                                    View All
+                                    <IconArrowLeft className="rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition duration-300 ltr:ml-1 rtl:mr-1" />
+                                </Link>
+                            </div>
+                        </div>
+                        <PerfectScrollbar className="relative h-[290px] ltr:pr-3 rtl:pl-3 ltr:-mr-3 rtl:-ml-3 mb-4">
+                            <div className="text-sm cursor-pointer h-full">
+                                <div className="flex items-center py-1.5 relative group">
+                                    <div className="bg-primary w-1.5 h-1.5 rounded-full ltr:mr-1 rtl:ml-1.5"></div>
+                                    <div className="flex-1">Updated Server Logs</div>
+                                    <div className="ltr:ml-auto rtl:mr-auto text-xs text-white-dark dark:text-gray-500">Just Now</div>
+
+                                    <span className="badge badge-outline-primary absolute ltr:right-0 rtl:left-0 text-xs bg-primary-light dark:bg-black opacity-0 group-hover:opacity-100">
+                                        Pending
+                                    </span>
+                                </div>
+                            </div>
+                        </PerfectScrollbar>
                     </div>
                 </div>
             </div>

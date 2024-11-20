@@ -43,7 +43,7 @@ axiosInstance.interceptors.response.use(
                     withCredentials: true,
                 });
 
-                const newAccessToken = response.data.accessToken;
+                const newAccessToken = response?.data?.accessToken;
                 localStorage.setItem('accessToken', newAccessToken);
                 originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
                 onRefreshed(newAccessToken);

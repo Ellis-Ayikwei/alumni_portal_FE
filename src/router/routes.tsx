@@ -13,12 +13,14 @@ import InsurancePacakes from '../pages/InsurancePackageManagement/InsurancePacka
 import AccountSetting from '../pages/MemberOnly/AccountSetting';
 import MemberDashboard from '../pages/MemberOnly/MemberDashboard';
 import MyGroups from '../pages/MemberOnly/MyAlumniGroups';
-import MyBeneficiaries from '../pages/MemberOnly/MyBeneficiaries';
 import MyContracts from '../pages/MemberOnly/MyContracts';
 import MyPayments from '../pages/MemberOnly/MyPayments';
 import Profile from '../pages/UserManagement/Profile';
 import UserManagement from '../pages/UserManagement/UserManagement';
 import { RowContextMenuExample } from '../pages/UserManagement/UserManagement copy';
+import MemberGroupEdit from '../pages/MemberOnly/MyAlumniGroupUtils/memberGroupEdit';
+import MemberGroupPreview from '../pages/MemberOnly/MyAlumniGroupUtils/memberGroupPreview';
+import JoinGroup from '../pages/MemberOnly/MyAlumniGroupUtils/joinGroup';
 const Index = lazy(() => import('../pages/Index'));
 
 const LoginBoxed = lazy(() => import('../pages/Authentication/LoginBoxed'));
@@ -127,20 +129,28 @@ const routes = [
         element: <MyGroups />,
     },
     {
-        path: '/member/groups/preview/:group_id',
+        path: '/groups/preview/:group_id',
         element: <GroupPreview />,
     },
     {
-        path: '/member/groups/edit/:group_id',
+        path: '/groups/edit/:group_id',
         element: <GroupEdit />,
+    },
+    {
+        path: '/member/groups/preview/:group_id',
+        element: <MemberGroupPreview />,
+    },
+    {
+        path: '/member/groups/edit/:group_id',
+        element: <MemberGroupEdit />,
+    },
+    {
+        path: '/member/groups/:group_id/joingroup',
+        element: <JoinGroup />,
     },
     {
         path: '/member/mypayments',
         element: <MyPayments />,
-    },
-    {
-        path: '/member/beneficiaries',
-        element: <MyBeneficiaries />,
     },
     {
         path: '/member/contracts',

@@ -16,7 +16,6 @@ import { setPageTitle } from '../../../../store/themeConfigSlice';
 import ChangeLog from '../../../Amendments/AmendmentUtils/changeLogModal';
 import handleMultiContractActivation from '../multiContractActivation';
 import handleMultiContractLocking from '../multiContractLocking';
-import ShowBeneficiaries from './showBeneficiaries';
 
 const ContractPreview = () => {
     const dispatch = useDispatch();
@@ -241,7 +240,6 @@ const ContractPreview = () => {
                 </div>
             </div>
             {showAmendmentModal && <ChangeLog showModal={showAmendmentModal} setShowModal={setShowAmendmentModal} changeLog={changeLog} />}
-            {benefactorIds && <ShowBeneficiaries showBeneficiariesModal={showBeneficiariesModal} setShowBeneficiariesModal={setShowBeneficiariesModal} benefactorIds={benefactorIds} edit={false} />}
         </div>
     );
 };

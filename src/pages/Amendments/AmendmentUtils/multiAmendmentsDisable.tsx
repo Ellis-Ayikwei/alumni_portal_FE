@@ -4,7 +4,7 @@ import { GetAmendments } from '../../../store/amendmentsSlice';
 
 const handleMultiAmendmnetDisable = async (selectedAmendments: { id: string }[], dispatch: Dispatch<AnyAction>): Promise<boolean> => {
     const promises = selectedAmendments.map( async (amendment) => {
-        const prevStatus = await axiosInstance.get(`/amendments/${amendment.id}`).then((response) => response.data.status);
+        const prevStatus = await axiosInstance.get(`/amendments/${amendment?.id}`).then((response) => response.data.status);
             
         if (prevStatus !== 'PENDING') {
             return;

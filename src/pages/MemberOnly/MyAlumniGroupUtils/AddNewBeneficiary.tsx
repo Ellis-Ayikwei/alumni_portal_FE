@@ -224,7 +224,7 @@ const AddNewBeneficiary = ({ AddUserModal, setAddUserModal }: SaveNewUserProps) 
                                             <label htmlFor="last_name">
                                                 Last Name <span className="text-red-600">*</span>
                                             </label>
-                                            <input id="last_name" type="text" placeholder="Enter Last Name" className="form-input" value={params.last_name} onChange={(e) => changeValue(e)} required />
+                                            <input id="last_name" type="text" placeholder="Enter Last Name...." className="form-input" value={params.last_name} onChange={(e) => changeValue(e)} required />
                                         </div>
                                         <div className="mb-5">
                                             <label htmlFor="other_names">Other Names</label>

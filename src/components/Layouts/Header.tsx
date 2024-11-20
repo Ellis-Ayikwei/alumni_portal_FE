@@ -31,9 +31,9 @@ import IconMenuPages from '../Icon/Menu/IconMenuPages';
 
 const Header = () => {
     const dispatch: AppDispatch = useDispatch();
-    const location = useLocation()
+    const location = useLocation();
     const user = useSelector((state: IRootState) => state.auth.user);
-    const userId = useSelector((state: IRootState) =>state.auth.user.id)
+    const userId = useSelector((state: IRootState) => state.auth.user?.id);
     useEffect(() => {
         const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
         if (selector) {
@@ -143,10 +143,12 @@ const Header = () => {
             // const logoutResponse = await dispatch(logoutUser() as any);
             // if (logoutResponse.meta.requestStatus === 'fulfilled') {
             // }
-            dispatch(LogoutUser() as any).then(() => {
-                navigate('/login');
-                localStorage.clear()
-                window.location.reload()
+            dispatch(LogoutUser() as any).then((res) => {
+                if (res.statusCode === 202) {
+                    navigate('/login');
+                    localStorage.clear();
+                    window.location.reload();
+                }
             });
         } catch (error) {
             console.error('Logout failed:', error);
